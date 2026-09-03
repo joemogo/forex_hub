@@ -2000,9 +2000,10 @@ const ALL_PAIRS=[
 // Bump by 1.0 for a major update (new feature/tab), by 0.1 for a small patch/fix.
 // This shows in the header next to the logo and on the Diagnostics tab, so you can
 // glance at the live site and instantly confirm which build actually deployed.
-const APP_VERSION='12.41.0';
-const APP_VERSION_DATE='22 Aug 2026';
+const APP_VERSION='12.42.0';
+const APP_VERSION_DATE='03 Sep 2026';
 const APP_VERSION_LOG=[
+  '12.42.0 — EXIT FIDELITY AND POLL RE-ENTRANCY (six confirmed correctness defects in the ALEX live paper-trading path; zero protected-function and zero protected-constant drift, verified against the committed 12.41.0 baseline — every repair lands in non-protected callers, and the frozen fixed-R booking methodology is deliberately UNCHANGED). D1 (WORST): a rejected ledger commit could book a losing trade as a WINNER. alexGCheckLivePositions advanced pos.lastExitCheckTimestamp PAST the exit bar before attempting the close, and discarded alexGCloseLivePosition\'s return value. That function rolls the ACCOUNT back when commitAlexGLedger rejects (STALE_VERSION from a second tab, a full quota) but cannot roll back a cursor it never saw, so the next tick began AFTER the bar that exited, never saw it again, and left open a position the market had already closed — which later closed at target and was recorded as a Win. The cursor and the excursion are now restored on rejection, the failure is reported through recordAlexGEngineError (stage alexGCheckLivePositions.exitCommitRejected) instead of vanishing, and the tick STOPS: the rollback replaces every object in openPositions with a deep clone, so the loop\'s remaining bindings are detached and their mutations would have been silently discarded. D2: gap-through exits were invisible. A bar that OPENS beyond the trigger — a weekend gap, an NFP spike — could only have filled at the open; the trigger was never traded. Every such exit therefore read as exactly the planned R, making the tail of the loss distribution unobservable. The BOOKING is deliberately left alone (fixed-R accounting is this system\'s disclosed, frozen methodology, pinned by ALEXEXIT.14/.18, and silently re-pricing historical exits would rewrite the meaning of every figure already derived from the corpus); instead the true executable price is CAPTURED beside the booked one as exitExecutablePrice/exitPriceBasis/exitGapPips/exitGapR, bounded so it can only ever record a fill AGAINST the position. Whether to change the booking is now an operator decision with the evidence in hand rather than an invisible one. D3: MFE/MAE absorbed the exit bar. alexGReconstructExitFromCandles (PROTECTED, unedited) folds each bar\'s full high/low into the excursion and only THEN tests for the exit, so movement after the position was already closed was recorded as excursion the trade experienced — mfeR could exceed plannedRR on a record whose resultR is −1, biasing every partial-exit study upward. Intra-minute ordering is not knowable at M1 resolution, so this does not guess: the recorded figure is rewound to the last bar completing strictly BEFORE the exit bar (the largest excursion the trade is KNOWN to have had while open) and the exit bar\'s own extreme is kept beside it as mfeRUpperBound with excursionBoundedByExitBar. What is established and what is merely possible stay distinguishable. D4: exitTimestamp in every evidence package read closedAt — the moment the POLLER NOTICED the exit, not the moment it happened. The two differ by the whole of any downtime: a laptop asleep from Friday reopens Monday, reconstructs a Friday 20:41 stop from M1 history, and stamped it Monday 07:00, so holding-period, exit-session and day-of-week figures were computed against the wrong instant. It now prefers the exitDetectedAt that was already being recorded, with exitTimestampBasis naming which was used. D5: setInterval(alexGLivePollTick, 60000) never awaited its async callback, so a tick outrunning its own period overlapped the next one while both shared alexGAccount, the per-position exit cursors and alexGLastEvaluatedCloseTime. This is the mechanism behind the continuity card\'s backwards intervals (startedAt is stamped at tick entry, seq at write, so overlapping ticks write rows whose two orderings disagree), and it can let two ticks both pass the pair+timeframe overlap check while suspended on await fetchBidAsk. A new alexGLivePollTickGuarded wrapper holds an in-flight flag; the tick itself is byte-identical and its exceptions still propagate. A skipped tick is RECORDED as SKIPPED_POLL_IN_FLIGHT with its own tickId, because an overlap that never reaches the ledger is indistinguishable from downtime. D6: a disabled tick wrote TWO poll rows under one natural key (POLL|strategyId|tickId) — one SKIPPED_DISABLED with 0 instruments from an early return, one OK with 12 NOT_REACHED from the finally block — both fire-and-forget async, so which survived the IndexedDB race was nondeterministic and the ledger\'s own uptime counts were not reproducible across runs of identical code. The outcome is now set on the tick\'s single writer; the surviving row is strictly richer. TESTING: new tests/run_v142_exit_fidelity_reentrancy_tests.js (22 fixtures) drives the REAL alexGCheckLivePositions and alexGLivePollTickGuarded extracted verbatim from this file, with the real protected alexGReconstructExitFromCandles, stubbing only the boundaries (candle fetch, the protected close, bid/ask, persistence). Every repair carries a NEGATIVE CONTROL: the recorded executable price cannot move in the position\'s favour (EXITFID-4); the excursion bound is not always set (EXITFID-8); a SUCCESSFUL close still advances the cursor, so the rejection fixture is not passing on code that never advances it (EXITFID-10); both positions are processed when the close succeeds, so the stop-the-tick fixture is not passing on a loop that only ever runs once (EXITFID-14); the guard releases its flag even when the tick THROWS (PRE-6), since a leaked flag would silently end live polling for the session — strictly worse than the overlap it prevents. tests/run_v1233_jvm_autotrade_reliability_tests.js JVMTMR-3/4/5 now assert against the wrapper, which is what is actually scheduled; PRE-1..PRE-7 pin that the wrapper calls through, so those three cannot decay into proving only that SOMETHING is scheduled. Full gate: 36/36 suites, 2,769/2,769 fixtures under Node, plus 22 (v142) and 43 (v138), zero drift. NOT CHANGED, deliberately: the fixed-R booking; alexGReconstructExitFromCandles and every other protected function; the evidence package date partition (changing which day a package files under has blast radius through sequence allocation and the identity manifest, and the misattribution it caused is fixed at exitTimestamp instead).',
   '12.41.0 — D3: THE EXECUTION BOUNDARY NOW CHECKS THE SIGN (OWNER-AUTHORIZED PROTECTED-FUNCTION CHANGE). Exactly one protected function changed -- openPaperPosition -- confirmed by the drift check naming it AND NOTHING ELSE, which independently proves the other 62 protected functions and all 4 protected constants are byte-identical. No pip-value behaviour, no pip qualification, no lot quantisation, no entry/exit semantics touched: D1, D2 and D4 are explicitly NOT part of this change. THE DEFECT: openPaperPosition guarded only `if(!(riskPips>0))`, and riskPips is built with Math.abs, so the SIGN was already discarded before the guard ran. Three consequences, all measured. (1) A WRONG-SIDE STOP FIRED: for a buy, stop = aoi.support - pip*7, where the AOI is computed from DAILY/WEEKLY candles filtered against the last CLOSED bar and cached 15 minutes, while the entry price is live -- so once price trades below support-7pip the stop sits ABOVE the entry, abs() makes the risk positive again, and the position opened. (2) THE R:R GATE MADE IT WORSE, NOT BETTER: ratio = reward/risk, so as risk approaches zero the ratio approaches infinity and clears the 1.99 minimum; measured 2000:1 at 0.05 pips. The one gate that looked protective was the one admitting the dangerous case. (3) SIZE WAS UNBOUNDED: lots = riskAmount/(riskPips*pipVal) with no cap, no notional limit and no margin check anywhere -- 0.5 pips gives 20 lots (2,000,000 units, 200x leverage on a $10,000 account) and 0.05 pips gives 200 lots, where a FIVE-PIP adverse move loses the entire account. Because clusterLevels returns a MEAN, aoi.support is not on the price grid, so riskPips is not tick-quantised and can be arbitrarily small. An infinite lot size also COMMITTED at open -- commitPaperLedger inspects only balance and the 5 most recent CLOSED P&Ls, and (Infinity).toFixed(2) survives parseFloat -- then wedged the position permanently unclosable when the close made balance non-finite and the commit rolled back. THE FIX: validateTradeGeometry(dir,entry,stop,target,pip,MIN_RISK_PIPS) is called at the top of openPaperPosition, before any sizing. It validates SIGNED geometry -- the thing Math.abs() throws away -- returning VALID / STOP_WRONG_SIDE / RISK_TOO_SMALL / TARGET_WRONG_SIDE / NON_FINITE. It was written, reviewed and fixture-covered as a pure unwired function during the D3 investigation, so this release wires existing tested logic rather than authoring new logic at the boundary. THIS IS THE RIGHT BOUNDARY: all four JVM and manual entry paths converge on openPaperPosition -- checkAutoTrades, placePaperTrade, approveManualReviewTrade and the developer test generator -- and paperAccount.openPositions.push is its single mutation site, so one check covers every path. ALEX is a separate engine with its own protected construction function and is deliberately OUT OF SCOPE for this authorization. MIN_RISK_PIPS=1.0 IS A SAFETY FLOOR, NOT A STRATEGY RULE: it rejects geometry no broker would fill meaningfully (a stop inside the spread) and must never be tuned to admit or exclude setups. HISTORICAL COMPATIBILITY, MEASURED: all 259 preserved observations were replayed through the installed guard and 259 of 259 classify VALID -- the tightest real risk distance in the corpus is 5.03 pips, five times the floor, and there are zero wrong-side records. The guard rejects NOTHING MOGO has ever done. TESTING: 13 new D3.* fixtures drive the REAL protected function at the boundary -- long and short valid/equal/wrong-side geometry, near-zero risk at 0.5 and 0.05 pips, seven malformed-input shapes (NaN, Infinity, -Infinity, undefined) all rejected with no position created, wrong-side target, the 5.03-pip historical tightest still accepted, the floor asserted to sit below it, and a normal JPY short still opening. Two POSITIVE CONTROLS (D3.1, D3.4) guard against the far worse defect of a guard that refuses everything. Gate: 34 suites, 1467 Python tests, zero drift after an authorized re-baseline of openPaperPosition alone.',
   '12.40.0 — A DEAD PROVIDER WAS RENDERED IN THE VOCABULARY OF A QUIET MARKET (MOGO-023, INC-006). Market-data diagnostics and operator display only; no strategy rule, threshold, evaluator, classification, trade construction, sizing or execution change; zero protected-function/protected-constant drift (63 functions and 4 constants byte-identical). THE INCIDENT: the operator saw "35 pairs not evaluated — incomplete candle history", every pair reporting requested 220 / received 0. Measured root cause, reproduced 9/9 across seven minutes: api-fxpractice.oanda.com was returning HTTP 520 (Cloudflare origin error) on EVERY endpoint -- candles, accounts and pricing alike -- while api-fxtrade.oanda.com answered a correct 401 to the identical unauthenticated request. A DATA PROVIDER outage, external to MOGO. Auth was eliminated (a dead token yields 401, not 520), as were symbol mapping (ALL_PAIRS already carries OANDA-native underscore identifiers), timeframe (reproduced on H1 and D), request construction (reproduced at count=220 and count=5) and local network (live host and unrelated hosts reachable). THE DEFECT THIS EXPOSED IS MOGO\'S, AND IT IS NOT THE SUPPRESSION: ADR-011 worked exactly as designed and correctly withheld every evaluation. The defect is that MOGO COULD NOT SAY WHY. fetchCandles() collapsed three materially different failures into one bare null -- a non-OK status, a 200 carrying no candles field, and a thrown network/CORS error -- discarding the reason one line after learning it. So the suppression banner rendered "· — · HTTP —" for all 35 instruments, and its own prose then reassured the operator that "session, weekend, holiday and liquidity gaps are all legitimate" -- arguing for precisely the wrong conclusion during a total outage. This is B-32\'s eighth defect category, ABSENCE IS NOT SILENCE, on a surface B-32 never audited: it was repaired three times in the evidence layer and never in the market-data path. THE REPAIR: a new fetchCandlesDiagnosed() returns {candles, diagnostics} carrying transportOutcome in {OK, HTTP_ERROR, NO_CANDLES_FIELD, NETWORK_ERROR} plus the real httpStatus; scanPair() records those into pairData EVEN WHEN candles is null (previously both went to null in exactly the case an operator needs them); and the banner names the transport failure, separates it from a legitimate short-history gap, and states plainly that this is a data-availability failure and NOT a market verdict -- MOGO is not reporting that no setups exist, it is reporting that it cannot see the market. FETCHCANDLES\' RETURN CONTRACT IS DELIBERATELY UNCHANGED -- the array on success, bare null on every failure -- so all 21 existing call sites and their null guards behave byte-for-byte as before. Returning [] instead would have been the obvious shape and is exactly wrong: [] is truthy, so every `if(!candles)` guard in the application would have silently stopped firing. Fixture BEHAVIOUR-1 pins this and still passes; INC006-1 pins it a second time, deliberately. completenessState REMAINS THE SOLE EVALUATION CONTRACT (ADR-011): transportOutcome and httpStatus are diagnostics and display only, and no consumer branches on them to decide evaluation -- branching on httpStatus===429 would re-create the original ADR-011 defect, whose actual case was httpStatus===200. CREDENTIAL SAFETY: only the error\'s own message is recorded, never the request, which carries the bearer token in a header; a fixture asserts no Authorization/Bearer text can reach a diagnostic string. EXPLICITLY NOT DONE: no relaxation of the 220-candle lookback, no fabricated or interpolated candles, no stale-data reuse, no retry storm against a failing origin, and NO automatic failover to the live host -- failing a PAPER platform over onto a live-money endpoint is a governance boundary, not a repair. TESTING: v130 grows 25 -> 31 fixtures (INC006-1..6), all passing. Mutation-verified, three mutations each killed: fetchCandles returning [] instead of null kills BEHAVIOUR-1 and INC006-1; discarding httpStatus when candles is null kills INC006-6; dropping the headline distinction kills INC006-6. Gate: 34 suites, 2,386 fixtures. See docs/INCIDENTS.md INC-006.',
   '12.36.0 — THE ONE LINE HOLDING THE ACCOUNT BALANCE UP HAD NO FIXTURE (MOGO-021 section 18.30). Two independent adversarial agents; 24 and 7 mutations scored gate-wide. THE CRITICAL FINDING: `if(!exitPrice)return;` in closePaperPosition was the SINGLE line preventing total, permanent destruction of the paper account, and NOTHING watched it. Deleting it survived all 2,215 fixtures with drift 0, while the control at the same line killed 85 -- the line runs constantly; its FAILURE path was unwitnessed. Driven end to end through the real engine, the deletion books the close at exitPrice=undefined, so pnl and then balance become NaN -- and JSON.stringify(NaN) is `null`, so {"balance":null} is written to storage and SURVIVES RELOAD. commitPaperLedger validated the storage write and never the numbers, so there was no second line of defence; the ALEX open path already checks isFinite and the JVM ledger commit did not. Reachable, and the two failures are CORRELATED not independent: checkPaperPositions decides the exit from a synchronous price read, closePaperPosition then yields at `await fetchBidAsk`, and during that await the sweep rewrites the shared pairData slot -- a failed fetchPrice writes price:null, and fetchBidAsk and fetchPrice hit the same host with the same credentials, so ONE outage produces both. The same missing coverage hid a second mutation: rewriting the auto branch as `live!=null?live:pos.entry` books a genuine +$300 take-profit winner at the entry -- pnl 0, result Win, closeReason TAKE_PROFIT -- destroying the gain and corrupting expectancy with a phantom 0R win. PTE2E-NOFILL.1-4 close both, and commitPaperLedger now REFUSES a non-finite ledger through the existing blocking-banner contract (PTE2E-FINITE.0-3). Because that refusal makes the guard deletion survivable, NOFILL.3b pins the upstream guard on the property that actually distinguishes them: a healthy refusal is SILENT, raising no banner and no engine error, because the close never reached the commit. UNREALIZED P&L HAD ZERO COVERAGE. Three mutations of the open-position P&L, INCLUDING REPLACING THE PIP VALUE WITH THE CONSTANT 987654, all survived the full gate -- so every floating P&L and R-multiple the operator reads while deciding whether to cut a live trade could be arbitrarily wrong while the gate stayed green. This is the unwatched SECOND COPY of the pip arithmetic; the realized path is pinned by JVMEXIT-11. PTE2E-UNREAL.1-6 assert hand-computed literals for a long and a short, and .5/.6 make a re-derived pip value differ from the entry-fixed one so the equivalent mutant in the first scenario becomes a real kill. THE EVIDENCE-PLATFORM EXCLUSION WAS DEFEATED FOR THE SEVENTH TIME, BY THE COMMIT THAT FIXED THE SIXTH. Version six matched the artifact MESSAGE exactly, as promised -- but discarded the WHOLE ENTRY, and evidenceRecordWriteFailure stores caller-controlled `context` and `detail:extra` while recordAlexGEngineError merges arbitrary meta. So ONE call to a real production function, with no forged strings at all, sends the exact allowlisted message and rides its payload in a field the filter never examined, poisoning both filtered structures at once. Found independently by me and by the verifier. An entry is now excluded only if its ENTIRE content, minus the timestamp, is a known artifact shape; all four channels -- message prefix, detail, engine meta and context -- now die, and a byte-identical zero-payload artifact still passes by design. TWO CREDENTIAL FIXTURES VACUOUS BY TIMING, NOT EMPTINESS: setCfg is a bare assignment and localStorage was read on the very next line, so ZERO production persistence ran while the sentinel was live and no persistence behaviour could make them fail. Leaks to an fxhub_ key and to a non-fxhub key both left them green. The real save/commit/persist surface now runs with the secret live, with a positive control that plants a sentinel and requires the same scan to find it. FOURTEEN MORE UNKILLABLE FIXTURES RETIRED and the harness that hid them fixed: t(name,fn) recorded a PASS whenever fn() did not throw SYNCHRONOUSLY, so a returned promise was stored as a detail string and discarded -- any async fixture would have passed unconditionally, proven by writing one that asserts false and passes. The same helper is copy-pasted in three suites; all three now fail closed. pnlUnavailable, computed and fixture-tested since v12.16.0 and RENDERED NOWHERE, is the third value this milestone recorded faithfully and never shown -- it is the number that EXPLAINS an UNEXPLAINED_DELTA, and without it the operator cannot tell missing data from wrong books. Gate: 34 suites, 2,235/2,235; protected drift 0.',
@@ -5621,13 +5622,117 @@ async function alexGCheckLivePositions(scanId){
           // Fetch failed -- do NOT advance lastExitCheckTimestamp and do NOT fall back to a
           // snapshot for this interval; retry the full gap next poll rather than guess.
         }else if(candles.length){
+          // ── v12.42.0 EXIT FIDELITY. Three defects, all corrected HERE rather than inside
+          // alexGReconstructExitFromCandles, which is PROTECTED and stays byte-identical.
+          //
+          // The protected reconstruction answers one question correctly -- WHICH bar the exit
+          // happened on -- and three incorrectly, because it never looks at the bar it just
+          // selected. All three are corrected below from the same candle array it was handed,
+          // so nothing is re-fetched and no protected semantics change.
+          const __exBefore={mfePips:pos.mfePips,maePips:pos.maePips,mfeR:pos.mfeR,maeR:pos.maeR};
+          const __cursorBefore=pos.lastExitCheckTimestamp;
           const{exit,lastProcessedTime}=alexGReconstructExitFromCandles(pos,candles,ALEXG_LIVE_CANDLE_DURATION_MS);
           if(lastProcessedTime!=null) pos.lastExitCheckTimestamp=lastProcessedTime; // only after successful processing
           if(exit){
-            alexGCloseLivePosition(pos.tradeId,exit.result,exit.triggerLevel,null,{
+            const isBuy=pos.direction==='buy';
+            const pip=pipSize(pos.pair);
+            const riskPips=Math.abs(pos.entry-pos.stop)/pip;
+            const exitBar=candles.find(function(c){return c.t===exit.candleStart;})||null;
+            const side=exitBar?(isBuy?exitBar.bid:exitBar.ask):null;
+
+            // (1) THE GAP IS RECORDED, NOT BOOKED. A bar that OPENS beyond the trigger -- a
+            // weekend gap, an NFP spike -- could only have filled at the open; the trigger level
+            // was never traded. Booking every such exit at the trigger clips it to exactly the
+            // planned R and makes the tail of the loss distribution unobservable: a 40-pip gap
+            // through a long's stop reads as -1.000R, identical to an ordinary stop-out.
+            //
+            // The BOOKING is deliberately left alone. Fixed-R accounting (resultR = plannedRR or
+            // -1, and a pnl computed from the trigger) is this system's disclosed, frozen
+            // methodology, pinned by ALEXEXIT.14/.18; changing what the ledger books is a
+            // methodology decision for the operator, not a defect for me to correct in passing.
+            // Silently re-pricing every historical exit would also rewrite the meaning of every
+            // figure already derived from the corpus.
+            //
+            // So the true executable price is CAPTURED beside the booked one. Analysis can then
+            // measure real gap risk -- and see how much of it the fixed-R books are absorbing --
+            // without the ledger and the evidence layer disagreeing about what was booked.
+            // Bounded in the favourable direction by the trigger, so it can only ever record a
+            // fill AGAINST the position, never for it.
+            let executable=exit.triggerLevel;
+            if(side&&typeof side.o==='number'&&isFinite(side.o)){
+              if(exit.type==='target') executable=isBuy?Math.max(side.o,pos.target):Math.min(side.o,pos.target);
+              else executable=isBuy?Math.min(side.o,pos.stop):Math.max(side.o,pos.stop);
+            }
+            const gapped=executable!==exit.triggerLevel;
+
+            // (2) EXCURSION MUST NOT ABSORB THE EXIT BAR. The protected function folds each bar's
+            // full high/low into MFE/MAE and only THEN tests for the exit, so movement that
+            // happened after the position was already closed is recorded as excursion the trade
+            // experienced. On a stopped-out trade that then spiked, mfeR can exceed plannedRR on
+            // a record whose resultR is -1, and every "would a partial at 1R have helped" study
+            // reads high.
+            //
+            // Intra-minute ordering is NOT knowable at M1 resolution, so this does not guess. The
+            // recorded figure is rewound to the last bar completing strictly BEFORE the exit bar
+            // -- the largest excursion the trade is KNOWN to have had while open -- and the exit
+            // bar's own extreme is kept beside it as an explicit upper bound. What is established
+            // and what is merely possible stay distinguishable, which is what was being destroyed.
+            let mfeP=__exBefore.mfePips,maeP=__exBefore.maePips;
+            for(const c of candles){
+              if(c.t>=exit.candleStart) break;
+              const s=isBuy?c.bid:c.ask;
+              const fav=isBuy?(s.h-pos.entry)/pip:(pos.entry-s.l)/pip;
+              const adv=isBuy?(pos.entry-s.l)/pip:(s.h-pos.entry)/pip;
+              if(fav>mfeP) mfeP=fav;
+              if(adv>maeP) maeP=adv;
+            }
+            let mfeUpper=mfeP;
+            if(side){
+              const favExit=isBuy?(side.h-pos.entry)/pip:(pos.entry-side.l)/pip;
+              if(favExit>mfeUpper) mfeUpper=favExit;
+            }
+            pos.mfePips=mfeP; pos.maePips=maeP;
+            pos.mfeR=riskPips>0?mfeP/riskPips:0;
+            pos.maeR=riskPips>0?maeP/riskPips:0;
+            // alexGCloseLivePosition builds the closed record as {...pos,...}, so provenance set
+            // on pos here rides into it without editing that protected function.
+            pos.exitPriceBasis=gapped?'candle_open_gap':'trigger_level';
+            pos.exitExecutablePrice=executable;
+            pos.exitGapPips=gapped?Math.abs(executable-exit.triggerLevel)/pip:0;
+            pos.exitGapR=(gapped&&riskPips>0)?Math.abs(executable-exit.triggerLevel)/pip/riskPips:0;
+            pos.mfeRUpperBound=riskPips>0?mfeUpper/riskPips:null;
+            pos.excursionBoundedByExitBar=!!(side&&mfeUpper>mfeP);
+
+            const __closeRes=alexGCloseLivePosition(pos.tradeId,exit.result,exit.triggerLevel,null,{
               exitTriggerLevel:exit.triggerLevel,exitDetectionSource:'historical_candle',
               exitDetectedAt:exit.candleEnd,exitCandleStart:exit.candleStart,exitCandleEnd:exit.candleEnd,
               ambiguous:exit.ambiguous,ambiguousMode:exit.ambiguousMode});
+
+            // (3) A REJECTED COMMIT MUST NOT CONSUME THE EXIT. The cursor was advanced past the
+            // exit bar above. alexGCloseLivePosition rolls the ACCOUNT back when the ledger
+            // commit is rejected (STALE_VERSION from a second tab, a full quota) but cannot roll
+            // back a cursor it never saw, and its return value was previously discarded. The next
+            // tick then starts AFTER the bar that exited, never sees it again, and leaves open a
+            // position the market had already closed -- which is eventually recorded as a Win at
+            // target. A genuine loser booked as a winner is the worst failure this file can have.
+            //
+            // The rollback also replaces every object in openPositions with a deep clone, so this
+            // loop's remaining `pos` bindings are now detached and their mutations would be
+            // silently discarded. Stop the tick instead of writing excursion into orphans; the
+            // next tick re-reads the live array.
+            if(__closeRes&&__closeRes.blocked){
+              pos.lastExitCheckTimestamp=__cursorBefore;
+              pos.mfePips=__exBefore.mfePips; pos.maePips=__exBefore.maePips;
+              pos.mfeR=__exBefore.mfeR; pos.maeR=__exBefore.maeR;
+              delete pos.exitPriceBasis; delete pos.exitExecutablePrice;
+              delete pos.exitGapPips; delete pos.exitGapR;
+              delete pos.mfeRUpperBound; delete pos.excursionBoundedByExitBar;
+              recordAlexGEngineError('exit close rejected ('+(__closeRes.error||'unknown')
+                +') -- cursor restored, exit will be re-detected next tick',
+                {stage:'alexGCheckLivePositions.exitCommitRejected',tradeId:pos.tradeId,
+                 pair:pos.pair,scanId:scanId});
+              break;
+            }
             closedByHistory=true;
           }
         }
@@ -5805,8 +5910,8 @@ function alexGLivePollingShouldRun(){
 }
 function startAlexGLivePollingIfNeeded(){
   if(alexGLiveInterval||!alexGLivePollingShouldRun()) return;
-  alexGLiveInterval=setInterval(alexGLivePollTick,60000);
-  alexGLivePollTick();
+  alexGLiveInterval=setInterval(alexGLivePollTickGuarded,60000);
+  alexGLivePollTickGuarded();
 }
 function stopAlexGLivePollingIfDone(){
   if(alexGLiveInterval&&!alexGLivePollingShouldRun()){
@@ -5819,6 +5924,45 @@ function stopAlexGLivePollingIfDone(){
 // PROTECTED_FUNCTIONS) -- this is the genuine outer poll-tick boundary; every original
 // statement below is byte-identical and unreordered, only wrapped in try/catch with emit
 // calls at the boundaries. No protected rule logic is instrumented.
+// ── v12.42.0 POLL RE-ENTRANCY GUARD ───────────────────────────────────────────────────────
+// alexGLivePollTick is async and was handed straight to setInterval, which does not await it.
+// A tick that outruns its own 60s period therefore overlaps the next one, and they share every
+// piece of mutable state they touch: alexGAccount (read for balance-based sizing, written on
+// open and close), the per-position exit cursor, and alexGLastEvaluatedCloseTime.
+//
+// Two consequences, both observed in the corpus rather than theorised. The forward-observation
+// ledger stamps startedAt at tick entry and seq at write, so overlapping ticks write rows whose
+// two orderings disagree -- which is the whole of the "1,300 backwards intervals / 3,806 missed"
+// figure the operator's continuity card reports. And the pair+timeframe overlap check in
+// alexGConstructLivePosition reads openPositions, which is only written after `await fetchBidAsk`,
+// so two overlapping ticks can both pass it and open two positions on one pair and timeframe --
+// double risk on a correlated instrument by a route the sequential path forbids.
+//
+// The guard is a wrapper, not an edit to the tick: the tick's own structure, its try/finally and
+// its instrumentation all stay byte-identical. A skipped tick is RECORDED, not dropped silently
+// -- an overlap that never appears in the ledger is indistinguishable from downtime, and telling
+// those two apart is the entire point of the ledger.
+let alexGPollInFlight=false;
+let alexGPollOverlapTotal=0;
+async function alexGLivePollTickGuarded(){
+  if(alexGPollInFlight){
+    alexGPollOverlapTotal++;
+    try{
+      const __ovId=generateDecisionEventId('SCAN');
+      const __ovAt=new Date().toISOString();
+      evidenceRecordForwardObservations({scanId:__ovId,poll:{tickId:__ovId,startedAt:__ovAt,
+        finishedAt:__ovAt,outcome:'SKIPPED_POLL_IN_FLIGHT',
+        tradingEnabled:!!alexGAutoTrading.enabled,evaluationAdvanced:false,
+        instrumentsAttempted:0,instrumentsEvaluated:[],
+        instrumentsConfigured:SCAN_PAIRS.length,instrumentsSkipped:[],
+        errorText:'previous poll still running after 60s; this tick was skipped, not missed'}});
+    }catch(e){ /* observation must never affect the trading path */ }
+    return;
+  }
+  alexGPollInFlight=true;
+  try{ await alexGLivePollTick(); }
+  finally{ alexGPollInFlight=false; }
+}
 async function alexGLivePollTick(){
   const __scanId=generateDecisionEventId('SCAN');
   // ── MOGO-013: observation seam. Purely additive local bookkeeping -- these three variables are
@@ -5844,9 +5988,19 @@ async function alexGLivePollTick(){
       emitDecisionEvent({eventType:'SCAN_COMPLETED',strategyId:RULES_ALEXG.ruleVersion,scanId:__scanId,correlationId:__scanId,source:'alexGLivePollTick',evidenceCompleteness:'COMPLETE'});
       // A poll that correctly did nothing is still an operational observation, and recording it
       // is what makes "MOGO was running but disabled" distinguishable from "MOGO was not running".
-      evidenceRecordForwardObservations({scanId:__scanId,poll:{tickId:__scanId,startedAt:__obsStartedAt,
-        finishedAt:new Date().toISOString(),outcome:'SKIPPED_DISABLED',tradingEnabled:false,
-        evaluationAdvanced:false,instrumentsAttempted:0,instrumentsEvaluated:[]}});
+      //
+      // v12.42.0: this used to WRITE that observation here and then `return`, which runs the
+      // `finally` below -- so a disabled tick emitted TWO poll rows under the same natural key
+      // ('POLL|'+strategyId+'|'+tickId), one saying SKIPPED_DISABLED with 0 instruments and one
+      // saying OK with 12 NOT_REACHED_THIS_TICK. Both writes are fire-and-forget async, so
+      // whichever lost the IndexedDB race was rejected as a duplicate, and WHICH row survived was
+      // nondeterministic. The ledger's own uptime and coverage counts were therefore not
+      // reproducible across runs of identical code -- the one property a ledger must have.
+      //
+      // Now the outcome is recorded on the tick's single writer instead. The surviving row is
+      // strictly richer: it still says the tick was skipped because trading was disabled, and it
+      // also accounts for all 12 configured instruments rather than none.
+      __obsOutcome='SKIPPED_DISABLED';
       return;
     }
     // Strategy evaluation only advances when a new completed H1 candle exists --
@@ -16868,7 +17022,26 @@ function evidenceBuildPackageFromTrade(trade,opts){
       outcomes:[{
         outcomeId:has('tradeId')?String(trade.tradeId)+'|outcome':null,
         positionId:pick('tradeId'),
-        exitPrice:pick('exitPrice'),exitTimestamp:pick('closedAt'),
+        // v12.42.0: exitTimestamp used to read closedAt -- the moment the POLLER NOTICED the
+        // exit, not the moment it happened. The two differ by the whole of any downtime: a
+        // laptop asleep from Friday evening reopens Monday, reconstructs a Friday 20:41 stop
+        // from M1 history, and stamped it Monday 07:00. Every holding-period, exit-session and
+        // day-of-week figure was then computed against the wrong instant. exitDetectedAt is the
+        // real exit boundary and has been recorded beside it all along; closedAt remains the
+        // fallback for a live-snapshot close, where the two genuinely coincide.
+        exitPrice:pick('exitPrice'),
+        exitTimestamp:(typeof trade.exitDetectedAt==='number'&&isFinite(trade.exitDetectedAt)&&trade.exitDetectedAt>0)
+          ?new Date(trade.exitDetectedAt).toISOString():pick('closedAt'),
+        exitTimestampBasis:(typeof trade.exitDetectedAt==='number'&&isFinite(trade.exitDetectedAt)&&trade.exitDetectedAt>0)
+          ?'exit_detected_at':'closed_at_fallback',
+        // v12.42.0 exit-fidelity provenance. Set on the position before it is closed, so it
+        // rides into the closed record through that record's own {...pos} spread -- no protected
+        // function was edited to carry it. exitPrice above stays the BOOKED price (fixed-R
+        // methodology); exitExecutablePrice is what the market could actually have filled, and
+        // the two differ only when the exit bar opened through the level.
+        exitPriceBasis:pick('exitPriceBasis'),exitExecutablePrice:pick('exitExecutablePrice'),
+        exitGapPips:pick('exitGapPips'),exitGapR:pick('exitGapR'),
+        mfeRUpperBound:pick('mfeRUpperBound'),excursionBoundedByExitBar:pick('excursionBoundedByExitBar'),
         exitReasonCode:pick('result'),
         // §18.38: the real close reason, beside the Win/Loss code rather than instead of it.
         exitReasonDetail:pick('exitReasonDetail'),

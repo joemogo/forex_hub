@@ -1450,16 +1450,24 @@ const wrapped=new Function('g', appCode + '\n' + 'return (async function(){\n' +
   // setInterval and every fixture calls scanAll()/alexGLivePollTick() DIRECTLY, so the evidence
   // proved ONE SWEEP, never that sweeps HAPPEN. The word "continuous" in the standard was untested.
   // This harness is the only one that records {fn,ms}, so the assertions live here.
+  // v12.42.0: the scheduled function is now alexGLivePollTickGuarded, a wrapper that holds an
+  // in-flight flag so an overrunning tick cannot overlap the next one. The property these
+  // fixtures protect is unchanged -- one sweep, armed at exactly 60s, not doubled by a
+  // re-entry -- only the identity of the scheduled function moved. That the wrapper actually
+  // CALLS the real tick, and releases its flag even when the tick throws, is pinned
+  // separately by PRE-1..PRE-6 in tests/run_v142_exit_fidelity_reentrancy_tests.js; without
+  // those, pointing these three assertions at the wrapper would weaken them into proving
+  // only that SOMETHING is scheduled.
   '  alexGLiveInterval=null;\n' +
   // The starter is a no-op unless polling SHOULD run (auto-trading on, or an open ALEX position).
   // Enabling it is the precondition, and JVMTMR-6 turns it back off as the negative control.
   '  alexGAutoTrading=alexGAutoTrading||{}; alexGAutoTrading.enabled=true;\n' +
   '  g.record("JVMTMR-2b","PRECONDITION: live polling SHOULD run in this state, so the starter below is not a no-op",\n' +
   '    alexGLivePollingShouldRun()===true,"shouldRun="+alexGLivePollingShouldRun());\n' +
-  '  const __tmrBefore=g.liveTimersFor(alexGLivePollTick);\n' +
+  '  const __tmrBefore=g.liveTimersFor(alexGLivePollTickGuarded);\n' +
   '  startAlexGLivePollingIfNeeded();\n' +
-  '  const __tmrAfter=g.liveTimersFor(alexGLivePollTick);\n' +
-  '  const __tmrMs=g.liveTimerMsFor(alexGLivePollTick);\n' +
+  '  const __tmrAfter=g.liveTimersFor(alexGLivePollTickGuarded);\n' +
+  '  const __tmrMs=g.liveTimerMsFor(alexGLivePollTickGuarded);\n' +
   '  g.record("JVMTMR-3","the ALEX live poller is ARMED by its own starter -- one live handle where there was none, so a deleted setInterval is a failure rather than a silent outage",\n' +
   '    __tmrBefore===0&&__tmrAfter===1,\n' +
   '    "handles before="+__tmrBefore+" after="+__tmrAfter);\n' +
@@ -1467,13 +1475,13 @@ const wrapped=new Function('g', appCode + '\n' + 'return (async function(){\n' +
   '    __tmrMs===60000,"period="+__tmrMs);\n' +
   '  startAlexGLivePollingIfNeeded();\n' +
   '  g.record("JVMTMR-5","calling the starter a SECOND time does not strand a second sweep -- the double-start guard holds, so a re-entry cannot double every scan",\n' +
-  '    g.liveTimersFor(alexGLivePollTick)===1,"handles after a second start="+g.liveTimersFor(alexGLivePollTick));\n' +
+  '    g.liveTimersFor(alexGLivePollTickGuarded)===1,"handles after a second start="+g.liveTimersFor(alexGLivePollTickGuarded));\n' +
   '  const __alexIntervalBefore=alexGLiveInterval;\n' +
   '  alexGAutoTrading.enabled=false;\n' +
   '  stopAlexGLivePollingIfDone();\n' +
   '  g.record("JVMTMR-6","NEGATIVE CONTROL: when live polling should no longer run the handle is CLEARED, so JVMTMR-3 is a real arming rather than a counter that only ever increases",\n' +
-  '    __alexIntervalBefore!=null&&g.liveTimersFor(alexGLivePollTick)===0&&alexGLiveInterval===null,\n' +
-  '    "before="+String(__alexIntervalBefore!=null)+" handles now="+g.liveTimersFor(alexGLivePollTick));\n' +
+  '    __alexIntervalBefore!=null&&g.liveTimersFor(alexGLivePollTickGuarded)===0&&alexGLiveInterval===null,\n' +
+  '    "before="+String(__alexIntervalBefore!=null)+" handles now="+g.liveTimersFor(alexGLivePollTickGuarded));\n' +
   '  alexGAutoTrading.enabled=true; alexGLiveInterval=null;\n' +
   '  g.resetBidAsk(); jvmFreshAccount();\n' +
   // ══ MOGO-021 LEAKED HOURLY TIMER ══════════════════════════════════════════════════════════
