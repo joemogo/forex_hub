@@ -16018,8 +16018,43 @@ function alexGDrainPipelineObservations(scanId){
 // and fixture is unaffected.
 function evidenceSummarizeObservations(list,nowMs){
   const all=Array.isArray(list)?list.slice():[];
+  // ── v12.42.0 DISORDERED INTERVALS ARE EXCLUDED, NOT REORDERED ───────────────────────────
+  // Polls are sorted by `seq` (write order) and the arithmetic below differences `startedAt`
+  // (tick-entry order). When those disagree -- which the missing poll re-entrancy guard made
+  // routine -- the sequence contains a negative gap AND a compensating oversized one. The
+  // negative half was already refused by Math.max(0,...); the oversized half was not, and
+  // Math.round(gap/expected)-1 counted it as intervals the loop missed. It never missed them.
+  // That is the whole of the operator card's "3,806 missed / 1,300 backwards".
+  //
+  // The fix is NOT to re-sort by startedAt. That was tried and is wrong: when the CLOCK is what
+  // moved backwards, re-sorting converts an untrustworthy negative sample into a confident
+  // positive gap and then invents missed intervals from it -- exactly what L10d exists to
+  // prevent. The ledger cannot fully separate a backwards clock from two ticks completing out of
+  // the order they began, and both make the surrounding intervals untrustworthy.
+  //
+  // So the order is left alone and the DISORDERED REGION is excluded from the interval
+  // arithmetic instead. A poll is out of order when its startedAt precedes the latest startedAt
+  // already seen in write order; any pair touching such a poll contributes no interval, no
+  // maxGap and no missed count, and the number of pairs dropped is reported rather than absorbed.
   const polls=all.filter(function(o){return o&&o.kind==='POLL';})
     .sort(function(a,b){return (a.seq||0)-(b.seq||0);});
+  let __seqTimeDisagreements=0;
+  const __outOfOrder=new Set();
+  (function(){
+    // A record participates in a local inversion if it starts before its predecessor OR its
+    // successor starts before it. BOTH members are marked, because an inversion makes the pair
+    // on EITHER side of it untrustworthy: the swap that produces a negative gap also produces an
+    // oversized one immediately before it, and marking only the later record would leave that
+    // oversized half in the missed-interval count -- which is the inflation being removed.
+    const t=polls.map(function(p){
+      const v=(p&&p.startedAt)?Date.parse(p.startedAt):NaN;
+      return Number.isNaN(v)?null:v;
+    });
+    for(let i=1;i<polls.length;i++){
+      if(t[i]===null||t[i-1]===null) continue;
+      if(t[i]<t[i-1]){ __seqTimeDisagreements++; __outOfOrder.add(polls[i]); __outOfOrder.add(polls[i-1]); }
+    }
+  })();
   const evals=all.filter(function(o){return o&&o.kind==='EVALUATION';});
   const out={
     total:all.length,byKind:{},
@@ -16030,7 +16065,26 @@ function evidenceSummarizeObservations(list,nowMs){
     trailingGapMs:null,trailingMissedIntervals:null,trailingSince:null,ongoingOutage:null,
     // A clock that goes BACKWARDS produced a negative interval that Math.max(0,...) silently
     // clamped away, so the one sample proving the timeline is untrustworthy vanished.
+    //
+    // v12.42.0: this is now measured on the SEQ-ORDERED pass above rather than inside the
+    // interval loop, which orders by startedAt and therefore can never see a negative gap. The
+    // measurement is unchanged -- adjacent polls, in write order, whose start times run backwards
+    // -- so a genuinely backwards clock is still surfaced exactly as before (L10d, L10g). What
+    // changed is only that missedIntervals no longer INHERITS it: a negative gap followed by a
+    // compensating oversized one was being counted as intervals the loop missed, and it never
+    // missed them.
+    //
+    // The same signature has two causes and the ledger alone cannot fully separate them: a clock
+    // that moved backwards, or two ticks that completed out of the order they began. Both make
+    // the timeline untrustworthy and both are worth surfacing, so they share this counter and
+    // seqTimeDisagreements names the mechanism the re-entrancy guard was added to end.
     negativeIntervals:0,
+    seqTimeDisagreements:__seqTimeDisagreements,
+    // Adjacent pairs dropped from the interval arithmetic because one of them was written out of
+    // start order. Reported so the coverage of missedIntervals is visible rather than implied:
+    // a figure computed over fewer pairs than the reader believes is how an outage count ends up
+    // describing a different sample than the one on the screen.
+    intervalPairsExcludedAsDisordered:0,
     gapsWithFailures:[],evaluations:evals.length,
     evaluationsByStatus:{},evaluationsByReason:{},staleEvaluations:0,qualifyingEvaluations:0,
     instrumentsSeen:{},retentionEvents:0,evictedTotal:0
@@ -16044,10 +16098,17 @@ function evidenceSummarizeObservations(list,nowMs){
     if(prev&&prev.startedAt&&p.startedAt){
       const gap=Date.parse(p.startedAt)-Date.parse(prev.startedAt);
       out.observedIntervalsMs.push(gap);
+      if(gap<0) out.negativeIntervals++;
+      // v12.42.0: a pair touching an out-of-order poll is not evidence about elapsed time in
+      // either direction. It is dropped from maxGap and from the missed count, and counted.
+      if(__outOfOrder.has(p)||__outOfOrder.has(prev)){
+        out.intervalPairsExcludedAsDisordered++;
+        prev=p;
+        return;
+      }
       if(out.maxGapMs===null||gap>out.maxGapMs){ out.maxGapMs=gap; out.maxGapBetween={from:prev.startedAt,to:p.startedAt}; }
       // A gap wider than one expected interval means intervals were MISSED, and the count is
       // reported rather than the gap merely being noted.
-      if(gap<0) out.negativeIntervals++;
       const missed=Math.max(0,Math.round(gap/EVIDENCE_POLL_EXPECTED_INTERVAL_MS)-1);
       out.missedIntervals+=missed;
       if(missed>0){
@@ -16069,11 +16130,28 @@ function evidenceSummarizeObservations(list,nowMs){
   // The trailing term. Measured from the LAST poll of any outcome -- not from the last SUCCESSFUL
   // one -- because the question here is "is the loop still running at all", which a failing poll
   // still answers yes to. lastSuccessfulPollAt remains separately reported for the other question.
-  if(typeof nowMs==='number'&&isFinite(nowMs)&&prev&&prev.startedAt){
-    const lastMs=Date.parse(prev.startedAt);
+  //
+  // v12.42.0: measured from the NEWEST start time, not from whichever poll happens to be last in
+  // WRITE order. Those are the same record on a healthy ledger and different ones the moment two
+  // ticks complete out of the order they began -- and when they differ, the last-written record
+  // is an OLDER tick, so the trailing gap is computed from the wrong instant and reports an
+  // ongoing outage that is not happening. Telling the operator the loop is dead while it is
+  // running is the worst direction for this particular figure to be wrong in.
+  const __newestPollStart=(function(){
+    let best=null,bestAt=null;
+    polls.forEach(function(p){
+      if(!p||!p.startedAt) return;
+      const v=Date.parse(p.startedAt);
+      if(Number.isNaN(v)) return;
+      if(bestAt===null||v>bestAt){ bestAt=v; best=p; }
+    });
+    return best;
+  })();
+  if(typeof nowMs==='number'&&isFinite(nowMs)&&__newestPollStart&&__newestPollStart.startedAt){
+    const lastMs=Date.parse(__newestPollStart.startedAt);
     if(!Number.isNaN(lastMs)){
       const trailing=nowMs-lastMs;
-      out.trailingSince=prev.startedAt;
+      out.trailingSince=__newestPollStart.startedAt;
       out.trailingGapMs=trailing;
       if(trailing<0) out.negativeIntervals++;
       out.trailingMissedIntervals=Math.max(0,Math.round(trailing/EVIDENCE_POLL_EXPECTED_INTERVAL_MS)-1);
@@ -16083,7 +16161,7 @@ function evidenceSummarizeObservations(list,nowMs){
       out.missedIntervals+=out.trailingMissedIntervals;
       if(out.maxGapMs===null||trailing>out.maxGapMs){
         out.maxGapMs=trailing;
-        out.maxGapBetween={from:prev.startedAt,to:new Date(nowMs).toISOString(),ongoing:true};
+        out.maxGapBetween={from:__newestPollStart.startedAt,to:new Date(nowMs).toISOString(),ongoing:true};
       }
     }
   }

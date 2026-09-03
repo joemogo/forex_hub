@@ -117,33 +117,79 @@ t('PCO-4', 'THE MECHANISM: one slow tick finishing after the next -- identical s
   };
 });
 
-t('PCO-5', 'THE FINDING: the same swap also INFLATES the missed-interval count, because the '
-  + 'negative gap is clamped to zero while the oversized positive gap beside it is counted in full', function () {
+t('PCO-5', 'REPAIRED (v12.42.0): the swap no longer inflates the missed-interval count. This '
+  + 'fixture previously asserted the INFLATION -- clean 0 missed, swapped 1 -- and its failure '
+  + 'against the repaired code is the proof the repair does something', function () {
   const clean = [poll(1, T0), poll(2, T0 + MINUTE), poll(3, T0 + 2 * MINUTE), poll(4, T0 + 3 * MINUTE)];
   const swapped = [poll(1, T0), poll(2, T0 + MINUTE), poll(4, T0 + 2 * MINUTE), poll(3, T0 + 3 * MINUTE)];
   const a = summarize(clean, T0 + 3 * MINUTE), b = summarize(swapped, T0 + 3 * MINUTE);
-  // Swapped, the seq walk sees startedAt 0 -> 1 -> 3 -> 2 min: a 2-minute gap (1 missed) then a
-  // -1 minute gap (clamped to 0). Hand-computed: clean 0 missed, swapped 1 missed.
+  // The seq walk still sees startedAt 0 -> 1 -> 3 -> 2 min. What changed is that BOTH members of
+  // the inversion are marked, so the oversized 2-minute gap BEFORE it -- the half that was being
+  // counted in full -- is excluded along with the negative half it pairs with.
   return {
-    pass: a.missedIntervals === 0 && b.missedIntervals === 1,
+    pass: a.missedIntervals === 0 && b.missedIntervals === 0 && b.maxGapMs === MINUTE,
     detail: 'clean missed=' + a.missedIntervals + ' -> swapped missed=' + b.missedIntervals
-      + '  (downtime invented by reordering alone)'
+      + ', maxGap=' + b.maxGapMs + ' (was 1 missed / 120000)'
   };
 });
 
-t('PCO-6', 'the wider the reordering, the larger the invented downtime -- a tick displaced by ten '
-  + 'positions manufactures ten missed intervals from a perfectly regular timeline', function () {
+t('PCO-5b', 'THE SIGNAL SURVIVES THE REPAIR. Excluding the disordered pairs must not make the '
+  + 'disorder itself invisible -- it is a real fact about the system, and the operator warning '
+  + 'depends on it', function () {
+  const swapped = [poll(1, T0), poll(2, T0 + MINUTE), poll(4, T0 + 2 * MINUTE), poll(3, T0 + 3 * MINUTE)];
+  const b = summarize(swapped, T0 + 3 * MINUTE);
+  return {
+    pass: b.negativeIntervals === 1 && b.seqTimeDisagreements === 1
+      && b.intervalPairsExcludedAsDisordered > 0,
+    detail: 'neg=' + b.negativeIntervals + ' disagreements=' + b.seqTimeDisagreements
+      + ' excluded=' + b.intervalPairsExcludedAsDisordered
+  };
+});
+
+t('PCO-6', 'PARTIALLY REPAIRED, STATED HONESTLY: a tick displaced by ten positions used to '
+  + 'manufacture ten missed intervals. Most of that is gone, but a residue remains and this '
+  + 'fixture pins the residue rather than claiming a clean fix', function () {
   const recs = []; for (let i = 0; i < 12; i++) recs.push(poll(i + 1, T0 + i * MINUTE));
-  // Move the record started at minute 1 to the END of the write order; every start time is
-  // unchanged and the real timeline still has no gap at all.
   const displaced = recs.slice();
   const moved = displaced.splice(1, 1)[0];
   displaced.push({ kind: 'POLL', seq: 99, outcome: 'OK', startedAt: moved.startedAt, instrumentsEvaluated: [] });
   const a = summarize(recs, T0 + 11 * MINUTE), b = summarize(displaced, T0 + 11 * MINUTE);
+  // The record started at minute 1 is written LAST, so the walk reads 0 -> 2 min as its first
+  // step. That pair touches no inversion -- the inversion is eleven positions later -- so one
+  // invented interval survives. Recovering it would mean re-deriving the true order, which is
+  // exactly the reconstruction this repository prefers a diagnostic to.
   return {
-    pass: a.missedIntervals === 0 && b.missedIntervals >= 10 && b.negativeIntervals === 1,
+    pass: a.missedIntervals === 0 && b.missedIntervals === 1 && b.seqTimeDisagreements === 1,
     detail: 'clean missed=' + a.missedIntervals + ' -> displaced missed=' + b.missedIntervals
-      + ', neg=' + b.negativeIntervals
+      + ' (was >=10), disagreements=' + b.seqTimeDisagreements
+  };
+});
+
+t('PCO-6b', 'AND THE TRAILING TERM NO LONGER INVENTS A LIVE OUTAGE. Most of that displaced '
+  + 'count was the trailing term measuring from the LAST-WRITTEN poll, which after a reordering '
+  + 'is an OLDER tick -- so a running loop was reported as ten minutes dead. It now measures '
+  + 'from the NEWEST start time', function () {
+  const recs = []; for (let i = 0; i < 12; i++) recs.push(poll(i + 1, T0 + i * MINUTE));
+  const displaced = recs.slice();
+  const moved = displaced.splice(1, 1)[0];
+  displaced.push({ kind: 'POLL', seq: 99, outcome: 'OK', startedAt: moved.startedAt, instrumentsEvaluated: [] });
+  const b = summarize(displaced, T0 + 11 * MINUTE);
+  return {
+    pass: b.ongoingOutage === false && b.trailingMissedIntervals === 0
+      && b.trailingSince === new Date(T0 + 11 * MINUTE).toISOString(),
+    detail: 'ongoing=' + b.ongoingOutage + ' trailingMissed=' + b.trailingMissedIntervals
+      + ' since=' + b.trailingSince
+  };
+});
+
+t('PCO-6c', 'POSITIVE CONTROL: a REAL ongoing outage is still reported. The trailing fix must '
+  + 'not have turned the outage detector off -- that would be a far worse failure than the '
+  + 'false positive it removes', function () {
+  const recs = []; for (let i = 0; i < 5; i++) recs.push(poll(i + 1, T0 + i * MINUTE));
+  const b = summarize(recs, T0 + 34 * MINUTE);   // 30 minutes past the last tick
+  return {
+    pass: b.ongoingOutage === true && b.trailingMissedIntervals === 29,
+    detail: 'ongoing=' + b.ongoingOutage + ' trailingMissed=' + b.trailingMissedIntervals
   };
 });
 
@@ -174,8 +220,12 @@ results.forEach(function (r) {
 const fails = results.filter(function (r) { return !r.pass; }).length;
 console.log('---');
 console.log(results.length + ' fixtures, ' + (results.length - fails) + ' PASS, ' + fails + ' FAIL');
-console.log('\nCharacterization only. No production behaviour is changed by this file, and the');
-console.log('operator-visible warning is CORRECT: the recorded timeline genuinely is unreliable');
-console.log('for continuity arithmetic. What these fixtures add is that the missed-interval count');
-console.log('reported beside it inherits the same fault and overstates downtime.');
+console.log('\nCharacterized in v12.41.0, REPAIRED in v12.42.0. The operator-visible warning is');
+console.log('still CORRECT -- a disordered timeline genuinely is unreliable for continuity');
+console.log('arithmetic, and PCO-5b proves that signal survives. What changed is that the');
+console.log('missed-interval count beside it no longer INHERITS the fault: the pairs touching an');
+console.log('inversion are excluded and counted, and the trailing term measures from the newest');
+console.log('start time rather than the last-written poll. PCO-6 pins the residue that remains on');
+console.log('a widely displaced record, because a partial repair reported as a clean one is the');
+console.log('same class of error as the defect itself.');
 process.exitCode = fails ? 1 : 0;
