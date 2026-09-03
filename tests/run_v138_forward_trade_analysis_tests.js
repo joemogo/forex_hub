@@ -10,7 +10,8 @@
 // Run:  node tests/run_v138_forward_trade_analysis_tests.js
 
 const path = require('path');
-const { rowsFromPackages, analyze, concurrentExposures, pipSizeFor, median } =
+const { rowsFromPackages, analyze, concurrentExposures, pipSizeFor, median,
+        segment, binomialTailAtLeast } =
   require(path.resolve(__dirname, '..', 'scripts', 'mogo_forward_trade_analysis.js'));
 
 const results = [];
@@ -345,11 +346,14 @@ t('FTA-28', 'a package with no isDeveloperTrade field is treated as a real trade
 
 t('FTA-29', 'CONCURRENCY excludes developer test trades too -- four synthetic trades fired seconds '
   + 'apart on one instrument must not read as real concurrent market exposure', function () {
+  const iso = function (ms) { return new Date(ms).toISOString(); };
   const t0 = Date.parse('2026-07-12T23:11:33Z');
   const rows = rowsFromPackages([
-    pkg({ instrument: 'GBP_USD', tf: 'H1', dir: 'buy', entry: t0, exit: t0 + 3600000,
+    pkg({ instrument: 'GBP_USD', timeframe: 'H1', direction: 'buy',
+          entry: iso(t0), exit: iso(t0 + 3600000),
           realizedR: -1, isDeveloperTrade: true }),
-    pkg({ instrument: 'GBP_USD', tf: 'H1', dir: 'sell', entry: t0 + 3000, exit: t0 + 3600000,
+    pkg({ instrument: 'GBP_USD', timeframe: 'H1', direction: 'sell',
+          entry: iso(t0 + 3000), exit: iso(t0 + 3600000),
           realizedR: -1, isDeveloperTrade: true })
   ]);
   return { pass: concurrentExposures(rows).length === 0
@@ -358,15 +362,166 @@ t('FTA-29', 'CONCURRENCY excludes developer test trades too -- four synthetic tr
       + ' included=' + concurrentExposures(rows, true).length };
 });
 
-t('FTA-30', 'POSITIVE CONTROL: two REAL overlapping positions on one instrument are still reported', function () {
+t('FTA-30', 'POSITIVE CONTROL: two REAL overlapping positions on one instrument are reported '
+  + 'WITH the overlap actually measured -- an earlier version of this fixture passed a raw number '
+  + 'where an ISO timestamp was read, and reported the overlap as NaN while still asserting pass', function () {
+  const iso = function (ms) { return new Date(ms).toISOString(); };
   const t0 = Date.parse('2026-08-26T05:00:00Z');
   const rows = rowsFromPackages([
-    pkg({ instrument: 'GBP_CAD', tf: 'H4', dir: 'buy', entry: t0, exit: t0 + 28 * 3600000, realizedR: -1 }),
-    pkg({ instrument: 'GBP_CAD', tf: 'H1', dir: 'buy', entry: t0 + 5 * 3600000, exit: t0 + 7.5 * 3600000, realizedR: -1 })
+    pkg({ instrument: 'GBP_CAD', timeframe: 'H4', direction: 'buy',
+          entry: iso(t0), exit: iso(t0 + 28 * 3600000), realizedR: -1 }),
+    pkg({ instrument: 'GBP_CAD', timeframe: 'H1', direction: 'buy',
+          entry: iso(t0 + 5 * 3600000), exit: iso(t0 + 7.5 * 3600000), realizedR: -1 })
   ]);
   const ex = concurrentExposures(rows);
-  return { pass: ex.length === 1 && ex[0].sameDirection === true,
+  return { pass: ex.length === 1 && ex[0].sameDirection === true && near(ex[0].overlapHours, 2.5),
     detail: 'n=' + ex.length + ' overlapH=' + (ex[0] && ex[0].overlapHours) };
+});
+
+t('FTA-30b', 'REGRESSION: an UNPARSEABLE timestamp must exclude the trade from the overlap scan. '
+  + 'Every comparison against NaN is false, so the `overlapEnd <= overlapStart` rejection fails '
+  + 'open -- without an isFinite filter, two unrelated trades on one instrument are reported as '
+  + 'concurrent exposure the reader will take as observed', function () {
+  const rows = rowsFromPackages([
+    pkg({ instrument: 'GBP_CAD', entry: 'not-a-date', exit: 'also-not-a-date', realizedR: -1 }),
+    pkg({ instrument: 'GBP_CAD', entry: 'nope', exit: 'nope', realizedR: -1 })
+  ]);
+  const ex = concurrentExposures(rows);
+  return { pass: ex.length === 0, detail: 'reported ' + ex.length + ' overlap(s)' };
+});
+
+// ── Binomial tail ─────────────────────────────────────────────────────────────────────────────
+//
+// The segment report leans on this number to stop a small favourable subgroup from reading as a
+// finding, so it is checked against arithmetic done on paper here -- not against a second call
+// into the same code.
+
+t('FTA-31', 'exact tail: P(X>=2) for n=3, p=1/3 is 7/27 -- hand-derived as '
+  + 'P(X=2)=3*(1/3)^2*(2/3)=6/27 plus P(X=3)=(1/3)^3=1/27', function () {
+  const p = binomialTailAtLeast(3, 2, 1 / 3);
+  return { pass: near(p, 7 / 27, 1e-12), detail: String(p) + ' vs ' + (7 / 27) };
+});
+
+t('FTA-32', 'degenerate bounds: at least zero wins is certain, more wins than trades is impossible', function () {
+  return { pass: binomialTailAtLeast(5, 0, 1 / 3) === 1 && binomialTailAtLeast(5, 6, 1 / 3) === 0,
+    detail: binomialTailAtLeast(5, 0, 1 / 3) + ' / ' + binomialTailAtLeast(5, 6, 1 / 3) };
+});
+
+t('FTA-33', 'INDEPENDENT IDENTITY: for a fair coin the tails must be complementary -- '
+  + 'P(X>=7) + P(X>=4) = 1 at n=10, which no sign or off-by-one error can satisfy by accident', function () {
+  const s = binomialTailAtLeast(10, 7, 0.5) + binomialTailAtLeast(10, 4, 0.5);
+  return { pass: near(s, 1, 1e-12), detail: String(s) };
+});
+
+t('FTA-34', 'the tail is monotonically non-increasing in k', function () {
+  let ok = true, prev = 1.0000001;
+  for (let k = 0; k <= 20; k++) {
+    const v = binomialTailAtLeast(20, k, 1 / 3);
+    if (v > prev) ok = false;
+    prev = v;
+  }
+  return { pass: ok, detail: ok ? 'monotone over k=0..20' : 'non-monotone' };
+});
+
+// ── Segmentation ──────────────────────────────────────────────────────────────────────────────
+
+t('FTA-35', 'segment splits by a row field and each subgroup carries its OWN arithmetic: '
+  + 'A = (-1,-1,+2) is 1W/3 and 0R, B = (+2,+2,-1) is 2W/3 and +3R', function () {
+  const rows = rowsFromPackages([
+    pkg({ setupType: 'A', realizedR: -1 }), pkg({ setupType: 'A', realizedR: -1 }),
+    pkg({ setupType: 'A', realizedR: 2 }),
+    pkg({ setupType: 'B', realizedR: 2 }), pkg({ setupType: 'B', realizedR: 2 }),
+    pkg({ setupType: 'B', realizedR: -1 })
+  ]);
+  const s = segment(rows, 'setupType');
+  return { pass: s.A.n === 3 && s.A.wins === 1 && near(s.A.netR, 0)
+      && s.B.n === 3 && s.B.wins === 2 && near(s.B.netR, 3),
+    detail: 'A n=' + s.A.n + ' ' + s.A.netR + 'R, B n=' + s.B.n + ' ' + s.B.netR + 'R' };
+});
+
+t('FTA-36', 'segment excludes developer trades from every subgroup by default -- a synthetic '
+  + 'trade must not be able to create or inflate a subgroup finding', function () {
+  const rows = rowsFromPackages([
+    pkg({ setupType: 'A', realizedR: -1 }),
+    pkg({ setupType: 'A', realizedR: 2, isDeveloperTrade: true }),
+    pkg({ setupType: 'A', realizedR: 2, isDeveloperTrade: true })
+  ]);
+  const off = segment(rows, 'setupType'), on = segment(rows, 'setupType', false, true);
+  return { pass: off.A.n === 1 && near(off.A.netR, -1) && on.A.n === 3 && near(on.A.netR, 3),
+    detail: 'excluded n=' + off.A.n + '/' + off.A.netR + 'R  included n=' + on.A.n + '/' + on.A.netR + 'R' };
+});
+
+t('FTA-37', 'a subgroup that contributes NO closed trade is kept with n=0 rather than dropped, '
+  + 'so the caller can name where the excluded flow went instead of silently losing it', function () {
+  const rows = rowsFromPackages([
+    pkg({ setupType: 'A', realizedR: 2 }),
+    pkg({ setupType: 'DEV_TEST', realizedR: 2, isDeveloperTrade: true })
+  ]);
+  const s = segment(rows, 'setupType');
+  return { pass: Object.prototype.hasOwnProperty.call(s, 'DEV_TEST') && s.DEV_TEST.n === 0,
+    detail: 'keys=' + Object.keys(s).join(',') + ' DEV_TEST n=' + (s.DEV_TEST && s.DEV_TEST.n) };
+});
+
+t('FTA-38', 'chronological halves are ordered by ENTRY TIME, not by the order the packages were '
+  + 'read -- otherwise a decay would be invisible whenever the export order differed', function () {
+  const at = function (d) { return '2026-0' + d + '-01T00:00:00.000Z'; };
+  const rows = rowsFromPackages([
+    pkg({ setupType: 'A', realizedR: -1, entry: at(3) }),   // 3rd chronologically
+    pkg({ setupType: 'A', realizedR: 2, entry: at(1) }),    // 1st
+    pkg({ setupType: 'A', realizedR: -1, entry: at(4) }),   // 4th
+    pkg({ setupType: 'A', realizedR: 2, entry: at(2) })     // 2nd
+  ]);
+  const s = segment(rows, 'setupType').A;
+  return { pass: near(s.firstHalf.netR, 4) && near(s.secondHalf.netR, -2)
+      && s.spanStart === '2026-01-01' && s.spanEnd === '2026-04-01',
+    detail: 'halves ' + s.firstHalf.netR + 'R → ' + s.secondHalf.netR + 'R, span '
+      + s.spanStart + '→' + s.spanEnd };
+});
+
+t('FTA-39', 'no breakeven rate exists for a subgroup whose planned R:R is mixed, so the tail '
+  + 'probability is withheld rather than computed against an invented threshold', function () {
+  const rows = rowsFromPackages([
+    pkg({ setupType: 'A', realizedR: 2, plannedR: 2 }),
+    pkg({ setupType: 'A', realizedR: -1, plannedR: 3 })
+  ]);
+  const s = segment(rows, 'setupType').A;
+  return { pass: s.breakevenWinRate === null && s.pWinsAtLeastIfBreakeven === null,
+    detail: 'breakeven=' + s.breakevenWinRate + ' p=' + s.pWinsAtLeastIfBreakeven };
+});
+
+t('FTA-40', 'median MFE of losers ignores winners -- a winner that ran to 3R must not move the '
+  + 'figure that answers whether LOSING trades ever travelled', function () {
+  const rows = rowsFromPackages([
+    pkg({ setupType: 'A', realizedR: -1, mfeR: 0.2 }),
+    pkg({ setupType: 'A', realizedR: -1, mfeR: 0.6 }),
+    pkg({ setupType: 'A', realizedR: 2, mfeR: 3 })
+  ]);
+  const s = segment(rows, 'setupType').A;
+  return { pass: near(s.medianLoserMfeR, 0.4), detail: String(s.medianLoserMfeR) };
+});
+
+t('FTA-41', 'NEGATIVE CONTROL: a subgroup sitting EXACTLY on its own breakeven win rate must not '
+  + 'produce a small tail probability -- 1W in 3 at a 2R target is 1/3, and the tool must say so', function () {
+  const rows = rowsFromPackages([
+    pkg({ setupType: 'A', realizedR: -1 }), pkg({ setupType: 'A', realizedR: -1 }),
+    pkg({ setupType: 'A', realizedR: 2 })
+  ]);
+  const s = segment(rows, 'setupType').A;
+  // P(X>=1) for n=3, p=1/3 is 1 - (2/3)^3 = 1 - 8/27 = 19/27 -- nowhere near significant.
+  return { pass: near(s.winRate, 1 / 3) && near(s.breakevenWinRate, 1 / 3)
+      && near(s.pWinsAtLeastIfBreakeven, 19 / 27, 1e-12),
+    detail: 'win=' + s.winRate + ' p=' + s.pWinsAtLeastIfBreakeven };
+});
+
+t('FTA-42', 'pnl coverage is reported per subgroup, because a dollar total drawn from half the '
+  + 'trades and an R total drawn from all of them are not the same sample', function () {
+  const rows = rowsFromPackages([
+    pkg({ setupType: 'A', realizedR: 2, pnl: 200 }),
+    pkg({ setupType: 'A', realizedR: -1 })            // no pnl recorded
+  ]);
+  const s = segment(rows, 'setupType').A;
+  return { pass: s.n === 2 && s.pnlCoverage === 1 && near(s.netPnl, 200) && near(s.netR, 1),
+    detail: 'n=' + s.n + ' pnlCoverage=' + s.pnlCoverage + ' $' + s.netPnl + ' ' + s.netR + 'R' };
 });
 
 results.forEach(function (r) {

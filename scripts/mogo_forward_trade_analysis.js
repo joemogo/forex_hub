@@ -133,7 +133,14 @@ function concurrentExposures(rows, includeDeveloperTrades) {
   // opened within seven seconds of each other.
   if (!includeDeveloperTrades) rows = rows.filter(function (r) { return !r.isDeveloperTrade; });
   const out = [];
-  const withTimes = rows.filter(function (r) { return r.entryMs != null && r.exitMs != null && r.instrument; });
+  // isFinite, not != null. An unparseable timestamp yields NaN, and every comparison against NaN
+  // is false -- including the `overlapEnd <= overlapStart` rejection below, which would therefore
+  // report EVERY pair of same-instrument trades as concurrent whenever the times could not be
+  // read. A guard that fails open is worse than no guard here, because the output is a list of
+  // overlaps a reader will take as observed.
+  const withTimes = rows.filter(function (r) {
+    return isFinite(r.entryMs) && isFinite(r.exitMs) && r.instrument;
+  });
   for (let i = 0; i < withTimes.length; i++) {
     for (let j = i + 1; j < withTimes.length; j++) {
       const a = withTimes[i], b = withTimes[j];
@@ -255,7 +262,91 @@ function groupBy(rows, key) {
   return out;
 }
 
-module.exports = { rowsFromPackages, analyze, concurrentExposures, pipSizeFor, median };
+// ── SEGMENTATION ──────────────────────────────────────────────────────────────────────────────
+//
+// Splitting one sample into subgroups is the fastest way to manufacture a result that isn't
+// there: with enough fields to slice on, some slice always looks profitable. Two guards are
+// therefore built into the segment report rather than left to the reader.
+//
+// FIRST, an exact binomial tail. A subgroup's win rate is compared against the breakeven rate
+// its own planned R:R implies, and the report states the probability of seeing at least that
+// many wins if the subgroup were a coin weighted exactly at breakeven. Without it, "59% versus
+// a 33% breakeven" reads as decisive at n=27 when it might be luck.
+//
+// SECOND, a chronological split. A subgroup whose whole edge sits in one half of its own history
+// is a different claim from one that repeats, and the two are indistinguishable in a single
+// aggregate. Both halves are printed so the reader sees the repeat, or its absence.
+//
+// Neither guard makes a subgroup finding true. They make an untrue one harder to state by
+// accident.
+
+// P(X >= k) for X ~ Binomial(n, p). Summed in log space so a large n cannot overflow the
+// factorials; the loop is exact, not a normal approximation, because the samples this tool sees
+// are small enough that the approximation is worst exactly where it would be relied on.
+function binomialTailAtLeast(n, k, p) {
+  if (!(n > 0) || !(p > 0) || !(p < 1)) return null;
+  if (k <= 0) return 1;
+  if (k > n) return 0;
+  let logC = 0, total = 0;
+  for (let i = 0; i <= n; i++) {
+    if (i > 0) logC += Math.log((n - i + 1) / i);
+    if (i >= k) total += Math.exp(logC + i * Math.log(p) + (n - i) * Math.log(1 - p));
+  }
+  return Math.min(1, total);
+}
+
+// `field` is any row property (setupType, timeframe, session, trendContext, instrument, ...).
+// Subgroups smaller than `minN` are still reported -- suppressing them would hide where the
+// flow actually goes -- but they carry their own n next to every figure, and the tail
+// probability is what stops a 3-trade subgroup from reading like a finding.
+function segment(rows, field, useRecordedR, includeDeveloperTrades) {
+  const groups = groupBy(rows, field);
+  const out = {};
+  Object.keys(groups).forEach(function (k) {
+    const g = groups[k];
+    const a = analyze(g, useRecordedR, includeDeveloperTrades);
+    const closed = (includeDeveloperTrades ? g : g.filter(function (r) { return !r.isDeveloperTrade; }))
+      .filter(function (r) { return r.realizedR != null || (useRecordedR && r.recordedResultR != null); })
+      .slice()
+      .sort(function (x, y) { return (x.entryMs || 0) - (y.entryMs || 0); });
+    const half = Math.floor(closed.length / 2);
+    const halfStats = function (part) {
+      if (!part.length) return null;
+      const w = part.filter(function (r) { return (r.realizedR != null ? r.realizedR : r.recordedResultR) > 0; }).length;
+      const net = sum(part.map(function (r) { return r.realizedR != null ? r.realizedR : r.recordedResultR; }));
+      return { n: part.length, wins: w, winRate: w / part.length, netR: +net.toFixed(3) };
+    };
+    out[k] = {
+      n: a.sampleSize,
+      wins: a.wins,
+      winRate: a.winRate,
+      breakevenWinRate: a.breakevenWinRate,
+      netR: a.netR,
+      expectancyR: a.expectancyR,
+      netPnl: a.netPnl,
+      pnlCoverage: closed.filter(function (r) { return typeof r.pnl === 'number'; }).length,
+      medianSpreadOverRisk: a.spreadOverRisk.median,
+      // Median MFE of the LOSERS only. A subgroup whose losers never travel is failing at entry;
+      // one whose losers reach most of the way to target is failing at exit. The aggregate median
+      // blends the two and answers neither question.
+      medianLoserMfeR: (function (m) { return m == null ? null : +m.toFixed(3); })(
+        median(closed.filter(function (r) { return (r.realizedR != null ? r.realizedR : r.recordedResultR) <= 0; })
+          .map(function (r) { return r.mfeR; }))),
+      // P(at least this many wins | the subgroup is exactly a breakeven coin). Null when the
+      // subgroup's planned R:R is not uniform, because then it has no single breakeven rate.
+      pWinsAtLeastIfBreakeven: (a.breakevenWinRate != null && a.sampleSize > 0)
+        ? binomialTailAtLeast(a.sampleSize, a.wins, a.breakevenWinRate) : null,
+      firstHalf: halfStats(closed.slice(0, half)),
+      secondHalf: halfStats(closed.slice(half)),
+      spanStart: closed.length && closed[0].entryMs ? new Date(closed[0].entryMs).toISOString().slice(0, 10) : null,
+      spanEnd: closed.length && closed[closed.length - 1].entryMs
+        ? new Date(closed[closed.length - 1].entryMs).toISOString().slice(0, 10) : null
+    };
+  });
+  return out;
+}
+
+module.exports = { rowsFromPackages, analyze, concurrentExposures, pipSizeFor, median, segment, binomialTailAtLeast, groupBy };
 
 // ── SIDE EFFECTS ──────────────────────────────────────────────────────────────────────────────
 if (require.main === module) {
@@ -266,9 +357,11 @@ if (require.main === module) {
   const includeDev = args.includes('--include-developer-trades');
   const sIdx = args.indexOf('--strategy');
   const onlyStrategy = sIdx >= 0 ? args[sIdx + 1] : null;
+  const gIdx = args.indexOf('--segment');
+  const segmentField = gIdx >= 0 ? args[gIdx + 1] : null;
 
   if (!dir) {
-    console.error('usage: node scripts/mogo_forward_trade_analysis.js <dir> [--json] [--strategy <id>]');
+    console.error('usage: node scripts/mogo_forward_trade_analysis.js <dir> [--json] [--strategy <id>] [--segment <field>]');
     process.exit(2);
   }
 
@@ -310,6 +403,10 @@ if (require.main === module) {
         medianSpreadOverRisk: a.spreadOverRisk.median
       };
     });
+    if (segmentField) {
+      report.strategies[sid].segmentField = segmentField;
+      report.strategies[sid].segments = segment(byStrategy[sid], segmentField, useRecordedR, includeDev);
+    }
   });
 
   if (asJson) { console.log(JSON.stringify(report, null, 2)); process.exit(0); }
@@ -373,6 +470,41 @@ if (require.main === module) {
           + ', overlapped ' + c.overlapHours + ' h'
           + (c.combinedPnl != null ? ', combined $' + c.combinedPnl + ' / ' + c.combinedRealizedR + 'R' : ''));
       });
+    }
+    if (a.segments) {
+      console.log('  by ' + a.segmentField + ' :');
+      // A subgroup can exist in the rows and still contribute no closed trade -- developer trades
+      // and unresolved positions both land here. Printing it with null figures reads like a
+      // result; naming it on one line does not.
+      const emptySegments = Object.keys(a.segments).filter(function (k) { return !a.segments[k].n; });
+      if (emptySegments.length) {
+        console.log('      (no closed trades: ' + emptySegments.join(', ') + ')');
+      }
+      Object.keys(a.segments)
+        .filter(function (k) { return a.segments[k].n > 0; })
+        .sort(function (x, y) { return (a.segments[y].netR || 0) - (a.segments[x].netR || 0); })
+        .forEach(function (k) {
+          const s = a.segments[k];
+          console.log('      ' + k.padEnd(20) + ' n=' + String(s.n).padStart(3)
+            + '  ' + pct(s.winRate).padStart(6) + ' win'
+            + (s.breakevenWinRate != null ? ' (breakeven ' + pct(s.breakevenWinRate) + ')' : '')
+            + '  ' + String(s.netR).padStart(8) + 'R'
+            + '  ' + s.expectancyR + 'R/trade');
+          console.log('      ' + ' '.repeat(20) + ' $' + s.netPnl + ' [pnl on ' + s.pnlCoverage + ' of ' + s.n + ']'
+            + (s.medianLoserMfeR != null ? '   median MFE of losers ' + s.medianLoserMfeR + 'R' : '')
+            + (s.medianSpreadOverRisk != null ? '   spread/risk ' + pct(s.medianSpreadOverRisk) : ''));
+          if (s.pWinsAtLeastIfBreakeven != null) {
+            console.log('      ' + ' '.repeat(20) + ' P(' + s.wins + '+ wins | breakeven coin) = '
+              + (s.pWinsAtLeastIfBreakeven < 0.001
+                ? s.pWinsAtLeastIfBreakeven.toExponential(1)
+                : s.pWinsAtLeastIfBreakeven.toFixed(3)));
+          }
+          if (s.firstHalf && s.secondHalf) {
+            console.log('      ' + ' '.repeat(20) + ' halves: ' + pct(s.firstHalf.winRate) + ' / ' + s.firstHalf.netR + 'R (n=' + s.firstHalf.n + ')'
+              + '  →  ' + pct(s.secondHalf.winRate) + ' / ' + s.secondHalf.netR + 'R (n=' + s.secondHalf.n + ')'
+              + (s.spanStart ? '   ' + s.spanStart + ' → ' + s.spanEnd : ''));
+          }
+        });
     }
     const insts = Object.keys(a.byInstrument);
     if (insts.length > 1) {
