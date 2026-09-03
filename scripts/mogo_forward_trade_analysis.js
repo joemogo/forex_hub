@@ -125,7 +125,13 @@ function sum(values) {
 // scoped to pair AND timeframe (EXISTING_OPEN_TRADE_SAME_PAIR_TIMEFRAME), so same-instrument
 // exposure across two timeframes is permitted by design; this reports where it actually happened
 // and what it cost, without asserting that it should have been prevented.
-function concurrentExposures(rows) {
+function concurrentExposures(rows, includeDeveloperTrades) {
+  // Fabricated test trades are fired seconds apart on one instrument by design, so leaving them
+  // in manufactures "concurrent exposure" events that never involved the market. They are excluded
+  // here for the same reason they are excluded from every other figure -- and this was found by
+  // running the tool, not by reading it: five of six reported overlaps were four TEST trades
+  // opened within seven seconds of each other.
+  if (!includeDeveloperTrades) rows = rows.filter(function (r) { return !r.isDeveloperTrade; });
   const out = [];
   const withTimes = rows.filter(function (r) { return r.entryMs != null && r.exitMs != null && r.instrument; });
   for (let i = 0; i < withTimes.length; i++) {
@@ -294,7 +300,7 @@ if (require.main === module) {
   };
   Object.keys(byStrategy).forEach(function (sid) {
     report.strategies[sid] = analyze(byStrategy[sid], useRecordedR, includeDev);
-    report.strategies[sid].concurrentSameInstrument = concurrentExposures(byStrategy[sid]);
+    report.strategies[sid].concurrentSameInstrument = concurrentExposures(byStrategy[sid], includeDev);
     report.strategies[sid].byInstrument = {};
     const inst = groupBy(byStrategy[sid], 'instrument');
     Object.keys(inst).forEach(function (i) {

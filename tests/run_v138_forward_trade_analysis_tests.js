@@ -343,6 +343,32 @@ t('FTA-28', 'a package with no isDeveloperTrade field is treated as a real trade
   return { pass: rows[0].isDeveloperTrade === false, detail: String(rows[0].isDeveloperTrade) };
 });
 
+t('FTA-29', 'CONCURRENCY excludes developer test trades too -- four synthetic trades fired seconds '
+  + 'apart on one instrument must not read as real concurrent market exposure', function () {
+  const t0 = Date.parse('2026-07-12T23:11:33Z');
+  const rows = rowsFromPackages([
+    pkg({ instrument: 'GBP_USD', tf: 'H1', dir: 'buy', entry: t0, exit: t0 + 3600000,
+          realizedR: -1, isDeveloperTrade: true }),
+    pkg({ instrument: 'GBP_USD', tf: 'H1', dir: 'sell', entry: t0 + 3000, exit: t0 + 3600000,
+          realizedR: -1, isDeveloperTrade: true })
+  ]);
+  return { pass: concurrentExposures(rows).length === 0
+      && concurrentExposures(rows, true).length === 1,
+    detail: 'excluded=' + concurrentExposures(rows).length
+      + ' included=' + concurrentExposures(rows, true).length };
+});
+
+t('FTA-30', 'POSITIVE CONTROL: two REAL overlapping positions on one instrument are still reported', function () {
+  const t0 = Date.parse('2026-08-26T05:00:00Z');
+  const rows = rowsFromPackages([
+    pkg({ instrument: 'GBP_CAD', tf: 'H4', dir: 'buy', entry: t0, exit: t0 + 28 * 3600000, realizedR: -1 }),
+    pkg({ instrument: 'GBP_CAD', tf: 'H1', dir: 'buy', entry: t0 + 5 * 3600000, exit: t0 + 7.5 * 3600000, realizedR: -1 })
+  ]);
+  const ex = concurrentExposures(rows);
+  return { pass: ex.length === 1 && ex[0].sameDirection === true,
+    detail: 'n=' + ex.length + ' overlapH=' + (ex[0] && ex[0].overlapHours) };
+});
+
 results.forEach(function (r) {
   console.log((r.pass ? 'PASS' : 'FAIL') + ' -- ' + r.name + ': ' + r.desc + (r.detail ? '  [' + r.detail + ']' : ''));
 });
