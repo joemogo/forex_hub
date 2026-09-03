@@ -311,6 +311,15 @@ measures. A replay result and a forward result are no longer validated to the sa
 `fetchCandlesAroundWindow()` is also unguarded and returns a bare array with no completeness at all
 — display-only, lower concern.
 
+**REPAIRED.** The walk is unchanged — same requests, same order, same break conditions, same
+candles — but it now records why it stopped and classifies the result the way `fetchCandlesRange`
+does. `HTTP_ERROR`, `NETWORK_ERROR`, `GUARD_LIMIT` and `CURSOR_NOT_ADVANCING` are `PARTIAL`;
+`REACHED_WINDOW_END`, `EMPTY_PAGE` and `SHORT_PAGE` are `COMPLETE`. Accumulated bars are kept on
+failure rather than discarded. `focusChartOnTradeWindow` now refuses to draw a `PARTIAL` window and
+names the cause, following the refusal precedent already in `focusTradeOnChart`. Covered by
+`tests/run_v140_focus_window_fetch_tests.js` (12 fixtures), including the discriminator that a
+5000-bar exhausted window and a 5000-bar HTTP-failed window are no longer indistinguishable.
+
 **Not repaired in this run** because the forward path was the live exposure and extending the guard
 to a paginated accumulator needs its own fixtures (page boundaries, partial accumulation, the
 existing cursor guard's interaction). Recorded rather than half-done.

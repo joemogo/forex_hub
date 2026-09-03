@@ -11531,26 +11531,51 @@ async function loadAndRenderTjrZones(oPair){
 // from "now"), this targets the trade's actual historical period so an
 // already-closed, possibly old trade still renders correctly. New function;
 // does not modify fetchCandles/fetchCandlesRange.
+// ADR-011 EXTENDED TO THE LAST UNGUARDED FETCHER. This walk previously broke identically on an
+// HTTP failure and on a genuinely empty page, then returned a bare array -- so a page-2 outage
+// produced a trade-review chart quietly missing bars that looked exactly like a whole one, with
+// the trade's own entry/stop/target lines drawn over it. KNOWN_ISSUES recorded it as
+// "display-only, lower concern"; lower concern is not no concern when the display is the surface
+// the operator judges a trade on.
+//
+// The walk itself is UNCHANGED -- same requests, same order, same break conditions, same candles.
+// What is added is the RECORD of why it stopped, and the classification the caller needs to tell
+// a truncated window from a complete one. A failed page now KEEPS what it accumulated rather than
+// discarding the window: the operator loses the guarantee, not the data.
 async function fetchCandlesAroundWindow(oPair,granularity,fromMs,toMs){
+  let all=[],cursor=fromMs,guard=0;
+  let termination='REACHED_WINDOW_END',lastHttpStatus=null,pagesRequested=0,pagesReceived=0;
   try{
-    let all=[],cursor=fromMs,guard=0;
     const cappedTo=Math.min(toMs,Date.now());
     while(cursor<cappedTo&&guard<20){
       guard++;
       const url=`${apiBase()}/v3/instruments/${oPair}/candles?granularity=${granularity}&price=M&count=5000&from=${encodeURIComponent(new Date(cursor).toISOString())}`;
+      pagesRequested++;
       const r=await fetch(url,{headers:{'Authorization':`Bearer ${cfg.key}`,'Accept-Datetime-Format':'RFC3339'}});
-      if(!r.ok) break;
+      lastHttpStatus=r&&r.status!=null?r.status:null;
+      if(!r.ok){termination='HTTP_ERROR';break;}
       const d=await r.json();
-      if(!d.candles||!d.candles.length) break;
+      if(!d.candles||!d.candles.length){termination='EMPTY_PAGE';break;}
+      pagesReceived++;
       const complete=d.candles.filter(c=>c.complete).map(c=>({t:new Date(c.time),o:parseFloat(c.mid.o),h:parseFloat(c.mid.h),l:parseFloat(c.mid.l),c:parseFloat(c.mid.c)}));
       all=all.concat(complete);
       const lastTime=new Date(d.candles[d.candles.length-1].time).getTime();
-      if(lastTime<=cursor) break;
+      if(lastTime<=cursor){termination='CURSOR_NOT_ADVANCING';break;}
       cursor=lastTime+1000;
-      if(d.candles.length<5000) break;
+      if(d.candles.length<5000){termination='SHORT_PAGE';break;}
     }
-    return all;
-  }catch{return [];}
+    if(guard>=20&&termination==='REACHED_WINDOW_END') termination='GUARD_LIMIT';
+  }catch(e){ termination='NETWORK_ERROR'; }
+  // Only three terminations mean the window is whole: the walk reached the end of the requested
+  // window, the broker had nothing more at this cursor, or it returned fewer than the page maximum
+  // (which for a `from`-anchored request is the same statement). HTTP_ERROR, NETWORK_ERROR,
+  // GUARD_LIMIT and CURSOR_NOT_ADVANCING all leave a window that may be missing bars, and are
+  // PARTIAL -- fail-closed, exactly as fetchCandlesRange classifies its own walk.
+  const satisfied=termination==='REACHED_WINDOW_END'||termination==='EMPTY_PAGE'||termination==='SHORT_PAGE';
+  return marketDataAttachCompleteness(all,{
+    completenessState:satisfied?MARKET_DATA_COMPLETENESS.COMPLETE:MARKET_DATA_COMPLETENESS.PARTIAL,
+    paginationTerminationReason:termination,httpStatus:lastHttpStatus,
+    pagesRequested:pagesRequested,pagesReceived:pagesReceived,receivedCount:all.length});
 }
 async function focusChartOnTradeWindow(rec){
   if(!lwChart||!candleSeries) return;
@@ -11573,6 +11598,19 @@ async function focusChartOnTradeWindow(rec){
   // overlay lines on a chart that is showing something else entirely. Do nothing instead.
   if(activePair!==focusPair||activeTf!==focusTf) return;
   if(!lwChart||!candleSeries) return; // the chart may also have been torn down mid-fetch
+  // A window whose walk stopped on a transport failure may be MISSING BARS, and drawing it puts
+  // this trade's entry, stop and target lines over a chart that is not the market -- while the
+  // operator uses exactly that picture to judge whether the trade was good. Refusing and naming
+  // the cause follows the precedent immediately above in focusTradeOnChart, which already refuses
+  // a record with missing fields rather than fabricating a view.
+  if(marketDataCompletenessOf(candles)!==MARKET_DATA_COMPLETENESS.COMPLETE){
+    try{ alert('⛔ This trade\'s chart window could not be fully retrieved ('
+      +(candles.paginationTerminationReason||'UNKNOWN')
+      +(candles.httpStatus?' — HTTP '+candles.httpStatus:'')
+      +'), so it is NOT being drawn. A partial window would silently omit candles while looking '
+      +'complete. Retry when the connection is healthy.'); }catch(e){}
+    return;
+  }
   currentChartCandles=candles;
   candleSeries.setData(candles.map(c=>({time:Math.floor(c.t.getTime()/1000),open:c.o,high:c.h,low:c.l,close:c.c})));
   let anchorIdx=candles.findIndex(c=>c.t.getTime()>=anchorMs);
