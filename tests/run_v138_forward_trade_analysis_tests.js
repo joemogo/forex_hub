@@ -51,10 +51,12 @@ function pkg(o) {
         originalStop: o.stop == null ? 1.09 : o.stop,
         entryTimestamp: o.entry || '2026-08-01T00:00:00.000Z',
         entrySpreadPips: o.spread,          // deliberately undefined when not supplied
+        isDeveloperTrade: o.isDeveloperTrade === true,
         plannedRR: o.plannedR == null ? 2 : o.plannedR
       }],
       outcomes: [{
         outcomeId: 'O1', positionId: 'P1',
+        recordedResultR: o.recordedResultR,
         exitTimestamp: o.exit || '2026-08-01T05:00:00.000Z',
         exitReasonCode: o.realizedR > 0 ? 'Win' : 'Loss',
         plannedR: o.plannedR == null ? 2 : o.plannedR,
@@ -249,6 +251,96 @@ t('FTA-20', 'a package with no qualified setup still yields its trade row -- JVM
   const rows = rowsFromPackages([pkg({ noSetup: true, realizedR: -1.0176, pnl: -101.74, instrument: 'USD_JPY' })]);
   return { pass: rows.length === 1 && rows[0].setupType === null && near(rows[0].realizedR, -1.0176),
     detail: 'setupType=' + rows[0].setupType };
+});
+
+// ── Backfilled / MINIMAL packages ─────────────────────────────────────────────────────────────
+// A backfilled trade goes through the SAME builder as a live capture, so the shape matches; what
+// differs is which fields a legacy record could populate. Its outcome can carry the engine's
+// recordedResultR while realizedR stays null, because realizedR is computed from an observed exit
+// the old record never stored. These fix that boundary in place.
+
+t('FTA-21', 'THE BACKFILL TRAP: a trade with recordedResultR but no realizedR is EXCLUDED by '
+  + 'default and reported, never silently dropped from the denominator', function () {
+  const rows = rowsFromPackages([
+    pkg({ realizedR: -1, pnl: -100 }),
+    pkg({ realizedR: undefined, recordedResultR: -1, pnl: -100 })
+  ]);
+  const a = analyze(rows);
+  return {
+    pass: a.sampleSize === 1 && a.coverage.recordedResultROnly === 1
+      && a.coverage.withObservedRealizedR === 1 && a.coverage.recordedResultRIncluded === false,
+    detail: JSON.stringify(a.coverage)
+  };
+});
+
+t('FTA-22', '...and INCLUDED, with the mix reported, when the caller opts in explicitly', function () {
+  const rows = rowsFromPackages([
+    pkg({ realizedR: 2, pnl: 200 }),
+    pkg({ realizedR: undefined, recordedResultR: -1, pnl: -100 })
+  ]);
+  const a = analyze(rows, true);
+  // 1 win at +2R and 1 recorded loss at -1R => net +1R over 2 trades => +0.5R each.
+  return {
+    pass: a.sampleSize === 2 && near(a.netR, 1) && near(a.expectancyR, 0.5)
+      && a.coverage.recordedResultRIncluded === true && a.coverage.recordedResultROnly === 1,
+    detail: 'n=' + a.sampleSize + ' netR=' + a.netR + ' ' + JSON.stringify(a.coverage)
+  };
+});
+
+t('FTA-23', 'recordedResultR is never merged into realizedR on the row itself -- the two stay '
+  + 'separate fields so provenance is not laundered', function () {
+  const rows = rowsFromPackages([pkg({ realizedR: undefined, recordedResultR: -1 })]);
+  return { pass: rows[0].realizedR === null && rows[0].recordedResultR === -1,
+    detail: 'realizedR=' + rows[0].realizedR + ' recorded=' + rows[0].recordedResultR };
+});
+
+t('FTA-24', 'a trade with NO R of any kind is counted as uncountable, distinct from a '
+  + 'recorded-only one', function () {
+  const a = analyze(rowsFromPackages([
+    pkg({ realizedR: -1 }), pkg({ realizedR: undefined, recordedResultR: -1 }), pkg({ realizedR: undefined })
+  ]));
+  return { pass: a.coverage.noRAtAll === 1 && a.coverage.recordedResultROnly === 1,
+    detail: JSON.stringify(a.coverage) };
+});
+
+t('FTA-25', 'a MINIMAL backfilled package -- no setup, no spread, no excursion -- still yields a '
+  + 'countable trade, and drops out of only the statistics it cannot support', function () {
+  const a = analyze(rowsFromPackages([
+    pkg({ noSetup: true, realizedR: -1, pnl: -100, instrument: 'GBP_CAD' }),   // no spread, no MFE
+    pkg({ realizedR: -1, pnl: -100, spread: 2, riskDistance: 0.001, mfeR: 0.5, maeR: 1.0 })
+  ]));
+  return {
+    pass: a.sampleSize === 2 && a.spreadOverRisk.n === 1 && a.excursion.nWithMfe === 1
+      && near(a.expectancyR, -1),
+    detail: 'n=' + a.sampleSize + ' spreadN=' + a.spreadOverRisk.n + ' mfeN=' + a.excursion.nWithMfe
+  };
+});
+
+t('FTA-26', 'DEVELOPER TEST TRADES are excluded from every figure by default, and reported -- a '
+  + 'fabricated +$200 win must never enter a win rate', function () {
+  const a = analyze(rowsFromPackages([
+    pkg({ realizedR: -1, pnl: -100 }),
+    pkg({ realizedR: 2, pnl: 200, isDeveloperTrade: true })
+  ]));
+  return {
+    pass: a.sampleSize === 1 && a.wins === 0 && near(a.expectancyR, -1)
+      && a.coverage.developerTradesFound === 1 && a.coverage.developerTradesIncluded === false,
+    detail: 'n=' + a.sampleSize + ' wins=' + a.wins + ' ' + JSON.stringify(a.coverage)
+  };
+});
+
+t('FTA-27', '...and included only on an explicit opt-in, with the count still reported', function () {
+  const a = analyze(rowsFromPackages([
+    pkg({ realizedR: -1, pnl: -100 }),
+    pkg({ realizedR: 2, pnl: 200, isDeveloperTrade: true })
+  ]), false, true);
+  return { pass: a.sampleSize === 2 && a.wins === 1 && a.coverage.developerTradesIncluded === true,
+    detail: 'n=' + a.sampleSize + ' wins=' + a.wins };
+});
+
+t('FTA-28', 'a package with no isDeveloperTrade field is treated as a real trade, not excluded', function () {
+  const rows = rowsFromPackages([pkg({ realizedR: -1 })]);
+  return { pass: rows[0].isDeveloperTrade === false, detail: String(rows[0].isDeveloperTrade) };
 });
 
 results.forEach(function (r) {

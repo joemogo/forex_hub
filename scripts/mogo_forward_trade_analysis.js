@@ -74,6 +74,13 @@ function rowsFromPackages(packages) {
         plannedR: (o && typeof o.plannedR === 'number') ? o.plannedR
           : (typeof p.plannedRR === 'number' ? p.plannedRR : null),
         realizedR: (o && typeof o.realizedR === 'number') ? o.realizedR : null,
+        // The engine's own stored R, kept BESIDE realizedR and never merged into it. The app
+        // refuses to copy one into the other because "provenance would then be a lie", and this
+        // tool holds the same line: a backfilled trade whose exit inputs were absent has a
+        // recordedResultR and no realizedR, and which of the two a figure rests on must stay
+        // visible in the output rather than being decided silently here.
+        recordedResultR: (o && typeof o.recordedResultR === 'number') ? o.recordedResultR : null,
+        exitReasonCode: o ? (o.exitReasonCode || null) : null,
         pnl: (o && typeof o.pnl === 'number') ? o.pnl : null,
         exitReason: o ? (o.exitReasonCode || null) : null,
         riskPips: riskPips,
@@ -91,7 +98,12 @@ function rowsFromPackages(packages) {
         unverifiedConditions: setup && setup.ruleAttribution
           && typeof setup.ruleAttribution.unverifiedConditionCount === 'number'
           ? setup.ruleAttribution.unverifiedConditionCount : null,
-        strategyVersionProvenance: (pkg.identity && pkg.identity.strategyVersionProvenance) || null
+        strategyVersionProvenance: (pkg.identity && pkg.identity.strategyVersionProvenance) || null,
+        // The builder LABELS fabricated trades on purpose -- "so a consumer can exclude them".
+        // This is that consumer. Developer test trades are synthetic BUY/SELL/WIN/LOSS records
+        // pushed through the real engine to check the UI; counting them would put invented
+        // outcomes inside a figure meant to describe the market.
+        isDeveloperTrade: !!(p && p.isDeveloperTrade)
       });
     });
   });
@@ -138,8 +150,18 @@ function concurrentExposures(rows) {
   return out;
 }
 
-function analyze(rows) {
-  const closed = rows.filter(function (r) { return r.realizedR != null; });
+// `useRecordedR` opts a run into counting trades that carry only the engine's recordedResultR.
+// It is off by default: including them silently would mix two provenances under one number. When
+// on, every affected trade is counted AND reported, so the reader always knows the mix.
+function analyze(rows, useRecordedR, includeDeveloperTrades) {
+  const developerTrades = rows.filter(function (r) { return r.isDeveloperTrade; });
+  if (!includeDeveloperTrades) rows = rows.filter(function (r) { return !r.isDeveloperTrade; });
+  const observed = rows.filter(function (r) { return r.realizedR != null; });
+  const recordedOnly = rows.filter(function (r) { return r.realizedR == null && r.recordedResultR != null; });
+  const closed = useRecordedR
+    ? observed.concat(recordedOnly.map(function (r) {
+        return Object.assign({}, r, { realizedR: r.recordedResultR, rFromRecorded: true }); }))
+    : observed;
   const wins = closed.filter(function (r) { return r.realizedR > 0; });
   const losses = closed.filter(function (r) { return r.realizedR <= 0; });
   const winRate = closed.length ? wins.length / closed.length : null;
@@ -164,6 +186,17 @@ function analyze(rows) {
   return {
     sampleSize: closed.length,
     openOrUnresolved: rows.length - closed.length,
+    // Coverage, always reported: how many trades the headline figures actually rest on, and how
+    // many were left out for want of an observed exit. A silent denominator is how an expectancy
+    // figure ends up describing a different sample than the reader believes.
+    coverage: {
+      withObservedRealizedR: observed.length,
+      recordedResultROnly: recordedOnly.length,
+      recordedResultRIncluded: !!useRecordedR,
+      noRAtAll: rows.length - observed.length - recordedOnly.length,
+      developerTradesFound: developerTrades.length,
+      developerTradesIncluded: !!includeDeveloperTrades
+    },
     wins: wins.length,
     losses: losses.length,
     winRate: winRate,
@@ -223,6 +256,8 @@ if (require.main === module) {
   const args = process.argv.slice(2);
   const dir = args.find(function (a) { return !a.startsWith('--'); });
   const asJson = args.includes('--json');
+  const useRecordedR = args.includes('--include-recorded-r');
+  const includeDev = args.includes('--include-developer-trades');
   const sIdx = args.indexOf('--strategy');
   const onlyStrategy = sIdx >= 0 ? args[sIdx + 1] : null;
 
@@ -258,12 +293,12 @@ if (require.main === module) {
     strategies: {}
   };
   Object.keys(byStrategy).forEach(function (sid) {
-    report.strategies[sid] = analyze(byStrategy[sid]);
+    report.strategies[sid] = analyze(byStrategy[sid], useRecordedR, includeDev);
     report.strategies[sid].concurrentSameInstrument = concurrentExposures(byStrategy[sid]);
     report.strategies[sid].byInstrument = {};
     const inst = groupBy(byStrategy[sid], 'instrument');
     Object.keys(inst).forEach(function (i) {
-      const a = analyze(inst[i]);
+      const a = analyze(inst[i], useRecordedR, includeDev);
       report.strategies[sid].byInstrument[i] = {
         n: a.sampleSize, wins: a.wins, netR: a.netR, netPnl: a.netPnl,
         medianSpreadOverRisk: a.spreadOverRisk.median
@@ -282,6 +317,22 @@ if (require.main === module) {
     const a = report.strategies[sid];
     console.log('\n── ' + sid + ' ──');
     console.log('  closed trades       : ' + a.sampleSize + (a.openOrUnresolved ? '  (' + a.openOrUnresolved + ' unresolved)' : ''));
+    if (a.coverage.developerTradesFound) {
+      console.log('  ! developer trades  : ' + a.coverage.developerTradesFound + ' synthetic test trade(s) '
+        + (a.coverage.developerTradesIncluded
+          ? 'INCLUDED (--include-developer-trades) — these are fabricated outcomes'
+          : 'EXCLUDED from every figure above'));
+    }
+    if (a.coverage.recordedResultROnly) {
+      console.log('  ! coverage          : ' + a.coverage.recordedResultROnly
+        + ' trade(s) carry only the engine\'s recordedResultR, with no observed-exit realizedR'
+        + (a.coverage.recordedResultRIncluded
+          ? ' — INCLUDED in the figures above (--include-recorded-r)'
+          : ' — EXCLUDED. Re-run with --include-recorded-r to count them.'));
+    }
+    if (a.coverage.noRAtAll) {
+      console.log('  ! coverage          : ' + a.coverage.noRAtAll + ' trade(s) carry no R of any kind and cannot be counted');
+    }
     console.log('  win rate            : ' + pct(a.winRate) + '  (' + a.wins + 'W / ' + a.losses + 'L)');
     if (a.breakevenWinRate != null) {
       console.log('  breakeven at ' + a.medianPlannedR + 'R      : ' + pct(a.breakevenWinRate)
@@ -293,9 +344,11 @@ if (require.main === module) {
       + '   (' + a.expectancyR + 'R per trade)');
     console.log('  spread ÷ risk       : median ' + pct(a.spreadOverRisk.median)
       + ', worst ' + pct(a.spreadOverRisk.max)
-      + (a.spreadOverRisk.worstInstrument ? ' on ' + a.spreadOverRisk.worstInstrument : ''));
+      + (a.spreadOverRisk.worstInstrument ? ' on ' + a.spreadOverRisk.worstInstrument : '')
+      + '   [n=' + a.spreadOverRisk.n + ' of ' + a.sampleSize + ']');
     console.log('  excursion (losers)  : ' + a.excursion.losersReachingHalfTarget + ' reached ≥ half target, '
-      + a.excursion.losersWithNoMeaningfulMove + ' never moved ≥ 0.1R');
+      + a.excursion.losersWithNoMeaningfulMove + ' never moved ≥ 0.1R'
+      + '   [n=' + a.excursion.nWithMfe + ' of ' + a.sampleSize + ']');
     console.log('  median MFE / MAE    : ' + (a.excursion.medianMfeR == null ? 'not recorded'
       : a.excursion.medianMfeR + 'R / ' + a.excursion.medianMaeR + 'R'));
     if (a.provenance.tradesWithUnverifiedConditions) {
