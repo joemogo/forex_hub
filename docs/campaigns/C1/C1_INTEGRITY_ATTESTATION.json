@@ -1,7 +1,7 @@
 {
   "attestationVersion": "mogo.c1-attestation.v1",
   "tool": "mogo-evidence-verify/1.0.0 (MOGO-011 Step 4A)",
-  "generatedAt": "2026-08-24T23:02:14.350Z",
+  "generatedAt": "2026-09-03T00:52:08.271Z",
   "manifestPath": "docs/campaigns/C1/CAMPAIGN_C1_EVIDENCE_MANIFEST.md",
   "manifestSha256": "c23e72e070e4e6e841e9e9cb77952a426743e666600e010c9bb14ca27fcee666",
   "artifacts": {
