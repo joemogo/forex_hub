@@ -607,35 +607,102 @@ button.danger:hover{background:var(--red-dim)}
 .empty-state{text-align:center;padding:2rem 0;color:var(--text2);font-size:13px}
 
 /* Setup screen */
+/* ══ v12.46.0 — CONNECT SCREEN ═════════════════════════════════════════════════════════════
+   Display-only. Every id, every onclick and every field the connect path reads is unchanged;
+   this is layout, type and colour. No external font, image or script -- the ambient motif is
+   pure CSS gradients, keeping the app's zero-external-dependency property (docs/SECURITY.md).
+   The screen's job is to say honestly what this instrument IS before asking for credentials. */
 .setup-screen{display:flex;align-items:center;justify-content:center;
-  height:100vh;background:var(--bg0)}
-.setup-card{background:var(--bg1);border:1px solid var(--border);
-  border-radius:14px;padding:36px;width:480px;max-width:95vw}
-.setup-logo{font-size:22px;font-weight:700;color:var(--green);margin-bottom:6px;
-  display:flex;align-items:center;gap:8px}
-.setup-logo-dot{width:10px;height:10px;border-radius:50%;background:var(--green);
-  box-shadow:0 0 10px var(--green)}
-.setup-card p{font-size:13px;color:var(--text2);margin-bottom:22px;line-height:1.6}
-.setup-field{display:flex;flex-direction:column;gap:5px;margin-bottom:14px}
-.setup-label{font-size:10px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px}
-.setup-input{font-size:13px;padding:10px 13px;border:1px solid var(--border);
-  border-radius:8px;background:var(--bg2);color:var(--text1);width:100%;outline:none;transition:border .15s}
-.setup-input:focus{border-color:var(--green)}
-.setup-btn{width:100%;padding:12px;background:var(--green);color:#fff;border:none;
-  border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;margin-top:8px;
-  font-family:inherit;transition:opacity .15s;letter-spacing:.3px}
-.setup-btn:hover{opacity:.85}
-.env-toggle{display:flex;gap:8px;margin-bottom:14px}
-.env-opt{flex:1;padding:9px;border:1px solid var(--border);border-radius:8px;
-  background:transparent;color:var(--text2);cursor:pointer;font-size:12px;
+  min-height:100vh;height:100vh;background:var(--bg0);overflow-y:auto;padding:24px;position:relative}
+/* Ambient depth: a fine grid plus two slow glows. Sits BEHIND everything and is inert -- no
+   pointer events, and it stops moving entirely for anyone who asks for reduced motion. */
+.setup-screen::before{content:'';position:absolute;inset:0;pointer-events:none;z-index:0;
+  background-image:linear-gradient(var(--border) 1px,transparent 1px),
+    linear-gradient(90deg,var(--border) 1px,transparent 1px);
+  background-size:44px 44px;opacity:.22;
+  -webkit-mask-image:radial-gradient(ellipse 80% 60% at 50% 45%,#000 25%,transparent 78%);
+  mask-image:radial-gradient(ellipse 80% 60% at 50% 45%,#000 25%,transparent 78%)}
+.setup-screen::after{content:'';position:absolute;inset:0;pointer-events:none;z-index:0;
+  background:radial-gradient(38% 44% at 22% 28%,rgba(38,166,154,.16),transparent 70%),
+    radial-gradient(34% 40% at 80% 74%,rgba(76,155,232,.13),transparent 70%);
+  animation:setupDrift 26s ease-in-out infinite alternate}
+@keyframes setupDrift{from{transform:translate3d(-1.5%,-1%,0) scale(1)}
+  to{transform:translate3d(1.5%,1.5%,0) scale(1.06)}}
+@media(prefers-reduced-motion:reduce){.setup-screen::after{animation:none}}
+
+.setup-card{position:relative;z-index:1;background:var(--bg1);
+  border:1px solid var(--border);border-radius:18px;width:920px;max-width:100%;
+  box-shadow:0 24px 70px rgba(0,0,0,.55);display:grid;grid-template-columns:1fr 1fr;overflow:hidden}
+/* ── left: what this is ── */
+.setup-intro{padding:38px 34px;background:linear-gradient(160deg,var(--bg2),var(--bg1) 72%);
+  border-right:1px solid var(--border);display:flex;flex-direction:column;gap:20px}
+.setup-logo{display:flex;align-items:center;gap:10px;margin:0}
+.setup-logo-dot{width:11px;height:11px;border-radius:50%;background:var(--green);
+  box-shadow:0 0 14px var(--green);flex:none}
+.setup-lede{font-size:14px;color:var(--text1);line-height:1.65;margin:0}
+.setup-sub{font-size:12.5px;color:var(--text2);line-height:1.7;margin:0}
+.setup-points{list-style:none;display:flex;flex-direction:column;gap:13px;margin:2px 0 0}
+.setup-points li{display:flex;gap:11px;align-items:flex-start;font-size:12.5px;
+  color:var(--text2);line-height:1.55}
+.setup-points b{display:block;color:var(--text1);font-size:12.5px;font-weight:600;margin-bottom:2px}
+.setup-tick{flex:none;width:19px;height:19px;border-radius:6px;margin-top:1px;
+  background:var(--green-dim);border:1px solid var(--green2);color:var(--green);
+  font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.setup-stamp{margin-top:auto;padding-top:18px;border-top:1px solid var(--border);
+  font-size:10.5px;color:var(--text3);letter-spacing:.4px;display:flex;
+  justify-content:space-between;gap:10px;flex-wrap:wrap}
+/* ── right: the form ── */
+.setup-form{padding:38px 34px;display:flex;flex-direction:column}
+.setup-form h2{font-size:15px;font-weight:600;color:var(--text1);margin:0 0 4px}
+.setup-form-note{font-size:12px;color:var(--text2);line-height:1.6;margin:0 0 22px}
+.setup-field{display:flex;flex-direction:column;gap:6px;margin-bottom:16px}
+.setup-label{font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.7px}
+.setup-input{font-size:13px;padding:11px 13px;border:1px solid var(--border);
+  border-radius:9px;background:var(--bg0);color:var(--text1);width:100%;outline:none;
+  font-family:inherit;transition:border-color .15s,box-shadow .15s}
+.setup-input:focus{border-color:var(--green);box-shadow:0 0 0 3px var(--green-dim)}
+.setup-input::placeholder{color:var(--text3)}
+.setup-key-wrap{position:relative;display:flex}
+.setup-key-wrap .setup-input{padding-right:58px}
+.setup-key-toggle{position:absolute;right:6px;top:50%;transform:translateY(-50%);
+  background:none;border:none;color:var(--text2);font-size:10.5px;font-weight:700;
+  letter-spacing:.5px;cursor:pointer;padding:5px 7px;border-radius:6px;font-family:inherit}
+.setup-key-toggle:hover{color:var(--green);background:var(--green-dim)}
+.setup-btn{width:100%;padding:13px;background:var(--green);color:#06231f;border:none;
+  border-radius:9px;font-size:14px;font-weight:700;cursor:pointer;margin-top:6px;
+  font-family:inherit;letter-spacing:.3px;transition:filter .15s,transform .06s}
+.setup-btn:hover{filter:brightness(1.09)}
+.setup-btn:active{transform:translateY(1px)}
+.setup-btn:disabled{opacity:.6;cursor:default;transform:none;filter:none}
+.env-toggle{display:flex;gap:8px}
+.env-opt{flex:1;padding:10px 8px;border:1px solid var(--border);border-radius:9px;
+  background:var(--bg0);color:var(--text2);cursor:pointer;font-size:12px;font-weight:600;
   text-align:center;font-family:inherit;transition:all .15s}
 .env-opt:hover{border-color:var(--border2);color:var(--text1)}
 .env-opt.sel{border-color:var(--green);color:var(--green);background:var(--green-dim)}
-.err-msg{font-size:12px;color:var(--red);margin-top:8px;padding:9px 13px;
-  background:var(--red-dim);border:1px solid rgba(239,83,80,.3);border-radius:7px;display:none}
-.help-box{background:var(--bg2);border:1px solid var(--border);border-radius:8px;
-  padding:13px;margin-top:14px;font-size:12px;color:var(--text2);line-height:1.7}
+.setup-hint{font-size:11px;color:var(--text3);line-height:1.6;margin-top:8px}
+.err-msg{font-size:12px;color:var(--red);margin-top:12px;padding:11px 13px;line-height:1.6;
+  background:var(--red-dim);border:1px solid rgba(239,83,80,.3);border-radius:8px;display:none}
+.err-msg strong{display:inline-block;margin-bottom:2px}
+.help-box{background:var(--bg0);border:1px solid var(--border);border-radius:9px;
+  margin-top:18px;font-size:12px;color:var(--text2);line-height:1.75}
+.help-box>summary{cursor:pointer;padding:11px 13px;font-size:11.5px;font-weight:600;
+  color:var(--text2);list-style:none;user-select:none}
+.help-box>summary::-webkit-details-marker{display:none}
+.help-box>summary::before{content:'+ ';color:var(--green);font-weight:700}
+.help-box[open]>summary::before{content:'– '}
+.help-box>summary:hover{color:var(--text1)}
+.help-box-body{padding:0 13px 13px;border-top:1px solid var(--border);padding-top:11px;margin-top:2px}
 .help-box strong{color:var(--text1)}
+/* Stack below the two-column breakpoint; the intro leads, because it is the part that says
+   what you are about to connect to. */
+@media(max-width:860px){
+  .setup-screen{align-items:flex-start;padding:16px;height:auto}
+  .setup-card{grid-template-columns:1fr;width:100%}
+  .setup-intro{border-right:none;border-bottom:1px solid var(--border);padding:28px 22px 24px}
+  .setup-form{padding:26px 22px 30px}
+  .setup-stamp{margin-top:14px}
+}
 
 /* Toast */
 .toast{position:fixed;top:12px;right:12px;background:var(--bg1);
@@ -666,34 +733,70 @@ button.danger:hover{background:var(--red-dim)}
 <!-- SETUP -->
 <div id="setupScreen" class="setup-screen">
   <div class="setup-card">
-    <div class="setup-logo"><div class="setup-logo-dot"></div><span class="brand-wordmark" style="font-size:34px">MO<span class="brand-accent">GO</span></span></div>
-    <p>Connect your OANDA account for real-time pattern scanning, confluence scoring, and trade alerts across all pairs.</p>
-    <div class="setup-field">
-      <span class="setup-label">Environment</span>
-      <div class="env-toggle">
-        <button class="env-opt sel" id="envPractice" onclick="setEnv('practice')">Practice (demo)</button>
-        <button class="env-opt" id="envLive" onclick="confirmLiveEnv()">Live account</button>
+
+    <!-- What this is. Deliberately no numbers: nothing here is connected yet, and a landing
+         screen that quotes a statistic it cannot currently read is a screen that lies. Every
+         claim below is a property of the build, not a reading. -->
+    <div class="setup-intro">
+      <div class="setup-logo">
+        <div class="setup-logo-dot"></div>
+        <span class="brand-wordmark" style="font-size:34px">MO<span class="brand-accent">GO</span></span>
       </div>
-      <div style="font-size:11px;color:var(--text2);margin-top:6px">This hub only ever simulates trades locally — it never places real orders through OANDA, in either mode. "Live account" only changes which account's real price data and balance are pulled in.</div>
+      <p class="setup-lede">A paper-trading laboratory for finding out whether a strategy has an edge — before any money is involved.</p>
+      <p class="setup-sub">MOGO watches the market, takes the trades its rules tell it to take, and records why. Nothing it does reaches a broker.</p>
+      <ul class="setup-points">
+        <li><span class="setup-tick">✓</span><span><b>Simulated, always</b>No order ever leaves this browser, in practice or live mode.</span></li>
+        <li><span class="setup-tick">✓</span><span><b>Every trade keeps its reasons</b>Each result is filed with the conditions that produced it, so a win can be told apart from a lucky one.</span></li>
+        <li><span class="setup-tick">✓</span><span><b>Strategies run side by side</b>Including a deliberately plain benchmark — because a strategy is only good if it beats doing nothing clever.</span></li>
+      </ul>
+      <div class="setup-stamp">
+        <span id="setupVersionStamp">MOGO</span>
+        <span>PAPER TRADING ONLY</span>
+      </div>
     </div>
-    <div class="setup-field">
-      <label class="setup-label">OANDA API key</label>
-      <input class="setup-input" id="apiKey" type="password" placeholder="Paste your personal access token">
+
+    <!-- The form. Every id, handler and field the connect path reads is unchanged. -->
+    <div class="setup-form">
+      <h2>Connect your OANDA account</h2>
+      <p class="setup-form-note">MOGO needs read access to pull live prices and your balance. Your key stays in this browser.</p>
+
+      <div class="setup-field">
+        <span class="setup-label">Environment</span>
+        <div class="env-toggle">
+          <button class="env-opt sel" id="envPractice" onclick="setEnv('practice')">Practice (demo)</button>
+          <button class="env-opt" id="envLive" onclick="confirmLiveEnv()">Live account</button>
+        </div>
+        <div class="setup-hint">Neither mode places real orders. "Live account" only changes which account's prices and balance are read.</div>
+      </div>
+
+      <div class="setup-field">
+        <label class="setup-label" for="apiKey">OANDA API key</label>
+        <div class="setup-key-wrap">
+          <input class="setup-input" id="apiKey" type="password" placeholder="Paste your personal access token" autocomplete="off" spellcheck="false">
+          <button type="button" class="setup-key-toggle" id="apiKeyToggle" onclick="toggleApiKeyVisibility()">SHOW</button>
+        </div>
+      </div>
+
+      <div class="setup-field">
+        <label class="setup-label" for="accountId">Account ID</label>
+        <input class="setup-input" id="accountId" type="text" placeholder="e.g. 101-001-39648506-001" autocomplete="off" spellcheck="false">
+      </div>
+
+      <div id="errMsg" class="err-msg"></div>
+      <button class="setup-btn" id="connectBtn" onclick="connect()">Connect &amp; Start Scanning</button>
+
+      <details class="help-box">
+        <summary>Where do I find these?</summary>
+        <div class="help-box-body">
+          1. Log into hub.oanda.com<br>
+          2. Click <strong>Trading Tools → API Access</strong><br>
+          3. Click <strong>Generate</strong> — copy the full token immediately<br>
+          4. Account ID is on your Accounts page (e.g. 101-001-39648506-001)<br><br>
+          <strong>Browser:</strong> use Chrome. Safari is not supported.
+        </div>
+      </details>
     </div>
-    <div class="setup-field">
-      <label class="setup-label">Account ID</label>
-      <input class="setup-input" id="accountId" type="text" placeholder="e.g. 101-001-39648506-001">
-    </div>
-    <div id="errMsg" class="err-msg"></div>
-    <button class="setup-btn" onclick="connect()">Connect & Start Scanning</button>
-    <div class="help-box">
-      <strong>Getting your API key:</strong><br>
-      1. Log into hub.oanda.com<br>
-      2. Click <strong>Trading Tools → API Access</strong><br>
-      3. Click <strong>Generate</strong> — copy the full token immediately<br>
-      4. Account ID is on your Accounts page (e.g. 101-001-39648506-001)<br><br>
-      <strong>Important:</strong> Open this file directly in Chrome — do not use Safari.
-    </div>
+
   </div>
 </div>
 
@@ -2006,9 +2109,10 @@ const ALL_PAIRS=[
 // Bump by 1.0 for a major update (new feature/tab), by 0.1 for a small patch/fix.
 // This shows in the header next to the logo and on the Diagnostics tab, so you can
 // glance at the live site and instantly confirm which build actually deployed.
-const APP_VERSION='12.45.0';
+const APP_VERSION='12.46.0';
 const APP_VERSION_DATE='04 Sep 2026';
 const APP_VERSION_LOG=[
+  '12.46.0 — THE CONNECT SCREEN (display-only; zero protected-function and zero protected-constant drift, 64/64 and 4/4 byte-identical). The first thing the operator saw was a narrow centred box on flat black that oversold what MOGO does -- and, the operator said, was ugly and unmotivating. A tool you dislike opening is one you check less, and this one needs checking. Rebuilt as a two-column card: what this instrument IS on the left, credentials on the right, stacking to one column below 860px with the screen allowed to scroll (a fixed 100vh clipped the connect button on a phone). Ambient depth is pure CSS gradients -- no font, image, script or stylesheet is fetched, preserving the zero-external-dependency property recorded in docs/SECURITY.md -- and the drift animation stops under prefers-reduced-motion. HONESTY: the landing panel states NO NUMBER (CS-9 pins this by scanning the rendered text for digits). Nothing is connected when this screen is shown, so any figure it quoted could only be stale or invented; the only value on it is the version, read from APP_VERSION rather than typed into the markup, so it cannot misreport which build is deployed. The paper-only guarantee is stated three times, including beside the live-account switch. THREE REAL DEFECTS FIXED, not cosmetics: (1) connect() resolved its button as `event.target`. The screen now supports Enter-to-connect, where event.target is the INPUT -- that line would have written \'Connecting...\' into the field the operator had just pasted their API key into. Now resolved by id, null-guarded, and the button is restored on every failure path. (2) A 503 surfaced as a bare \'Error: HTTP 503\', which reads like a fault in this app; it is OANDA saying its own service is down -- seen 2026-09-04 shortly after the Friday 17:00 ET close, and recorded once before in the v12.6.0 note. Now named as OANDA\'s outage, with the weekend-close window explained. (3) The help text still told the operator to open the file directly rather than use the deployed page. Two full-bleed decorative layers cover the viewport, so CS-11/12 pin pointer-events:none and the card\'s z-index -- verified in a real browser via elementFromPoint at the button and the key field. Every id, handler and field the connect path reads is unchanged (CS-1/2/3). 24 fixtures (CS-1..CS-24).',
   '12.45.0 — THE FORWARD RECORD COULD NOT PROVE THE FACT THAT PICKED ITS OWN DIRECTION (zero protected-function and zero protected-constant drift; 64/64 functions and 4/4 constants byte-identical). MEASURED, not suspected: across the 86 preserved packages, EVERY REPLAY_RUN package verifies every attribution condition and EVERY forward package leaves at least one unverified -- A_repeatedReaction 1 (ALEX_SR_V1_A_ZONE_STATUS_VALIDATED), B_breakRetest 3 (adding B_ZONE_STATUS_BROKEN, B_FIRST_RETEST_IN_BREAK_CYCLE and B_REACTION_SIDE_MATCHES_BREAK -- the condition that decides whether the trade is a buy or a sell). The data was never missing: alexGCreateSetupRecord (PROTECTED) stores zoneStatusAtQualification, reactionSwingType and reactionFromSide, and alexGConstructLivePosition (PROTECTED) simply does not copy them onto the booked position. Replay reads the setup record directly, which is exactly why replay always verified and forward never did. BOTH PROTECTED FUNCTIONS ARE UNCHANGED: the repair is a join performed at capture time, where the setup record and the closed trade are both already in hand. The join is IDENTITY-CHECKED, never heuristic -- setupId AND qualificationTimestamp must be present on both sides and both match, and every other outcome supplies NOTHING and leaves the package honestly INDETERMINATE, because treating an absent field as agreement is how provenance gets manufactured. The booked trade always wins: the join fills a hole, never overwrites a recorded value. ALEX_SR_V1_B_FIRST_RETEST_IN_BREAK_CYCLE needs a count no single record can carry, so it is taken over (zoneId, breakCycleId, B_breakRetest) -- the uniqueness key the engine itself enforces -- and a record missing either half yields null rather than a count over the wrong population. SAFETY: a contradiction that appears ONLY once the join supplied fields falls back to the pre-v12.45.0 attribution and records CONTRADICTED_BY_JOIN with the offending condition ids, so a stale setup record can never destroy a trade record; a trade that contradicts its own rules on its OWN stored fields still fails capture, unchanged. Packages carry an additive setupRecordJoin block naming exactly which inputs came from the join, validated present-only so the 86 existing packages still validate, import and verify. Callers that supply nothing -- replay and every other seam -- get the pre-v12.45.0 attribution byte-for-byte. 37 new fixtures (SJ-1..SJ-37) including two positive controls that mutate the joined data and require the mirror to notice, and one mutation control proving the same bad data is invisible without the join.',
   '12.44.0 — A CONTROL ARM, AND A REPLAY THAT CANNOT PEEK (zero protected-function and zero protected-constant drift; the new strategy is registered but NOT authorized to trade). WHY: ALEX has never been measured against an alternative, so it could be shown to be winning or losing but never to be ADDING anything -- which is the only question that matters once a strategy is losing. Hutchinson &amp; O\'Brien (2022, Int. Rev. Financial Analysis) tested technical trading rules across currencies and found in-sample Sharpe 0.66 collapsing to 0.06 out of sample, with whatever abnormal return remained FULLY EXPLAINED by time-series momentum. If that holds here, ALEX\'s zone detection, touch counting, break-and-retest sequencing and staleness rules are elaborate machinery producing what a one-line trend check produces for free. Nothing in this repository could test that. THE CONTROL: baselineTrendSignal is the entire entry rule -- the sign of the 3-month return, no filters, no confirmation, no discretion. BT-4 pins that it reads ONLY the two endpoint closes (a wild path and a straight line with identical endpoints give an identical signal), because a control arm with hidden structure is a second strategy rather than a control. It borrows ALEX\'s OWN risk model: same instruments, same 2R target (BT-9 asserts the ratio in both directions, since a divergence there invalidates every conclusion drawn from the comparison), same 1% sizing. THE ONE DISCLOSED DIFFERENCE, recorded on every position rather than left in a comment (BT-12): ALEX places its stop against the zone it traded and a trend rule has no zone, so this uses an ATR multiple. NOT the published TSMOM strategy and must never be reported as one -- academic TSMOM holds a fixed horizon with volatility-scaled sizing and no stop; the question here is narrower and more useful. THE REPLAY IS BUILT SO LOOK-AHEAD IS STRUCTURALLY IMPOSSIBLE, not merely avoided: the signal is handed candles.slice(0,i+1) -- a PREFIX, not an index into the full array -- so no future bar is in scope to read by mistake; the ATR comes off the same prefix; and the entry is bar i+1\'s OPEN, the first price actually transactable after the close that produced the signal, because deciding on a bar and filling inside it is the classic backtest lie. BTR-1 proves the property by TRUNCATION: running the full series and a series cut short yields byte-identical trades for every decision made before the cut, which no leak of a future bar into a signal, an entry or a stop could survive. EXITS REUSE ALEX\'S OWN PROTECTED alexGWalkOutcome AND alexGComputeMAEMFE, UNMODIFIED, so the two arms differ ONLY at entry and no outcome difference can be attributed to bookkeeping -- including conservative ambiguity (a bar touching stop and target both books a Loss, BTR-5). One position per pair at a time (BTR-4); a still-open trade has resultR null and is neither a win nor a loss (BTR-6); a bar that cannot produce geometry is RECORDED as skipped rather than silently dropped, because a missing trade is a fact about coverage (BTR-9). FRICTION IS NOT MODELLED AND THE RESULT SAYS SO (BTR-7): ALEX\'s own replay threads spread and slippage as metadata with zero effect on outcome math, so charging spread here and not there would rig the comparison. Both arms are equally optimistic; the comparison BETWEEN them is valid, neither number is achievable, and neither should ever be quoted as a return. Results are stamped captureBasis REPLAY_RUN at the source -- the analysis tool partitions on exactly that, and a replay result reaching a forward figure is the defect that produced a +20.97R claim where the real forward result was -7.04R. IT CANNOT TRADE: paperTrading, automation and scanning are false (BT-13), the services are inert (BT-16), and BT-14 checks SEVEN named live entry points (alexGLivePollTick, alexGCheckLivePositions, alexGAttemptOpenLivePosition, alexGEvaluatePairForLiveSetups, alexGConstructLivePosition, checkAutoTrades, scanAll) and asserts none of them reference the baseline -- promoting a strategy into PAPER is an operator governance boundary and this has not been promoted. The lookback was chosen from the literature BEFORE looking at any MOGO outcome and is pinned (BT-17), because a lookback tuned against this corpus would make the control as overfitted as the thing it controls for. TWO EXISTING FIXTURES WERE PINNING A SNAPSHOT and registering a fourth strategy broke them -- the defect CLAUDE.md names as this repository\'s most common failure mode. v1231 Fixture 4 asserted buttonCount===3 and is about ONE BUTTON PER ENTRY, so it now compares against the registry\'s own length; Fixture 6 asserted buttonCount===4 after injecting one entry and is about a RELATIONSHIP, so it now asserts one more entry yields exactly one more button, taking its baseline from the registry length rather than by rendering again (an extra render/read there re-enters the workspace chart path and exhausts the harness\'s charting stub, failing a LATER fixture -- a test that breaks another test by measuring is worse than the literal it replaced). 27 new fixtures in tests/run_v144_baseline_trend_tests.js. Gate: 36/36 suites, 2,769/2,769 under Node, plus v144 27/27; zero drift.',
   '12.43.0 — C1 STALENESS IS A WARNING; C1 FAILURE STILL BLOCKS (operator-authorized relaxation of a safety gate, 2026-09-04; zero protected-function and zero protected-constant drift). THE PROBLEM: evidenceEvaluateCampaignC1Attestation returned one flat reason list, and evidenceEvaluateForwardPaperGate refused on any of it. That collapsed two very different facts into one outcome. "Artifacts are missing / hashes mismatch / the manifest is not the pinned one / the verdict is not VERIFIED / the counts contradict the file\'s own detail lists / the timestamp is forged into the future" all mean something is wrong with the evidence corpus RIGHT NOW. "The check passed and nobody has re-run it since" means nothing is known to be wrong and the confirmation is merely not fresh. The attestation expires after 24 h, so the second case fired DAILY and locked ALEX out until the operator re-ran and pushed the verifier -- a gate firing on a schedule rather than on a fault, which trains an operator to route around it and takes the system down on days nobody is watching, losing exactly the forward evidence it exists to protect. It is also the wrong REMEDY: halting trading does not repair evidence integrity, it only stops new evidence being produced. THE CHANGE: STALE_ATTESTATION is now the ONLY reason code that can become advisory (EVIDENCE_C1_ADVISORY_REASONS, asserted to be exactly that one entry by C1AGE-10, so a future edit widening it fails). Everything else still blocks, one fixture per failure mode (C1AGE-5.1..5.9), and staleness combined with a real failure still blocks (C1AGE-9). FUTURE_DATED_ATTESTATION is deliberately NOT advisory -- a broken or forged clock is the one direction that could buy unlimited freshness. A BACKSTOP at EVIDENCE_C1_ATTESTATION_HARD_MAX_AGE_MS (30 days) restores blocking, because "warn instead of block" must not decay into "never checked again" and an attestation from months ago is not evidence about anything (C1AGE-8). The whole policy reverses by setting EVIDENCE_C1_STALENESS_BLOCKS_TRADING back to true -- one constant, proven to restore the old behaviour exactly by C1AGE-11 running the real function in a second realm. ADDITIVE AND BACKWARD COMPATIBLE: `intact` keeps its original meaning (every condition positively satisfied, so a stale attestation is still not intact) and the blocking/advisory split sits beside it; the gate consults the new campaignC1Blocking fact ONLY when a caller positively supplies it, so every call site and fixture written before this split gets the old rule unchanged (C1AGE-12). WHAT IS GIVEN UP, stated plainly rather than buried: if evidence artifacts are altered or deleted AFTER the last attestation, MOGO will keep trading and will not notice until the verifier is re-run; that window is now the 30-day backstop rather than 24 hours. The advisory is SHOWN on the operator text for a passing preflight (C1AGE-4) -- a warning nobody sees is not a warning. 20 new fixtures in tests/run_v143_c1_staleness_policy_tests.js driving the real extracted functions. Gate: 36/36 suites, 2,769/2,769 under Node, plus v143 20/20; zero drift.',
@@ -7203,6 +7307,39 @@ function mogoLockBlocked(){
   alert('MOGO is locked. Click Unlock (top right) first.');
   return true;
 }
+// ══ v12.46.0 — connect-screen affordances. Display-only; none of this reads or writes cfg. ═════
+function toggleApiKeyVisibility(){
+  const inp=document.getElementById('apiKey'),btn=document.getElementById('apiKeyToggle');
+  if(!inp||!btn) return;
+  const show=inp.type==='password';
+  inp.type=show?'text':'password';
+  btn.textContent=show?'HIDE':'SHOW';
+  // The field keeps focus, so revealing the key does not cost the operator their place.
+  try{ inp.focus(); }catch(e){}
+}
+// Runs at parse time. This script tag sits at the end of <body>, so the connect screen's markup
+// already exists; every lookup is null-guarded anyway so a future markup change degrades to a
+// no-op rather than an uncaught error during load.
+(function initConnectScreenAffordances(){
+  try{
+    const stamp=document.getElementById('setupVersionStamp');
+    // The deployed version, stated where it can be read BEFORE connecting -- the only reliable way
+    // to tell at a glance whether a deploy actually landed.
+    if(stamp&&typeof APP_VERSION!=='undefined') stamp.textContent='MOGO v'+APP_VERSION;
+    ['apiKey','accountId'].forEach(function(id){
+      const el=document.getElementById(id);
+      if(!el) return;
+      el.addEventListener('keydown',function(ev){
+        if(ev.key!=='Enter') return;
+        ev.preventDefault();
+        const btn=document.getElementById('connectBtn');
+        // Never re-enter a connection already in flight.
+        if(btn&&btn.disabled) return;
+        connect();
+      });
+    });
+  }catch(e){}
+})();
 function confirmLiveEnv(){
   if(confirm('Switch to your LIVE OANDA account?\n\nThis hub never places real orders — it only ever simulates paper trades locally, in both modes. But Live pulls real price data and your real account balance instead of the practice sandbox. Only proceed if you meant to do this.'))
     setEnv('live');
@@ -7221,7 +7358,12 @@ async function connect(){
   errEl.style.display='none';
   if(!key||!acct){errEl.textContent='Please enter your API key and account ID.';errEl.style.display='block';return;}
   cfg.key=key;cfg.accountId=acct;
-  const btn=event.target;btn.textContent='Connecting...';btn.disabled=true;
+  // v12.46.0: resolved by id rather than event.target. connect() is now also reachable from the
+  // Enter key inside either input, where event.target is the INPUT -- and the old line would then
+  // have written "Connecting..." into the field the operator had just typed their API key into.
+  const btn=document.getElementById('connectBtn')
+    ||(typeof event!=='undefined'&&event&&event.target?event.target:null);
+  if(btn){ btn.textContent='Connecting...';btn.disabled=true; }
   errEl.textContent='Attempting connection...';errEl.style.display='block';errEl.style.background='rgba(76,155,232,.15)';errEl.style.color='#4c9be8';errEl.style.borderColor='rgba(76,155,232,.3)';
   try{
     const url=`${apiBase()}/v3/accounts/${acct}`;
@@ -7252,10 +7394,20 @@ async function connect(){
       errEl.innerHTML='<strong>401 Unauthorized</strong> — API key is invalid or expired. Generate a new one in OANDA HUB → Trading Tools → API Access.';
     } else if(e.message.includes('404')){
       errEl.innerHTML='<strong>404 Not Found</strong> — Account ID is incorrect. Check it on your OANDA Accounts page.';
+    } else if(e.message.includes('503')||/under maintenance/i.test(e.message)){
+      // v12.46.0. This exact response was seen on 2026-09-04 shortly after the Friday 17:00 ET
+      // close, and MOGO reported it as a bare "Error: HTTP 503: ..." that reads like a fault in
+      // this app. It is not: it is OANDA saying its own service is down, and the app's v12.6.0
+      // release note records a previous confirmed instance of the same thing. Naming it costs
+      // nothing and stops a broker outage being mistaken for a broken key or a broken build.
+      errEl.innerHTML='<strong>OANDA is down, not MOGO</strong> — their API answered <em>503 System '
+        +'under maintenance</em>. Your key and account ID were not the problem and nothing here needs '
+        +'fixing.<br><br>This most often happens over the weekend market close (Friday 17:00 ET to '
+        +'Sunday afternoon ET) and during OANDA\'s own maintenance windows. Try again later.';
     } else {
       errEl.innerHTML=`<strong>Error:</strong> ${e.message}`;
     }
-    btn.textContent='Connect & Start Scanning';btn.disabled=false;
+    if(btn){ btn.textContent='Connect & Start Scanning';btn.disabled=false; }
   }
 }
 function disconnect(){
