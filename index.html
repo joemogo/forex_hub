@@ -21037,10 +21037,149 @@ const TJR_SERVICES={
   health:()=>'development'
 };
 
+// ══════════════════════════════════════════════════════════════════════════════════════════════
+// BASELINE TREND — THE CONTROL ARM (v12.44.0)
+// ══════════════════════════════════════════════════════════════════════════════════════════════
+//
+// WHY THIS EXISTS. Hutchinson & O'Brien (2022, Int. Rev. Financial Analysis) tested technical
+// trading rules across currencies and found their in-sample Sharpe of 0.66 collapsed to 0.06 out
+// of sample -- and that whatever abnormal return remained was FULLY EXPLAINED by time-series
+// momentum. If that holds here, then ALEX's zone detection, touch counting, break-and-retest
+// sequencing and staleness rules are elaborate machinery producing what a one-line trend check
+// produces for free.
+//
+// That is a testable claim, and nothing in this repository could test it, because there was
+// nothing to compare ALEX against. A strategy with no control arm cannot be shown to be adding
+// anything; it can only be shown to be winning or losing, which is a different and much weaker
+// question. This is the control arm.
+//
+// WHAT IT DELIBERATELY IS NOT. This is NOT the published TSMOM strategy and must never be
+// reported as one. Academic TSMOM holds to a fixed horizon with volatility-scaled sizing and no
+// stop. This instead borrows ALEX'S OWN RISK MODEL -- the same instruments, the same 2R target,
+// the same 1% risk sizing -- and changes ONLY the entry rule. That is the comparison that answers
+// the question actually being asked: holding risk management constant, is ALEX's setup detection
+// worth anything over a trivial entry?
+//
+// THE ONE DISCLOSED DIFFERENCE. ALEX's stop is placed relative to the ZONE it traded (zone edge
+// -/+ 0.25 ATR). A trend rule has no zone, so the stop here is a straight ATR multiple from
+// entry. The risk model is therefore not byte-identical, and that difference is part of what is
+// being compared rather than something to paper over.
+//
+// NOT AUTHORIZED TO TRADE. capabilities.paperTrading is false and there is no live path anywhere
+// in this file -- the manifest registers it, the pure functions below compute it, and nothing
+// calls them from the poll tick. Promoting a strategy into PAPER is an operator governance
+// boundary (CLAUDE.md, "Discovery is not authorisation"), and this has not been promoted.
+const BASELINE_TREND_STRATEGY_ID='baseline_trend_v1';
+const BASELINE_TREND_VERSION='baseline_trend_v1';
+const RULES_BASELINE_TREND={
+  ruleVersion:'baseline_trend_v1',
+  config:{
+    // ~3 months of daily bars. Moskowitz, Ooi & Pedersen (2012, JFE) document 1-12 month
+    // horizons; 3 is inside that range and was chosen BEFORE looking at any MOGO outcome. It is
+    // recorded here rather than tuned, because a lookback fitted to this corpus would make the
+    // control arm as overfitted as the thing it is controlling for.
+    lookbackBars:63,
+    atrPeriod:14,
+    // A wider stop than ALEX typically gets from a zone edge. Deliberately NOT tuned.
+    stopATRMultiple:2,
+    targetRR:2,
+    riskPercent:1
+  }
+};
+
+// PURE. Direction from the sign of the lookback return, and nothing else. No filters, no
+// confirmation, no discretion -- the whole point is that it is trivial. A signal this simple that
+// matches ALEX's results is the strongest possible evidence that ALEX's complexity is inert.
+//
+// Returns null rather than a direction whenever the answer is genuinely unknown: too few bars, an
+// unusable price, or a return of exactly zero. A null is "no signal", never a silent 'buy'.
+function baselineTrendSignal(candles,cfg){
+  const c=(cfg&&cfg.config)?cfg.config:(cfg||RULES_BASELINE_TREND.config);
+  const lookback=c.lookbackBars;
+  if(!Array.isArray(candles)) return null;
+  // lookback+1 bars are needed to form one return, and the LAST bar is the one being decided on.
+  if(candles.length<lookback+1) return null;
+  const last=candles[candles.length-1];
+  const prior=candles[candles.length-1-lookback];
+  const now=last&&typeof last.c==='number'?last.c:null;
+  const then=prior&&typeof prior.c==='number'?prior.c:null;
+  if(now==null||then==null||!isFinite(now)||!isFinite(then)||then<=0) return null;
+  const ret=(now-then)/then;
+  if(ret===0) return null;   // exactly flat is not a direction
+  return{
+    direction:ret>0?'buy':'sell',
+    lookbackReturn:ret,
+    lookbackBars:lookback,
+    fromClose:then,toClose:now,
+    decidedAtBarTime:last.t!=null?last.t:null
+  };
+}
+
+// PURE. Entry/stop/target from the signal and the ATR. Mirrors ALEX's 2R convention exactly so
+// the two arms differ only where they are meant to differ.
+//
+// Fails CLOSED: a non-finite ATR, a non-positive ATR, or a bad entry yields null rather than a
+// position with an invented stop. An invented stop is how a control arm quietly becomes a
+// different experiment.
+function baselineTrendGeometry(direction,entry,atr,cfg){
+  const c=(cfg&&cfg.config)?cfg.config:(cfg||RULES_BASELINE_TREND.config);
+  if(direction!=='buy'&&direction!=='sell') return null;
+  if(typeof entry!=='number'||!isFinite(entry)||entry<=0) return null;
+  if(typeof atr!=='number'||!isFinite(atr)||atr<=0) return null;
+  const riskDistance=atr*c.stopATRMultiple;
+  if(!(riskDistance>0)) return null;
+  const stop=direction==='buy'?entry-riskDistance:entry+riskDistance;
+  const target=direction==='buy'?entry+riskDistance*c.targetRR:entry-riskDistance*c.targetRR;
+  // The same signed-stop invariant ALEX's protected constructor enforces. Stated here rather than
+  // assumed, because a control arm with a wrong-side stop would produce a meaningless comparison.
+  if(direction==='buy'&&!(stop<entry&&target>entry)) return null;
+  if(direction==='sell'&&!(stop>entry&&target<entry)) return null;
+  return{direction:direction,entry:entry,stop:stop,target:target,
+    riskDistance:riskDistance,plannedRR:c.targetRR,atrAtEntry:atr,
+    stopBasis:'ATR_MULTIPLE_FROM_ENTRY',stopATRMultiple:c.stopATRMultiple};
+}
+
+const BASELINE_TREND_MANIFEST={
+  id:BASELINE_TREND_STRATEGY_ID,
+  family:'baseline_control',
+  version:BASELINE_TREND_VERSION,
+  label:'Trend Baseline',
+  fullName:'Baseline Trend (control arm)',
+  description:'A deliberately trivial control arm: direction is the sign of the 3-month return, with ALEX\'s own 2R target and 1% risk sizing. It exists to answer whether ALEX\'s setup detection adds anything over a one-line entry rule. NOT authorized to paper trade -- signals only.',
+  author:'MOGO',
+  ownership:'internal',
+  status:'development',
+  trustLevel:'unverified',
+  badgeColor:'var(--muted)',
+  capabilities:{
+    scanning:false,paperTrading:false,automation:false,journal:false,
+    statistics:false,alerts:false,replay:false,backtesting:false,
+    aiReview:false,aiCoaching:false,reports:false,academyContent:false,
+    diagnostics:false,settings:false,
+    strategyCenterContent:false
+  },
+  dependencies:['candleData'],
+  dna:{
+    style:'Time-series momentum in spirit: long when the 3-month return is positive, short when negative. No filters, no confirmation, no discretion.',
+    difficulty:'Trivial by design',
+    marketType:'Forex, the same 12 instruments ALEX observes',
+    preferredSessions:[],
+    idealConditions:[],avoidConditions:[],strengths:[],weaknesses:[]
+  }
+};
+const BASELINE_TREND_SERVICES={
+  getAccount:()=>null,
+  getJournal:()=>[],
+  normalize:(raw)=>raw,
+  onOpen:()=>null,
+  health:()=>'development'
+};
+
 const STRATEGY_REGISTRY=[
   {manifest:JVM_MANIFEST,services:JVM_SERVICES},
   {manifest:ALEX_MANIFEST,services:ALEX_SERVICES},
-  {manifest:TJR_MANIFEST,services:TJR_SERVICES}
+  {manifest:TJR_MANIFEST,services:TJR_SERVICES},
+  {manifest:BASELINE_TREND_MANIFEST,services:BASELINE_TREND_SERVICES}
 ];
 function findStrategyEntry(id){
   return STRATEGY_REGISTRY.find(e=>e.manifest.id===id)||null;

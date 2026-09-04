@@ -57,11 +57,19 @@ function runV1231Fixtures(g){
     g.renderStrategyNavGroup();
     const html=g.getNavDropdownHtml();
     const buttonCount=(html.match(/<button/g)||[]).length;
-    assert('Fixture 4: Strategies nav dropdown renders exactly one button per registered strategy (3: JVM, ALEX, TJR)',
-      buttonCount===3,'buttonCount='+buttonCount+' html='+html.substring(0,200));
+    // v12.44.0: was `buttonCount===3`. That pinned a SNAPSHOT of the registry as an oracle, so
+    // registering a fourth strategy broke a fixture that was never about how many strategies
+    // exist -- it is about ONE BUTTON PER ENTRY. Asserted against the registry's own length now,
+    // which is the invariant, and which keeps holding as strategies are added or removed.
+    const registered=g.getRegistry().length;
+    assert('Fixture 4: Strategies nav dropdown renders exactly one button per registered strategy',
+      buttonCount===registered&&registered>0,
+      'buttonCount='+buttonCount+' registered='+registered+' html='+html.substring(0,200));
   }
   {
     const html=g.getNavDropdownHtml();
+    // Order is asserted for the three strategies this fixture was written about; later entries
+    // are deliberately not named here, so adding one cannot break a fixture about ordering.
     assert('Fixture 5: Strategies nav buttons appear in registry order (JVM, ALEX, TJR)',
       html.indexOf('JVM')<html.indexOf('ALEX')&&html.indexOf('ALEX')<html.indexOf('TJR'),
       html);
@@ -69,6 +77,15 @@ function runV1231Fixtures(g){
   {
     // Registry-driven, not hardcoded: injecting a 4th synthetic entry produces a 4th button.
     const before=g.getRegistry().slice();
+    // v12.44.0: was `buttonCount===4`, which assumed the registry held exactly three entries
+    // before the injection. The property is a RELATIONSHIP -- one more entry yields exactly one
+    // more button -- so it is now measured before and after rather than compared to a literal.
+    // Fixture 4 above already established one button per entry, so the pre-injection count is
+    // the registry's own length. Taken from that rather than by rendering again: an extra
+    // render/read cycle here re-enters the workspace chart path and exhausts the harness's
+    // charting stub, which fails a LATER fixture -- a test that breaks a different test by
+    // measuring is worse than the literal it replaced.
+    const countBefore=before.length;
     const synManifest={id:'test_ws_zzz',navLabel:'SYN WORKSPACE',panelId:'comingsoon'};
     g.setRegistry(before.concat([{manifest:synManifest,services:{}}]));
     g.renderStrategyNavGroup();
@@ -76,8 +93,9 @@ function runV1231Fixtures(g){
     const buttonCount=(html.match(/<button/g)||[]).length;
     g.setRegistry(before); // restore
     g.renderStrategyNavGroup();
-    assert('Fixture 6: a 4th registry entry produces a 4th nav button automatically (proves genuine registry-driven routing, not hardcoded TJR nav)',
-      buttonCount===4&&html.indexOf('SYN WORKSPACE')!==-1,'buttonCount='+buttonCount);
+    assert('Fixture 6: ONE MORE registry entry produces exactly ONE MORE nav button, carrying its own label (proves genuine registry-driven routing, not hardcoded nav)',
+      buttonCount===countBefore+1&&html.indexOf('SYN WORKSPACE')!==-1,
+      'before='+countBefore+' after='+buttonCount);
   }
 
   // ═══ Routing: showPanel opens the TJR workspace via the existing registry mechanism ═══
