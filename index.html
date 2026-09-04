@@ -1862,6 +1862,12 @@ button.danger:hover{background:var(--red-dim)}
         <div id="tjrWsContentContainer"></div>
       </div>
 
+      <div id="panel-baselinetrend" class="panel">
+        <div class="card" id="btWsHeaderCard"></div>
+        <div class="card" id="btWsControlsCard" style="margin-top:10px"></div>
+        <div id="btWsResultsContainer"></div>
+      </div>
+
       <!-- v8.0: shared "Coming Soon" feature-preview panel -- used by every nav
            leaf that doesn't have a dedicated page yet (see comingSoonOpen() below),
            instead of silently routing to an unrelated existing page. -->
@@ -21140,6 +21146,179 @@ function baselineTrendGeometry(direction,entry,atr,cfg){
     stopBasis:'ATR_MULTIPLE_FROM_ENTRY',stopATRMultiple:c.stopATRMultiple};
 }
 
+// ── EXPORT ───────────────────────────────────────────────────────────────────────────────────
+//
+// PURE. Builds ONE evidence package holding every replayed trade.
+//
+// WHY THE EXISTING PACKAGE SHAPE RATHER THAN A NEW FORMAT: scripts/mogo_forward_trade_analysis.js
+// already reads this shape, already partitions on captureBasis, and already refuses to mix
+// populations. Inventing a second format for the control arm would mean a second reader, and a
+// second reader is a second place for a replay figure to be read as a forward one. That mistake
+// has already been made once in this project and cost a published conclusion.
+//
+// captureBasis is REPLAY_RUN and mode is REPLAY, stated at the top of the file, so the analyser
+// buckets it correctly without being told and a human opening the JSON sees it in the first
+// screenful.
+function baselineTrendBuildReplayPackage(runs,cfg,opts){
+  const c=(cfg&&cfg.config)?cfg.config:(cfg||RULES_BASELINE_TREND.config);
+  const o=opts||{};
+  const positions=[],outcomes=[],setups=[];
+  let seq=0,stillOpen=0;
+  (runs||[]).forEach(function(run){
+    if(!run||!Array.isArray(run.trades)) return;
+    run.trades.forEach(function(t){
+      // A still-open trade is NOT exported as an outcome. It has no result, and writing one with
+      // a null realizedR invites a reader to treat it as a zero.
+      if(t.stillOpen){ stillOpen++; return; }
+      const id='BTR|'+BASELINE_TREND_STRATEGY_ID+'|'+(t.pair||run.pair||'?')+'|'+(++seq);
+      setups.push({
+        setupId:id,setupType:'baseline_trend',setupLabel:'TREND BASELINE',
+        strategyId:BASELINE_TREND_STRATEGY_ID,
+        instrument:t.pair||run.pair||null,timeframe:t.timeframe||'D',
+        ruleAttribution:{ruleSetId:BASELINE_TREND_STRATEGY_ID,
+          // Nothing is unverified here: the rule is one arithmetic comparison and every input to
+          // it is on the record. That is the point of a control arm.
+          unverifiedConditionCount:0,contradictsEngineClassification:false,failedConditionIds:[]},
+        contextRefs:{session:null,trendContext:t.lookbackReturn>0?'UPTREND':'DOWNTREND',
+          atrAtEntry:t.atrAtEntry},
+        structureRefs:{lookbackBars:t.lookbackBars,lookbackReturn:t.lookbackReturn,
+          stopBasis:t.stopBasis,stopATRMultiple:t.stopATRMultiple}
+      });
+      positions.push({
+        positionId:id,setupId:id,
+        instrument:t.pair||run.pair||null,timeframe:t.timeframe||'D',
+        direction:t.direction,entryPrice:t.entry,
+        entryTimestamp:t.entryTimestamp?new Date(t.entryTimestamp).toISOString():null,
+        // Spread is genuinely NOT MODELLED here, so it is left absent rather than written as 0.
+        // A recorded zero spread and an unmodelled spread are different facts, and the analyser
+        // excludes an absent one from its spread statistics instead of averaging a fiction in.
+        entrySpreadPips:undefined,
+        originalStop:t.stop,currentStop:t.stop,target:t.target,
+        plannedRR:t.plannedRR,riskPercent:c.riskPercent,
+        isDeveloperTrade:false,tradeSource:'replay',
+        evidenceCompleteness:'PARTIAL'
+      });
+      outcomes.push({
+        outcomeId:id+'|outcome',positionId:id,
+        exitPrice:t.exitPrice,
+        exitTimestamp:t.exitTimestamp?new Date(t.exitTimestamp).toISOString():null,
+        exitReasonCode:t.result,exitDetectionSource:'replay_candle',
+        plannedR:t.plannedRR,recordedResultR:t.resultR,realizedR:t.resultR,
+        realizedRProvenance:'FIXED_R_BY_METHODOLOGY',
+        realizedRBasis:{entryPrice:t.entry,exitPrice:t.exitPrice,direction:t.direction,
+          riskDistance:Math.abs(t.entry-t.stop),riskDistanceSource:'abs(entry-stop)'},
+        // pnl is deliberately absent: no account, no position size, no friction. Writing a
+        // currency figure here would be inventing one.
+        pnl:undefined,
+        maeR:t.maeR,mfeR:t.mfeR,maePips:t.maePips,mfePips:t.mfePips,
+        ambiguous:t.ambiguous,evidenceCompleteness:'PARTIAL'
+      });
+    });
+  });
+  return{
+    packageSchemaVersion:'mogo.evidence-package.v1',
+    packageId:'PKG|'+BASELINE_TREND_STRATEGY_ID+'|REPLAY|'+(o.stamp||Date.now()),
+    captureBasis:'REPLAY_RUN',
+    identity:{strategyId:BASELINE_TREND_STRATEGY_ID,strategyVersion:BASELINE_TREND_VERSION,
+      strategyVersionProvenance:'OBSERVED',mode:'REPLAY',engineVersion:APP_VERSION,
+      captureOrigin:(typeof location!=='undefined'&&location&&location.origin)?location.origin:null},
+    configSnapshot:{ruleVersion:RULES_BASELINE_TREND.ruleVersion,config:c},
+    configSnapshotProvenance:'OBSERVED',
+    objects:{candidates:[],decisions:[],marketContexts:[],
+      qualifiedSetups:setups,positions:positions,outcomes:outcomes},
+    objectCounts:{candidates:0,decisions:0,marketContexts:0,
+      qualifiedSetups:setups.length,positions:positions.length,outcomes:outcomes.length},
+    // Every caveat that must travel with these numbers, in the file rather than in someone's memory.
+    replayDisclosures:{
+      frictionModelled:false,
+      frictionNote:'Spread and slippage are NOT charged. ALEX\'s own replay also does not charge them, so the two arms are equally optimistic. The comparison BETWEEN them is valid; neither figure is an achievable return.',
+      entryBasis:'NEXT_BAR_OPEN',
+      ambiguousMode:'conservative',
+      lookAheadControl:'The signal and the ATR see only candles[0..i]; entry is bar i+1 open. Verified by truncation (fixture BTR-1).',
+      exitEngine:'alexGWalkOutcome / alexGComputeMAEMFE — ALEX\'s own protected functions, unmodified, so the arms differ only at entry.',
+      stillOpenExcluded:stillOpen
+    }
+  };
+}
+
+// ── WORKSPACE ────────────────────────────────────────────────────────────────────────────────
+// Thin by design: everything worth testing is in the pure functions above.
+let baselineTrendLastRuns=null;
+let baselineTrendRunning=false;
+function initBaselineTrendWorkspace(){
+  const h=document.getElementById('btWsHeaderCard');
+  if(h) h.innerHTML='<div style="font-size:15px;font-weight:700">Trend Baseline — control arm</div>'
+    +'<div class="muted" style="margin-top:6px;line-height:1.5">The entire entry rule is the sign of the '
+    +RULES_BASELINE_TREND.config.lookbackBars+'-bar return. It uses ALEX\'s own 2R target, 1% sizing and exit logic, '
+    +'so a difference in results can only come from the entry.<br><b>Replay only — this strategy cannot open a live position.</b><br>'
+    +'Spread is not charged, here or in ALEX\'s replay. Neither number is a return you could have earned; '
+    +'the comparison between them is what means something.</div>';
+  renderBaselineTrendControls();
+  renderBaselineTrendResults();
+}
+function renderBaselineTrendControls(){
+  const el=document.getElementById('btWsControlsCard');
+  if(!el) return;
+  el.innerHTML='<div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">'
+    +'<div><div class="muted" style="font-size:11px;margin-bottom:4px">Days of history</div>'
+    +'<input id="btWsDays" type="number" value="1000" min="120" max="3000" style="width:110px"></div>'
+    +'<button class="btn" id="btWsRunBtn" onclick="runBaselineTrendReplayAll()">Run replay on all '+SCAN_PAIRS.length+' pairs</button>'
+    +'<button class="btn" id="btWsExportBtn" onclick="exportBaselineTrendReplay()">Export results</button>'
+    +'</div><div id="btWsProgress" class="muted" style="margin-top:8px;font-size:12px"></div>';
+}
+function renderBaselineTrendResults(){
+  const el=document.getElementById('btWsResultsContainer');
+  if(!el) return;
+  if(!baselineTrendLastRuns){ el.innerHTML=''; return; }
+  let n=0,w=0,l=0,open=0,netR=0,errs=[];
+  baselineTrendLastRuns.forEach(function(r){
+    if(r&&r.error){ errs.push((r.pair||'?')+': '+r.error); return; }
+    (r&&r.trades||[]).forEach(function(t){
+      if(t.stillOpen){ open++; return; }
+      n++; if(t.result==='Win') w++; else l++; netR+=(t.resultR||0);
+    });
+  });
+  const be=100/3;
+  el.innerHTML='<div class="card" style="margin-top:10px">'
+    +'<div style="font-size:14px;font-weight:700;margin-bottom:8px">Replay result — REPLAY, not forward performance</div>'
+    +'<div style="display:flex;gap:24px;flex-wrap:wrap">'
+    +'<div><div class="muted" style="font-size:11px">CLOSED TRADES</div><div style="font-size:20px;font-weight:700">'+n+'</div></div>'
+    +'<div><div class="muted" style="font-size:11px">WIN RATE</div><div style="font-size:20px;font-weight:700">'+(n?(100*w/n).toFixed(1):'—')+'%</div></div>'
+    +'<div><div class="muted" style="font-size:11px">BREAKEVEN AT 2R</div><div style="font-size:20px;font-weight:700">'+be.toFixed(1)+'%</div></div>'
+    +'<div><div class="muted" style="font-size:11px">NET R</div><div style="font-size:20px;font-weight:700">'+netR.toFixed(2)+'R</div></div>'
+    +'<div><div class="muted" style="font-size:11px">PER TRADE</div><div style="font-size:20px;font-weight:700">'+(n?(netR/n).toFixed(3):'—')+'R</div></div>'
+    +'<div><div class="muted" style="font-size:11px">STILL OPEN</div><div style="font-size:20px;font-weight:700">'+open+'</div></div>'
+    +'</div>'
+    +(errs.length?'<div class="muted" style="margin-top:10px;font-size:12px;color:var(--red)">'+escapeHtml(errs.join(' | '))+'</div>':'')
+    +'<div class="muted" style="margin-top:10px;font-size:12px">Spread is not charged. Still-open trades are counted as neither a win nor a loss. '
+    +'Export and run the analysis tool for the segmented view.</div></div>';
+}
+async function runBaselineTrendReplayAll(){
+  if(baselineTrendRunning) return;
+  baselineTrendRunning=true;
+  const prog=document.getElementById('btWsProgress');
+  const daysEl=document.getElementById('btWsDays');
+  const days=Math.max(120,Math.min(3000,parseInt(daysEl&&daysEl.value,10)||1000));
+  const runs=[];
+  try{
+    for(let i=0;i<SCAN_PAIRS.length;i++){
+      const oPair=SCAN_PAIRS[i].replace('/','_');
+      if(prog) prog.textContent='('+(i+1)+'/'+SCAN_PAIRS.length+') '+oPair+' ...';
+      try{ runs.push(await runBaselineTrendReplay(oPair,days,function(m){ if(prog) prog.textContent='('+(i+1)+'/'+SCAN_PAIRS.length+') '+m; })); }
+      catch(e){ runs.push({pair:oPair,error:(e&&e.message)?e.message:String(e)}); }
+    }
+    baselineTrendLastRuns=runs;
+    if(prog) prog.textContent='Done — '+runs.length+' pair(s).';
+    renderBaselineTrendResults();
+  } finally { baselineTrendRunning=false; }
+}
+function exportBaselineTrendReplay(){
+  if(!baselineTrendLastRuns){ alert('Run the replay first.'); return; }
+  const pkg=baselineTrendBuildReplayPackage(baselineTrendLastRuns,RULES_BASELINE_TREND.config,{stamp:Date.now()});
+  downloadTextFile('mogo-evidence-'+BASELINE_TREND_STRATEGY_ID+'-REPLAY-'+Date.now()+'.json',
+    'application/json',JSON.stringify(pkg,null,2));
+}
+
 // ── REPLAY ───────────────────────────────────────────────────────────────────────────────────
 //
 // PURE given a candle array. No fetching, no globals, no side effects, so the properties below
@@ -21258,6 +21437,10 @@ const BASELINE_TREND_MANIFEST={
   family:'baseline_control',
   version:BASELINE_TREND_VERSION,
   label:'Trend Baseline',
+  navLabel:'TREND BASELINE',
+  panelId:'baselinetrend',
+  workspaceTitle:'Trend Baseline — control arm',
+  currentPhase:'Replay only. Not authorized to paper trade.',
   fullName:'Baseline Trend (control arm)',
   description:'A deliberately trivial control arm: direction is the sign of the 3-month return, with ALEX\'s own 2R target and 1% risk sizing. It exists to answer whether ALEX\'s setup detection adds anything over a one-line entry rule. NOT authorized to paper trade -- signals only.',
   author:'MOGO',
@@ -21285,7 +21468,7 @@ const BASELINE_TREND_SERVICES={
   getAccount:()=>null,
   getJournal:()=>[],
   normalize:(raw)=>raw,
-  onOpen:()=>null,
+  onOpen:()=>initBaselineTrendWorkspace(),
   health:()=>'development'
 };
 

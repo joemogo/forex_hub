@@ -56,10 +56,15 @@ vm.runInContext(extractFunction('pipSize'), ctx);
 vm.runInContext(extractFunction('alexGWalkOutcome'), ctx);
 vm.runInContext(extractFunction('alexGComputeMAEMFE'), ctx);
 vm.runInContext(extractFunction('baselineTrendReplayTrades'), ctx);
+// RULES_BASELINE_TREND is already in this realm from the top of the file; only the two
+// identifiers the package builder additionally reads are added here.
+vm.runInContext("const APP_VERSION='test';const BASELINE_TREND_VERSION='baseline_trend_v1';", ctx);
+vm.runInContext(extractFunction('baselineTrendBuildReplayPackage'), ctx);
 const signal = vm.runInContext('baselineTrendSignal', ctx);
 const geom = vm.runInContext('baselineTrendGeometry', ctx);
 const CFG = vm.runInContext('RULES_BASELINE_TREND.config', ctx);
 const replay = vm.runInContext('baselineTrendReplayTrades', ctx);
+const buildPkg = vm.runInContext('baselineTrendBuildReplayPackage', ctx);
 
 const results = [];
 function t(name, desc, fn) {
@@ -392,6 +397,129 @@ t('BTR-10', 'JPY pips are handled -- risk in pips uses the instrument\'s own pip
   const ratio = jpy.trades[0].riskPips / eur.trades[0].riskPips;
   return { pass: jpy.trades.length > 0 && ratio > 0.5 && ratio < 2.5,
     detail: 'eur ' + eur.trades[0].riskPips.toFixed(1) + 'p vs jpy ' + jpy.trades[0].riskPips.toFixed(1) + 'p (ratio ' + ratio.toFixed(2) + ')' };
+});
+
+// ══ EXPORT: THE PACKAGE MUST BE UNMISTAKABLY A REPLAY ════════════════════════════════════════
+//
+// This project has already published a conclusion built by counting backtests as live trades. The
+// export is the seam where that could happen again, so these fixtures are about labelling and
+// about refusing to invent numbers the replay does not have.
+
+function runFor(pair) {
+  return replay(replaySeries(LOOKBACK + 200), CFG, { pair: pair || 'EUR_USD', timeframe: 'D' });
+}
+
+t('BTX-1', 'the package is stamped REPLAY_RUN and mode REPLAY at the top level. The analysis tool '
+  + 'partitions on exactly this field, and a replay reaching a forward figure is the defect that '
+  + 'produced a +20.97R claim where the real forward result was -7.04R', function () {
+  const p = buildPkg([runFor('EUR_USD')], CFG, { stamp: 1 });
+  return { pass: p.captureBasis === 'REPLAY_RUN' && p.identity.mode === 'REPLAY'
+      && p.identity.strategyId === 'baseline_trend_v1',
+    detail: p.captureBasis + ' / ' + p.identity.mode };
+});
+
+t('BTX-2', 'it uses the EXISTING evidence-package shape, so the existing analyser reads it with '
+  + 'no change. A second format would mean a second reader, and a second place for a replay '
+  + 'number to be mistaken for a forward one', function () {
+  const p = buildPkg([runFor()], CFG, { stamp: 1 });
+  const o = p.objects;
+  return { pass: p.packageSchemaVersion === 'mogo.evidence-package.v1'
+      && Array.isArray(o.positions) && Array.isArray(o.outcomes) && Array.isArray(o.qualifiedSetups)
+      && o.positions.length > 0 && o.positions.length === o.outcomes.length,
+    detail: o.positions.length + ' positions, ' + o.outcomes.length + ' outcomes' };
+});
+
+t('BTX-3', 'every position is joined to its outcome by positionId -- an unmatched pair would be '
+  + 'silently dropped by the analyser and shrink the sample without saying so', function () {
+  const p = buildPkg([runFor()], CFG, { stamp: 1 });
+  const ids = {}; p.objects.outcomes.forEach(function (o) { ids[o.positionId] = 1; });
+  const orphans = p.objects.positions.filter(function (x) { return !ids[x.positionId]; });
+  return { pass: p.objects.positions.length > 0 && orphans.length === 0,
+    detail: orphans.length + ' orphan(s) of ' + p.objects.positions.length };
+});
+
+t('BTX-4', 'STILL-OPEN TRADES ARE NOT EXPORTED as outcomes, and the count of what was withheld is '
+  + 'stated. An outcome with a null R invites a reader to treat it as a zero', function () {
+  const flat = replaySeries(LOOKBACK + 3);
+  for (let i = LOOKBACK + 1; i < flat.length; i++) {
+    flat[i] = { t: flat[i].t, o: flat[i].o, h: flat[i].o + 0.00001, l: flat[i].o - 0.00001, c: flat[i].o };
+  }
+  const run = replay(flat, CFG, { pair: 'EUR_USD' });
+  const openCount = run.trades.filter(function (x) { return x.stillOpen; }).length;
+  const p = buildPkg([run], CFG, { stamp: 1 });
+  return { pass: openCount > 0 && p.replayDisclosures.stillOpenExcluded === openCount
+      && p.objects.outcomes.every(function (o) { return o.realizedR !== null; }),
+    detail: openCount + ' open, excluded=' + p.replayDisclosures.stillOpenExcluded };
+});
+
+t('BTX-5', 'SPREAD IS ABSENT, NOT ZERO. It is genuinely not modelled, and a recorded zero would '
+  + 'be averaged into the analyser\'s spread statistics as a fiction rather than excluded as '
+  + 'unknown', function () {
+  const p = buildPkg([runFor()], CFG, { stamp: 1 });
+  const withSpread = p.objects.positions.filter(function (x) { return x.entrySpreadPips !== undefined; });
+  return { pass: p.objects.positions.length > 0 && withSpread.length === 0,
+    detail: withSpread.length + ' position(s) carry a spread field' };
+});
+
+t('BTX-6', 'PNL IS ABSENT for the same reason -- there is no account, no position size and no '
+  + 'friction here, so a currency figure would be invented', function () {
+  const p = buildPkg([runFor()], CFG, { stamp: 1 });
+  const withPnl = p.objects.outcomes.filter(function (x) { return x.pnl !== undefined; });
+  return { pass: withPnl.length === 0, detail: withPnl.length + ' outcome(s) carry a pnl' };
+});
+
+t('BTX-7', 'the caveats travel WITH the file. Friction, entry basis, ambiguity handling, the '
+  + 'look-ahead control and the shared exit engine are all recorded in the package, not left in '
+  + 'someone\'s memory of the conversation where the numbers were produced', function () {
+  const d = buildPkg([runFor()], CFG, { stamp: 1 }).replayDisclosures;
+  return { pass: d.frictionModelled === false && /not charged/i.test(d.frictionNote)
+      && d.entryBasis === 'NEXT_BAR_OPEN' && d.ambiguousMode === 'conservative'
+      && /truncation/i.test(d.lookAheadControl) && /alexGWalkOutcome/.test(d.exitEngine),
+    detail: Object.keys(d).join(',') };
+});
+
+t('BTX-8', 'R is carried on BOTH realizedR and recordedResultR and they agree -- the analyser '
+  + 'prefers realizedR, and a package where the two disagreed would report a different sample '
+  + 'depending on which field a reader happened to use', function () {
+  const p = buildPkg([runFor()], CFG, { stamp: 1 });
+  const bad = p.objects.outcomes.filter(function (o) { return o.realizedR !== o.recordedResultR; });
+  const wins = p.objects.outcomes.filter(function (o) { return o.exitReasonCode === 'Win'; });
+  return { pass: bad.length === 0 && wins.every(function (o) { return o.realizedR === CFG.targetRR; }),
+    detail: bad.length + ' disagreement(s); ' + wins.length + ' win(s) all at +' + CFG.targetRR + 'R' };
+});
+
+t('BTX-9', 'multiple pairs merge into one package without colliding -- ids carry the instrument, '
+  + 'so two pairs cannot overwrite each other\'s trades', function () {
+  const p = buildPkg([runFor('EUR_USD'), runFor('USD_JPY')], CFG, { stamp: 1 });
+  const ids = p.objects.positions.map(function (x) { return x.positionId; });
+  const unique = {}; ids.forEach(function (i) { unique[i] = 1; });
+  const instruments = {}; p.objects.positions.forEach(function (x) { instruments[x.instrument] = 1; });
+  return { pass: ids.length === Object.keys(unique).length && Object.keys(instruments).length === 2,
+    detail: ids.length + ' ids, ' + Object.keys(unique).length + ' unique, ' + Object.keys(instruments).length + ' instruments' };
+});
+
+t('BTX-10', 'an errored or empty run contributes nothing rather than throwing -- one pair failing '
+  + 'to fetch must not lose the other eleven', function () {
+  const p = buildPkg([{ pair: 'X', error: 'fetch failed' }, null, { pair: 'Y', trades: [] }, runFor()], CFG, { stamp: 1 });
+  return { pass: p.objects.positions.length > 0,
+    detail: p.objects.positions.length + ' position(s) survived a failed run in the list' };
+});
+
+t('BTX-11', 'the config used is snapshotted into the package, so a result can never be read '
+  + 'against a lookback it was not produced with', function () {
+  const p = buildPkg([runFor()], CFG, { stamp: 1 });
+  return { pass: p.configSnapshot.config.lookbackBars === CFG.lookbackBars
+      && p.configSnapshot.config.stopATRMultiple === CFG.stopATRMultiple
+      && p.configSnapshotProvenance === 'OBSERVED',
+    detail: JSON.stringify(p.configSnapshot.config) };
+});
+
+t('BTX-12', 'the workspace panel exists in the markup and the manifest points at it, so opening '
+  + 'the strategy shows the control arm rather than routing nowhere', function () {
+  const m = /const BASELINE_TREND_MANIFEST=\{[\s\S]*?\n\};/.exec(SRC)[0];
+  return { pass: /panelId:'baselinetrend'/.test(m) && /navLabel:/.test(m)
+      && SRC.indexOf('id="panel-baselinetrend"') >= 0,
+    detail: 'panel present=' + (SRC.indexOf('id="panel-baselinetrend"') >= 0) };
 });
 
 results.forEach(function (r) {
