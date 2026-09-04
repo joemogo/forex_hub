@@ -4193,6 +4193,95 @@ function alexGRunSetupEngine(pair,datasets){
   return{zones:alexGZoneState[pair],setups:alexGSetupState.filter(s=>s.pair===pair)};
 }
 
+// MOGO_LEAN_PRODUCTION_EMITTER_SEAM_START
+// Disabled, in-memory export seam for the separately reviewed LEAN v2 contract.
+// This is deliberately NOT wired to a UI, scanner, persistence, fetch, download,
+// cloud service, or trade path.  It has no ambient reads: the caller must pass the
+// selected B&R setup, matching zone, the exact candle ARRAY used for that setup,
+// explicit versions/configuration/dataset identity, and a SHA-256 dependency.
+// Enabling requires an explicit per-call opt-in; this constant is documentation and
+// a source-inspection guard against accidental future auto-wiring.
+const MOGO_LEAN_PRODUCTION_EMITTER_DEFAULT_ENABLED=false;
+const MOGO_LEAN_ZONE_REQUEST_V2='mogo.lean.zone-request.v2';
+const MOGO_LEAN_ZONE_START_TIME_SEMANTICS='START_TIME_UTC_MS';
+const MOGO_LEAN_ZONE_CONFIG_KEYS=['breakConfirmationCloses','maxBarsBetweenBreakAndRetest','stopATRBuffer','atrPeriod','minRR','trendSwingLookback','rejectionConfirmWithinBars','rejectionDisplacementATRMultiplier'];
+function alexGLeanEmitterRefusal(code){
+  const err=new Error(code);err.code=code;throw err;
+}
+function alexGLeanCanonicalJson(value){
+  if(Array.isArray(value)) return '['+value.map(alexGLeanCanonicalJson).join(',')+']';
+  if(value&&typeof value==='object') return '{'+Object.keys(value).sort().map(k=>alexGLeanCanonicalJson(k)+':'+alexGLeanCanonicalJson(value[k])).join(',')+'}';
+  if(typeof value==='string') return '"'+value.replace(/\\/g,'\\\\').replace(/"/g,'\\"').replace(/\n/g,'\\n').replace(/\r/g,'\\r').replace(/\t/g,'\\t')+'"';
+  if(value===null) return 'null';
+  if(typeof value==='boolean') return value?'true':'false';
+  return String(value);
+}
+function alexGBuildLeanZoneRequestV2(input,deps){
+  // No default arguments on purpose: a missing explicit capability must refuse.
+  if(!input||input.enabled!==true||MOGO_LEAN_PRODUCTION_EMITTER_DEFAULT_ENABLED!==false)
+    alexGLeanEmitterRefusal('REFUSE_EMITTER_DISABLED');
+  if(!deps||typeof deps.sha256Hex!=='function') alexGLeanEmitterRefusal('REFUSE_HASH_DEPENDENCY');
+  const setup=input.setup,zone=input.zone,bars=input.bars,retestTouch=input.retestTouch;
+  const identity=input.identity,versions=input.versions,dataset=input.dataset,config=input.config;
+  if(!setup||setup.setupType!=='B_breakRetest') alexGLeanEmitterRefusal('REFUSE_SETUP_TYPE');
+  if(typeof setup.setupId!=='string'||!setup.setupId||typeof setup.zoneId!=='string'||!setup.zoneId||
+     typeof setup.breakCycleId!=='string'||!setup.breakCycleId||typeof setup.reactionId!=='string'||!setup.reactionId)
+    alexGLeanEmitterRefusal('REFUSE_SETUP_IDENTITY');
+  if(!zone||typeof zone.id!=='string'||!zone.id||zone.id!==setup.zoneId||!Number.isFinite(zone.low)||!Number.isFinite(zone.high)||zone.low>zone.high)
+    alexGLeanEmitterRefusal('REFUSE_ZONE_MATCH');
+  if(!Array.isArray(bars)||bars.length<2||bars.length>10000||input.setupCandles!==bars) alexGLeanEmitterRefusal('REFUSE_EXACT_CANDLE_ARRAY');
+  if(!identity||typeof identity.pair!=='string'||!identity.pair||identity.pair!==setup.pair||identity.timeframe!==setup.timeframe||!['H1','H4','D','W'].includes(identity.timeframe))
+    alexGLeanEmitterRefusal('REFUSE_IDENTITY_MATCH');
+  if(!versions||!['strategyVersion','ruleVersion','appVersion'].every(k=>typeof versions[k]==='string'&&versions[k]))
+    alexGLeanEmitterRefusal('REFUSE_VERSIONS');
+  if(!dataset||typeof dataset.id!=='string'||!dataset.id||!dataset.hash||dataset.hash.algorithm!=='SHA-256'||!(/^[0-9a-f]{64}$/).test(dataset.hash.value||''))
+    alexGLeanEmitterRefusal('REFUSE_DATASET_IDENTITY');
+  if(!config||!MOGO_LEAN_ZONE_CONFIG_KEYS.every(k=>Number.isFinite(config[k]))) alexGLeanEmitterRefusal('REFUSE_CONFIG');
+  const integerConfigKeys=['breakConfirmationCloses','maxBarsBetweenBreakAndRetest','atrPeriod','trendSwingLookback','rejectionConfirmWithinBars'];
+  if(integerConfigKeys.some(k=>!Number.isInteger(config[k])||config[k]<1)||config.stopATRBuffer<0||config.rejectionDisplacementATRMultiplier<0||config.minRR<=0)
+    alexGLeanEmitterRefusal('REFUSE_CONFIG');
+  const direction=setup.brokenDirection;
+  if(direction!=='downThroughSupport'&&direction!=='upThroughResistance') alexGLeanEmitterRefusal('REFUSE_BROKEN_DIRECTION');
+  const preBreakRole=direction==='downThroughSupport'?'support':'resistance';
+  if(!retestTouch||retestTouch.reactionId!==setup.reactionId||!Number.isInteger(retestTouch.barIndex)||retestTouch.barIndex<=setup.brokenAtBar)
+    alexGLeanEmitterRefusal('REFUSE_RETEST_ANCHOR');
+  if(!Number.isInteger(zone.formedAtBar)||!Number.isInteger(setup.brokenAtBar)||!Number.isInteger(setup.qualificationBarIndex)||setup.brokenAtBar<=zone.formedAtBar||setup.qualificationBarIndex<retestTouch.barIndex)
+    alexGLeanEmitterRefusal('REFUSE_EVENT_ORDER');
+  const toMs=v=>v instanceof Date?v.getTime():(Number.isFinite(v)?v:NaN);
+  const cadenceOk=delta=>{
+    const hour=3600000;
+    if(identity.timeframe==='H1') return delta===hour;
+    if(identity.timeframe==='H4') return delta===4*hour;
+    if(identity.timeframe==='D') return delta===23*hour||delta===24*hour||delta===25*hour;
+    return delta===167*hour||delta===168*hour||delta===169*hour;
+  };
+  const starts=[];
+  const rows=bars.map((bar,index)=>{
+    const start=toMs(bar&&bar.t),o=bar&&bar.o,h=bar&&bar.h,l=bar&&bar.l,c=bar&&bar.c;
+    if(!Number.isSafeInteger(start)||!Number.isFinite(o)||!Number.isFinite(h)||!Number.isFinite(l)||!Number.isFinite(c)||l>o||o>h||l>c||c>h)
+      alexGLeanEmitterRefusal('REFUSE_BAR_SHAPE');
+    if(index&&start<=starts[index-1]) alexGLeanEmitterRefusal('REFUSE_BAR_ORDER');
+    if(index&&!cadenceOk(start-starts[index-1])) alexGLeanEmitterRefusal('REFUSE_BAR_CADENCE');
+    starts.push(start);return{index,startTimeUtcMs:start,open:o,high:h,low:l,close:c};
+  });
+  const at=(index,kind)=>{
+    if(index<0||index>=rows.length-1) alexGLeanEmitterRefusal('REFUSE_'+kind+'_INDEX');
+    return{index,barStartTimeUtcMs:rows[index].startTimeUtcMs,closeTimeUtcMs:rows[index+1].startTimeUtcMs};
+  };
+  if(setup.qualificationTimestamp!==at(setup.qualificationBarIndex,'QUALIFICATION').closeTimeUtcMs)
+    alexGLeanEmitterRefusal('REFUSE_QUALIFICATION_TIMESTAMP');
+  if(zone.formedAt!==at(zone.formedAtBar,'FORMATION').closeTimeUtcMs||setup.brokenAt!==at(setup.brokenAtBar,'BREAK').closeTimeUtcMs||retestTouch.timestamp!==at(retestTouch.barIndex,'RETEST').closeTimeUtcMs)
+    alexGLeanEmitterRefusal('REFUSE_EVENT_TIMESTAMP');
+  const breakBar=rows[setup.brokenAtBar];
+  if((direction==='downThroughSupport'&&!(breakBar.close<zone.low))||(direction==='upThroughResistance'&&!(breakBar.close>zone.high)))
+    alexGLeanEmitterRefusal('REFUSE_BREAK_GEOMETRY');
+  const digest=deps.sha256Hex(alexGLeanCanonicalJson(rows));
+  if(typeof digest!=='string'||digest!==dataset.hash.value) alexGLeanEmitterRefusal('REFUSE_DATASET_HASH');
+  const copiedConfig={};MOGO_LEAN_ZONE_CONFIG_KEYS.forEach(k=>{copiedConfig[k]=config[k];});
+  return{schemaVersion:MOGO_LEAN_ZONE_REQUEST_V2,caseId:setup.setupId,identity:{pair:identity.pair,timeframe:identity.timeframe},versions:{strategyVersion:versions.strategyVersion,ruleVersion:versions.ruleVersion,appVersion:versions.appVersion},barTimestampSemantics:MOGO_LEAN_ZONE_START_TIME_SEMANTICS,zone:{id:zone.id,low:zone.low,high:zone.high,formedAt:at(zone.formedAtBar,'FORMATION'),preBreakRole},breakEvent:{id:setup.breakCycleId,brokenDirection:direction,at:at(setup.brokenAtBar,'BREAK')},setup:{id:setup.setupId,type:'break-retest',reaction:'rejection',retestAt:at(retestTouch.barIndex,'RETEST'),qualificationAt:at(setup.qualificationBarIndex,'QUALIFICATION')},dataset:{id:dataset.id,hash:{algorithm:'SHA-256',value:dataset.hash.value}},config:copiedConfig,bars:rows};
+}
+// MOGO_LEAN_PRODUCTION_EMITTER_SEAM_END
+
 // ══════════════════════════════════════════════════════════════════════════
 // ── ALEX G S&R v1.0 — PHASE 4: TRADE CONSTRUCTION & HISTORICAL REPLAY ──
 // Converts already-qualified alexGSetupState records into complete
