@@ -11,7 +11,8 @@
 
 const path = require('path');
 const { rowsFromPackages, analyze, concurrentExposures, pipSizeFor, median,
-        segment, binomialTailAtLeast } =
+        segment, binomialTailAtLeast, packagePopulation, partitionByPopulation,
+        FORWARD_CAPTURE_BASES, REPLAY_CAPTURE_BASES } =
   require(path.resolve(__dirname, '..', 'scripts', 'mogo_forward_trade_analysis.js'));
 
 const results = [];
@@ -30,6 +31,9 @@ function pkg(o) {
   o = o || {};
   return {
     packageSchemaVersion: 'mogo.evidence-package.v1',
+    // Defaults to LIVE_CLOSE so every pre-existing fixture keeps describing a forward trade,
+    // which is what they were all written to mean.
+    captureBasis: o.captureBasis || 'LIVE_CLOSE',
     packageId: o.packageId || ('PKG|test|' + (++hashSeq)),
     contentHash: o.contentHash || ('hash' + hashSeq),
     identity: {
@@ -522,6 +526,68 @@ t('FTA-42', 'pnl coverage is reported per subgroup, because a dollar total drawn
   const s = segment(rows, 'setupType').A;
   return { pass: s.n === 2 && s.pnlCoverage === 1 && near(s.netPnl, 200) && near(s.netR, 1),
     detail: 'n=' + s.n + ' pnlCoverage=' + s.pnlCoverage + ' $' + s.netPnl + ' ' + s.netR + 'R' };
+});
+
+// ── Population ────────────────────────────────────────────────────────────────────────────────
+//
+// These pin the separation that was missing when this tool reported a corpus of 91 packages as
+// one figure: 42 of them were backtests, the headline read +20.97R at 42.3%, and the real forward
+// result was -7.04R at 27.5%. The operator's own screen had been right the whole time.
+
+t('FTA-43', 'a LIVE_CLOSE package is FORWARD and a REPLAY_RUN package is REPLAY -- the distinction '
+  + 'the tool previously did not make at all', function () {
+  return { pass: packagePopulation({ captureBasis: 'LIVE_CLOSE' }) === 'FORWARD'
+      && packagePopulation({ captureBasis: 'REPLAY_RUN' }) === 'REPLAY',
+    detail: packagePopulation({ captureBasis: 'LIVE_CLOSE' }) + ' / '
+      + packagePopulation({ captureBasis: 'REPLAY_RUN' }) };
+});
+
+t('FTA-44', 'HISTORICAL_BACKFILL is FORWARD, not replay. It is a real live-paper trade whose '
+  + 'package was written late -- excluding it would understate the forward sample as badly as '
+  + 'including a backtest overstates it', function () {
+  return { pass: packagePopulation({ captureBasis: 'HISTORICAL_BACKFILL' }) === 'FORWARD',
+    detail: packagePopulation({ captureBasis: 'HISTORICAL_BACKFILL' }) };
+});
+
+t('FTA-45', 'FAILS CLOSED: an unrecognised or missing captureBasis is UNKNOWN, never assumed into '
+  + 'FORWARD. A future capture path arrives in exactly this shape, and quietly counting it as live '
+  + 'performance is the original defect happening again', function () {
+  return { pass: packagePopulation({ captureBasis: 'SOME_FUTURE_BASIS' }) === 'UNKNOWN'
+      && packagePopulation({}) === 'UNKNOWN' && packagePopulation(null) === 'UNKNOWN',
+    detail: [packagePopulation({ captureBasis: 'SOME_FUTURE_BASIS' }), packagePopulation({}),
+      packagePopulation(null)].join(',') };
+});
+
+t('FTA-46', 'partition splits a mixed corpus and keeps every package in exactly one bucket -- a '
+  + 'package silently belonging to none would shrink the denominator without saying so', function () {
+  const pkgs = [{ captureBasis: 'LIVE_CLOSE' }, { captureBasis: 'REPLAY_RUN' },
+    { captureBasis: 'HISTORICAL_BACKFILL' }, { captureBasis: 'REPLAY_RUN' }, { captureBasis: 'WAT' }];
+  const p = partitionByPopulation(pkgs);
+  return { pass: p.FORWARD.length === 2 && p.REPLAY.length === 2 && p.UNKNOWN.length === 1
+      && (p.FORWARD.length + p.REPLAY.length + p.UNKNOWN.length) === pkgs.length,
+    detail: 'fwd=' + p.FORWARD.length + ' replay=' + p.REPLAY.length + ' unknown=' + p.UNKNOWN.length };
+});
+
+t('FTA-47', 'THE REGRESSION, END TO END: a profitable backtest mixed with a losing forward sample '
+  + 'must not average into a winning headline. Forward alone is 1W/3L for -1R; adding two +2R '
+  + 'backtests flips the total positive, and that flip is the reported defect', function () {
+  const fwd = [pkg({ captureBasis: 'LIVE_CLOSE', realizedR: 2 }), pkg({ captureBasis: 'LIVE_CLOSE', realizedR: -1 }),
+    pkg({ captureBasis: 'LIVE_CLOSE', realizedR: -1 }), pkg({ captureBasis: 'LIVE_CLOSE', realizedR: -1 })];
+  const rep = [pkg({ captureBasis: 'REPLAY_RUN', realizedR: 2 }), pkg({ captureBasis: 'REPLAY_RUN', realizedR: 2 })];
+  const parts = partitionByPopulation(fwd.concat(rep));
+  const forwardOnly = analyze(rowsFromPackages(parts.FORWARD));
+  const mixed = analyze(rowsFromPackages(fwd.concat(rep)));
+  return { pass: near(forwardOnly.netR, -1) && forwardOnly.sampleSize === 4
+      && near(mixed.netR, 3) && mixed.sampleSize === 6,
+    detail: 'forward ' + forwardOnly.netR + 'R over ' + forwardOnly.sampleSize
+      + ' vs mixed ' + mixed.netR + 'R over ' + mixed.sampleSize };
+});
+
+t('FTA-48', 'the basis lists are non-empty and disjoint -- an empty forward list would silently '
+  + 'report every corpus as zero trades, and an overlap would double-count', function () {
+  const overlap = FORWARD_CAPTURE_BASES.filter(function (b) { return REPLAY_CAPTURE_BASES.indexOf(b) >= 0; });
+  return { pass: FORWARD_CAPTURE_BASES.length > 0 && REPLAY_CAPTURE_BASES.length > 0 && overlap.length === 0,
+    detail: 'forward=' + FORWARD_CAPTURE_BASES.join('|') + ' replay=' + REPLAY_CAPTURE_BASES.join('|') };
 });
 
 results.forEach(function (r) {

@@ -42,6 +42,48 @@ function pipSizeFor(instrument) {
 // One flat row per trade, built only from fields the package actually carries. A field that is
 // absent stays null and is excluded from its statistic rather than defaulted to zero -- a zero
 // spread and an unrecorded spread are not the same fact.
+// ── POPULATION ────────────────────────────────────────────────────────────────────────────────
+//
+// THE DEFECT THIS EXISTS TO PREVENT, FOUND THE HARD WAY. This tool originally read every package
+// in a directory and reported one combined figure. Of a 91-package corpus, 42 were REPLAY_RUN --
+// backtests of the strategy against historical data -- and they were counted as forward
+// performance. The reported result was +20.97R at 42.3%; the real forward result over the same
+// corpus was -7.04R at 27.5%, and the operator's own screen had been showing the correct number
+// the whole time. A conclusion was published off the contaminated figure before anyone noticed.
+//
+// The repository rule this broke is explicit: forward-performance statistics never silently
+// include replay observations. "Silently" was the operative word -- nothing here even looked at
+// captureBasis, so there was no way for a reader to know the populations had been mixed.
+//
+// Replaying alex_g_sr_v1 measures the IMPLEMENTATION, not whether the trader's rule holds. A
+// backtest that agrees with itself is not evidence about the market.
+//
+// FORWARD is what actually happened in the live paper account:
+//   LIVE_CLOSE          -- the package was written when the position closed.
+//   HISTORICAL_BACKFILL -- a real live-paper trade whose package was reconstructed after the
+//                          fact. Real trade, late capture; the mode is still LIVE_PAPER.
+// REPLAY_RUN is a backtest and is excluded from forward figures unless explicitly asked for.
+const FORWARD_CAPTURE_BASES = ['LIVE_CLOSE', 'HISTORICAL_BACKFILL'];
+const REPLAY_CAPTURE_BASES = ['REPLAY_RUN'];
+
+// Fails CLOSED on an unrecognised basis: a package whose population cannot be established is not
+// quietly folded into whichever bucket the caller asked for. A silent mixing is exactly the
+// failure above, and an unknown basis is the shape a future capture path will arrive in.
+function packagePopulation(pkg) {
+  const basis = pkg && pkg.captureBasis;
+  if (FORWARD_CAPTURE_BASES.indexOf(basis) >= 0) return 'FORWARD';
+  if (REPLAY_CAPTURE_BASES.indexOf(basis) >= 0) return 'REPLAY';
+  return 'UNKNOWN';
+}
+
+// Splits a package list by population and reports what it dropped. The counts are returned, never
+// just discarded, so every figure downstream can state the denominator it actually rests on.
+function partitionByPopulation(packages) {
+  const out = { FORWARD: [], REPLAY: [], UNKNOWN: [] };
+  (packages || []).forEach(function (p) { out[packagePopulation(p)].push(p); });
+  return out;
+}
+
 function rowsFromPackages(packages) {
   const rows = [];
   packages.forEach(function (pkg) {
@@ -346,7 +388,9 @@ function segment(rows, field, useRecordedR, includeDeveloperTrades) {
   return out;
 }
 
-module.exports = { rowsFromPackages, analyze, concurrentExposures, pipSizeFor, median, segment, binomialTailAtLeast, groupBy };
+module.exports = { rowsFromPackages, analyze, concurrentExposures, pipSizeFor, median, segment,
+  binomialTailAtLeast, groupBy, packagePopulation, partitionByPopulation,
+  FORWARD_CAPTURE_BASES, REPLAY_CAPTURE_BASES };
 
 // ── SIDE EFFECTS ──────────────────────────────────────────────────────────────────────────────
 if (require.main === module) {
@@ -361,7 +405,10 @@ if (require.main === module) {
   const segmentField = gIdx >= 0 ? args[gIdx + 1] : null;
 
   if (!dir) {
-    console.error('usage: node scripts/mogo_forward_trade_analysis.js <dir> [--json] [--strategy <id>] [--segment <field>]');
+    console.error('usage: node scripts/mogo_forward_trade_analysis.js <dir> [--json] [--strategy <id>]\n'
+      + '         [--segment <field>] [--replay | --all-populations]\n'
+      + '  Default population is FORWARD (live paper trades). --replay reports backtests\n'
+      + '  separately; --all-populations mixes them, which is almost always wrong.');
     process.exit(2);
   }
 
@@ -379,7 +426,17 @@ if (require.main === module) {
     packages.push(pkg);
   });
 
-  let rows = rowsFromPackages(packages);
+  // Population selection happens BEFORE any arithmetic, and the header below always says which
+  // population produced the numbers -- a figure whose population is implicit is how a backtest
+  // ends up being read as live performance.
+  const parts = partitionByPopulation(packages);
+  const population = args.includes('--replay') ? 'REPLAY'
+    : (args.includes('--all-populations') ? 'ALL' : 'FORWARD');
+  const selected = population === 'ALL'
+    ? parts.FORWARD.concat(parts.REPLAY).concat(parts.UNKNOWN)
+    : parts[population];
+
+  let rows = rowsFromPackages(selected);
   if (onlyStrategy) rows = rows.filter(function (r) { return r.strategyId === onlyStrategy; });
 
   const byStrategy = groupBy(rows, 'strategyId');
@@ -389,6 +446,10 @@ if (require.main === module) {
     packagesAccepted: packages.length,
     duplicatesCollapsed: duplicates,
     unreadableFiles: unreadable,
+    population: population,
+    populationCounts: { forward: parts.FORWARD.length, replay: parts.REPLAY.length,
+      unknownBasis: parts.UNKNOWN.length },
+    packagesInPopulation: selected.length,
     strategies: {}
   };
   Object.keys(byStrategy).forEach(function (sid) {
@@ -412,9 +473,26 @@ if (require.main === module) {
   if (asJson) { console.log(JSON.stringify(report, null, 2)); process.exit(0); }
 
   const pct = function (x) { return x == null ? 'n/a' : (x * 100).toFixed(1) + '%'; };
-  console.log('MOGO forward evidence analysis — ' + report.packagesAccepted + ' packages ('
-    + report.duplicatesCollapsed + ' duplicate file(s) collapsed'
+  console.log('MOGO evidence analysis — POPULATION: ' + report.population);
+  console.log('  ' + report.packagesInPopulation + ' of ' + report.packagesAccepted
+    + ' packages (' + report.duplicatesCollapsed + ' duplicate file(s) collapsed'
     + (report.unreadableFiles ? ', ' + report.unreadableFiles + ' unreadable' : '') + ')');
+  console.log('  corpus split: ' + report.populationCounts.forward + ' forward, '
+    + report.populationCounts.replay + ' replay/backtest, '
+    + report.populationCounts.unknownBasis + ' unknown basis');
+  if (report.population === 'FORWARD' && report.populationCounts.replay) {
+    console.log('  ! ' + report.populationCounts.replay + ' REPLAY package(s) EXCLUDED. A backtest '
+      + 'of the strategy against its own code is not');
+    console.log('    evidence about the market. Use --replay to report those separately, or '
+      + '--all-populations to mix them');
+    console.log('    (which is what produced a +20.97R figure where the real forward result was '
+      + '-7.04R).');
+  }
+  if (report.populationCounts.unknownBasis) {
+    console.log('  ! ' + report.populationCounts.unknownBasis + ' package(s) carry a captureBasis '
+      + 'this tool does not recognise and are EXCLUDED');
+    console.log('    from FORWARD rather than assumed into it.');
+  }
 
   Object.keys(report.strategies).forEach(function (sid) {
     const a = report.strategies[sid];
