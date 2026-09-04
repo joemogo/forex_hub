@@ -2000,9 +2000,10 @@ const ALL_PAIRS=[
 // Bump by 1.0 for a major update (new feature/tab), by 0.1 for a small patch/fix.
 // This shows in the header next to the logo and on the Diagnostics tab, so you can
 // glance at the live site and instantly confirm which build actually deployed.
-const APP_VERSION='12.42.0';
-const APP_VERSION_DATE='03 Sep 2026';
+const APP_VERSION='12.43.0';
+const APP_VERSION_DATE='04 Sep 2026';
 const APP_VERSION_LOG=[
+  '12.43.0 — C1 STALENESS IS A WARNING; C1 FAILURE STILL BLOCKS (operator-authorized relaxation of a safety gate, 2026-09-04; zero protected-function and zero protected-constant drift). THE PROBLEM: evidenceEvaluateCampaignC1Attestation returned one flat reason list, and evidenceEvaluateForwardPaperGate refused on any of it. That collapsed two very different facts into one outcome. "Artifacts are missing / hashes mismatch / the manifest is not the pinned one / the verdict is not VERIFIED / the counts contradict the file\'s own detail lists / the timestamp is forged into the future" all mean something is wrong with the evidence corpus RIGHT NOW. "The check passed and nobody has re-run it since" means nothing is known to be wrong and the confirmation is merely not fresh. The attestation expires after 24 h, so the second case fired DAILY and locked ALEX out until the operator re-ran and pushed the verifier -- a gate firing on a schedule rather than on a fault, which trains an operator to route around it and takes the system down on days nobody is watching, losing exactly the forward evidence it exists to protect. It is also the wrong REMEDY: halting trading does not repair evidence integrity, it only stops new evidence being produced. THE CHANGE: STALE_ATTESTATION is now the ONLY reason code that can become advisory (EVIDENCE_C1_ADVISORY_REASONS, asserted to be exactly that one entry by C1AGE-10, so a future edit widening it fails). Everything else still blocks, one fixture per failure mode (C1AGE-5.1..5.9), and staleness combined with a real failure still blocks (C1AGE-9). FUTURE_DATED_ATTESTATION is deliberately NOT advisory -- a broken or forged clock is the one direction that could buy unlimited freshness. A BACKSTOP at EVIDENCE_C1_ATTESTATION_HARD_MAX_AGE_MS (30 days) restores blocking, because "warn instead of block" must not decay into "never checked again" and an attestation from months ago is not evidence about anything (C1AGE-8). The whole policy reverses by setting EVIDENCE_C1_STALENESS_BLOCKS_TRADING back to true -- one constant, proven to restore the old behaviour exactly by C1AGE-11 running the real function in a second realm. ADDITIVE AND BACKWARD COMPATIBLE: `intact` keeps its original meaning (every condition positively satisfied, so a stale attestation is still not intact) and the blocking/advisory split sits beside it; the gate consults the new campaignC1Blocking fact ONLY when a caller positively supplies it, so every call site and fixture written before this split gets the old rule unchanged (C1AGE-12). WHAT IS GIVEN UP, stated plainly rather than buried: if evidence artifacts are altered or deleted AFTER the last attestation, MOGO will keep trading and will not notice until the verifier is re-run; that window is now the 30-day backstop rather than 24 hours. The advisory is SHOWN on the operator text for a passing preflight (C1AGE-4) -- a warning nobody sees is not a warning. 20 new fixtures in tests/run_v143_c1_staleness_policy_tests.js driving the real extracted functions. Gate: 36/36 suites, 2,769/2,769 under Node, plus v143 20/20; zero drift.',
   '12.42.0 — EXIT FIDELITY AND POLL RE-ENTRANCY (six confirmed correctness defects in the ALEX live paper-trading path; zero protected-function and zero protected-constant drift, verified against the committed 12.41.0 baseline — every repair lands in non-protected callers, and the frozen fixed-R booking methodology is deliberately UNCHANGED). D1 (WORST): a rejected ledger commit could book a losing trade as a WINNER. alexGCheckLivePositions advanced pos.lastExitCheckTimestamp PAST the exit bar before attempting the close, and discarded alexGCloseLivePosition\'s return value. That function rolls the ACCOUNT back when commitAlexGLedger rejects (STALE_VERSION from a second tab, a full quota) but cannot roll back a cursor it never saw, so the next tick began AFTER the bar that exited, never saw it again, and left open a position the market had already closed — which later closed at target and was recorded as a Win. The cursor and the excursion are now restored on rejection, the failure is reported through recordAlexGEngineError (stage alexGCheckLivePositions.exitCommitRejected) instead of vanishing, and the tick STOPS: the rollback replaces every object in openPositions with a deep clone, so the loop\'s remaining bindings are detached and their mutations would have been silently discarded. D2: gap-through exits were invisible. A bar that OPENS beyond the trigger — a weekend gap, an NFP spike — could only have filled at the open; the trigger was never traded. Every such exit therefore read as exactly the planned R, making the tail of the loss distribution unobservable. The BOOKING is deliberately left alone (fixed-R accounting is this system\'s disclosed, frozen methodology, pinned by ALEXEXIT.14/.18, and silently re-pricing historical exits would rewrite the meaning of every figure already derived from the corpus); instead the true executable price is CAPTURED beside the booked one as exitExecutablePrice/exitPriceBasis/exitGapPips/exitGapR, bounded so it can only ever record a fill AGAINST the position. Whether to change the booking is now an operator decision with the evidence in hand rather than an invisible one. D3: MFE/MAE absorbed the exit bar. alexGReconstructExitFromCandles (PROTECTED, unedited) folds each bar\'s full high/low into the excursion and only THEN tests for the exit, so movement after the position was already closed was recorded as excursion the trade experienced — mfeR could exceed plannedRR on a record whose resultR is −1, biasing every partial-exit study upward. Intra-minute ordering is not knowable at M1 resolution, so this does not guess: the recorded figure is rewound to the last bar completing strictly BEFORE the exit bar (the largest excursion the trade is KNOWN to have had while open) and the exit bar\'s own extreme is kept beside it as mfeRUpperBound with excursionBoundedByExitBar. What is established and what is merely possible stay distinguishable. D4: exitTimestamp in every evidence package read closedAt — the moment the POLLER NOTICED the exit, not the moment it happened. The two differ by the whole of any downtime: a laptop asleep from Friday reopens Monday, reconstructs a Friday 20:41 stop from M1 history, and stamped it Monday 07:00, so holding-period, exit-session and day-of-week figures were computed against the wrong instant. It now prefers the exitDetectedAt that was already being recorded, with exitTimestampBasis naming which was used. D5: setInterval(alexGLivePollTick, 60000) never awaited its async callback, so a tick outrunning its own period overlapped the next one while both shared alexGAccount, the per-position exit cursors and alexGLastEvaluatedCloseTime. This is the mechanism behind the continuity card\'s backwards intervals (startedAt is stamped at tick entry, seq at write, so overlapping ticks write rows whose two orderings disagree), and it can let two ticks both pass the pair+timeframe overlap check while suspended on await fetchBidAsk. A new alexGLivePollTickGuarded wrapper holds an in-flight flag; the tick itself is byte-identical and its exceptions still propagate. A skipped tick is RECORDED as SKIPPED_POLL_IN_FLIGHT with its own tickId, because an overlap that never reaches the ledger is indistinguishable from downtime. D6: a disabled tick wrote TWO poll rows under one natural key (POLL|strategyId|tickId) — one SKIPPED_DISABLED with 0 instruments from an early return, one OK with 12 NOT_REACHED from the finally block — both fire-and-forget async, so which survived the IndexedDB race was nondeterministic and the ledger\'s own uptime counts were not reproducible across runs of identical code. The outcome is now set on the tick\'s single writer; the surviving row is strictly richer. TESTING: new tests/run_v142_exit_fidelity_reentrancy_tests.js (22 fixtures) drives the REAL alexGCheckLivePositions and alexGLivePollTickGuarded extracted verbatim from this file, with the real protected alexGReconstructExitFromCandles, stubbing only the boundaries (candle fetch, the protected close, bid/ask, persistence). Every repair carries a NEGATIVE CONTROL: the recorded executable price cannot move in the position\'s favour (EXITFID-4); the excursion bound is not always set (EXITFID-8); a SUCCESSFUL close still advances the cursor, so the rejection fixture is not passing on code that never advances it (EXITFID-10); both positions are processed when the close succeeds, so the stop-the-tick fixture is not passing on a loop that only ever runs once (EXITFID-14); the guard releases its flag even when the tick THROWS (PRE-6), since a leaked flag would silently end live polling for the session — strictly worse than the overlap it prevents. tests/run_v1233_jvm_autotrade_reliability_tests.js JVMTMR-3/4/5 now assert against the wrapper, which is what is actually scheduled; PRE-1..PRE-7 pin that the wrapper calls through, so those three cannot decay into proving only that SOMETHING is scheduled. Full gate: 36/36 suites, 2,769/2,769 fixtures under Node, plus 22 (v142) and 43 (v138), zero drift. ALSO IN THIS RELEASE: (a) the forward-observation continuity figures no longer inherit the poll-ordering fault -- evidenceSummarizeObservations sorted by seq (write order) and differenced startedAt (entry order), so a disordered pair produced a negative gap the arithmetic refused AND a compensating oversized one it counted in full. Re-sorting by startedAt was tried and is WRONG (it converts a backwards CLOCK into a confident positive gap and invents downtime from it, which L10d exists to prevent); instead both members of every local inversion are marked, any pair touching one contributes no interval, no maxGap and no missed count, and intervalPairsExcludedAsDisordered reports how many pairs were dropped rather than absorbing them. The trailing ongoing-outage term now measures from the NEWEST start time rather than whichever poll was last in write order -- after a reordering that is an OLDER tick, so a running loop could be reported as minutes dead. An adjacent swap now inflates nothing (was 1 invented interval and a doubled maxGap); a record displaced by ten positions goes from >=10 invented intervals to 1, and PCO-6 pins that residue explicitly because a partial repair reported as a clean one is the same class of error as the defect. (b) ALEXG_LIVE_RISK_POLICY: two operator risk limits, BOTH OFF BY DEFAULT and off meaning byte-identical behaviour -- a spread-over-risk cap and a per-instrument open-exposure cap (optionally same-direction-only). Enforced at the same non-protected post-construction seam as the D3C geometry gate, before the position reaches openPositions or the ledger, with the same permanent status row, pipeline stage and decision event every other refusal gets. RISK_INSTRUMENT_EXPOSURE_LIMIT registered before use. Both thresholds come from measurements over the whole corpus (spread/risk median 9.5% and worst 39.7%; five same-instrument overlaps, four in the same direction, EUR_USD H1+H4 for 47 h) and a threshold must be chosen on principle, never by which past trades it would have excluded. NO setup-type gate was added: ALEX_V11_SETUP_EXECUTION_POLICY already suspends A_repeatedReaction, and a second mechanism doing the same job is how two gates end up disagreeing. (c) That suspension\'s recorded basis is REVIEWED, not rewritten: the original 1W/17L reason is left byte-identical as the operator\'s recorded authority. CORRECTION ISSUED WITHIN THIS RELEASE: the first version of that review claimed the corpus showed A_repeatedReaction at 17W/34L, \'exactly breakeven\', and it was WRONG -- it was computed over 91 packages of which 42 were REPLAY_RUN backtests counted as forward trades, breaking this repository\'s own rule that forward statistics never silently include replay observations. FORWARD ONLY: A_repeatedReaction is 24 trades, 4W/20L, 16.7%, -12.13R, which AGREES with the recorded basis rather than softening it; B_breakRetest is 16 trades, 43.8%, +5.09R at P=0.26, which is not evidence of an edge; the whole forward sample is 40 trades at 27.5% for -7.04R, matching the operator\'s own screen, which had been correct all along. scripts/mogo_forward_trade_analysis.js now partitions by captureBasis, defaults to FORWARD, fails CLOSED on an unrecognised basis, and prints the population and the excluded counts in its header; six fixtures (FTA-43..FTA-48) pin the split, including an end-to-end regression where two profitable backtests flip a losing forward sample positive. NOT CHANGED, deliberately: the fixed-R booking; alexGReconstructExitFromCandles and every other protected function; the evidence package date partition (changing which day a package files under has blast radius through sequence allocation and the identity manifest, and the misattribution it caused is fixed at exitTimestamp instead).',
   '12.41.0 — D3: THE EXECUTION BOUNDARY NOW CHECKS THE SIGN (OWNER-AUTHORIZED PROTECTED-FUNCTION CHANGE). Exactly one protected function changed -- openPaperPosition -- confirmed by the drift check naming it AND NOTHING ELSE, which independently proves the other 62 protected functions and all 4 protected constants are byte-identical. No pip-value behaviour, no pip qualification, no lot quantisation, no entry/exit semantics touched: D1, D2 and D4 are explicitly NOT part of this change. THE DEFECT: openPaperPosition guarded only `if(!(riskPips>0))`, and riskPips is built with Math.abs, so the SIGN was already discarded before the guard ran. Three consequences, all measured. (1) A WRONG-SIDE STOP FIRED: for a buy, stop = aoi.support - pip*7, where the AOI is computed from DAILY/WEEKLY candles filtered against the last CLOSED bar and cached 15 minutes, while the entry price is live -- so once price trades below support-7pip the stop sits ABOVE the entry, abs() makes the risk positive again, and the position opened. (2) THE R:R GATE MADE IT WORSE, NOT BETTER: ratio = reward/risk, so as risk approaches zero the ratio approaches infinity and clears the 1.99 minimum; measured 2000:1 at 0.05 pips. The one gate that looked protective was the one admitting the dangerous case. (3) SIZE WAS UNBOUNDED: lots = riskAmount/(riskPips*pipVal) with no cap, no notional limit and no margin check anywhere -- 0.5 pips gives 20 lots (2,000,000 units, 200x leverage on a $10,000 account) and 0.05 pips gives 200 lots, where a FIVE-PIP adverse move loses the entire account. Because clusterLevels returns a MEAN, aoi.support is not on the price grid, so riskPips is not tick-quantised and can be arbitrarily small. An infinite lot size also COMMITTED at open -- commitPaperLedger inspects only balance and the 5 most recent CLOSED P&Ls, and (Infinity).toFixed(2) survives parseFloat -- then wedged the position permanently unclosable when the close made balance non-finite and the commit rolled back. THE FIX: validateTradeGeometry(dir,entry,stop,target,pip,MIN_RISK_PIPS) is called at the top of openPaperPosition, before any sizing. It validates SIGNED geometry -- the thing Math.abs() throws away -- returning VALID / STOP_WRONG_SIDE / RISK_TOO_SMALL / TARGET_WRONG_SIDE / NON_FINITE. It was written, reviewed and fixture-covered as a pure unwired function during the D3 investigation, so this release wires existing tested logic rather than authoring new logic at the boundary. THIS IS THE RIGHT BOUNDARY: all four JVM and manual entry paths converge on openPaperPosition -- checkAutoTrades, placePaperTrade, approveManualReviewTrade and the developer test generator -- and paperAccount.openPositions.push is its single mutation site, so one check covers every path. ALEX is a separate engine with its own protected construction function and is deliberately OUT OF SCOPE for this authorization. MIN_RISK_PIPS=1.0 IS A SAFETY FLOOR, NOT A STRATEGY RULE: it rejects geometry no broker would fill meaningfully (a stop inside the spread) and must never be tuned to admit or exclude setups. HISTORICAL COMPATIBILITY, MEASURED: all 259 preserved observations were replayed through the installed guard and 259 of 259 classify VALID -- the tightest real risk distance in the corpus is 5.03 pips, five times the floor, and there are zero wrong-side records. The guard rejects NOTHING MOGO has ever done. TESTING: 13 new D3.* fixtures drive the REAL protected function at the boundary -- long and short valid/equal/wrong-side geometry, near-zero risk at 0.5 and 0.05 pips, seven malformed-input shapes (NaN, Infinity, -Infinity, undefined) all rejected with no position created, wrong-side target, the 5.03-pip historical tightest still accepted, the floor asserted to sit below it, and a normal JPY short still opening. Two POSITIVE CONTROLS (D3.1, D3.4) guard against the far worse defect of a guard that refuses everything. Gate: 34 suites, 1467 Python tests, zero drift after an authorized re-baseline of openPaperPosition alone.',
   '12.40.0 — A DEAD PROVIDER WAS RENDERED IN THE VOCABULARY OF A QUIET MARKET (MOGO-023, INC-006). Market-data diagnostics and operator display only; no strategy rule, threshold, evaluator, classification, trade construction, sizing or execution change; zero protected-function/protected-constant drift (63 functions and 4 constants byte-identical). THE INCIDENT: the operator saw "35 pairs not evaluated — incomplete candle history", every pair reporting requested 220 / received 0. Measured root cause, reproduced 9/9 across seven minutes: api-fxpractice.oanda.com was returning HTTP 520 (Cloudflare origin error) on EVERY endpoint -- candles, accounts and pricing alike -- while api-fxtrade.oanda.com answered a correct 401 to the identical unauthenticated request. A DATA PROVIDER outage, external to MOGO. Auth was eliminated (a dead token yields 401, not 520), as were symbol mapping (ALL_PAIRS already carries OANDA-native underscore identifiers), timeframe (reproduced on H1 and D), request construction (reproduced at count=220 and count=5) and local network (live host and unrelated hosts reachable). THE DEFECT THIS EXPOSED IS MOGO\'S, AND IT IS NOT THE SUPPRESSION: ADR-011 worked exactly as designed and correctly withheld every evaluation. The defect is that MOGO COULD NOT SAY WHY. fetchCandles() collapsed three materially different failures into one bare null -- a non-OK status, a 200 carrying no candles field, and a thrown network/CORS error -- discarding the reason one line after learning it. So the suppression banner rendered "· — · HTTP —" for all 35 instruments, and its own prose then reassured the operator that "session, weekend, holiday and liquidity gaps are all legitimate" -- arguing for precisely the wrong conclusion during a total outage. This is B-32\'s eighth defect category, ABSENCE IS NOT SILENCE, on a surface B-32 never audited: it was repaired three times in the evidence layer and never in the market-data path. THE REPAIR: a new fetchCandlesDiagnosed() returns {candles, diagnostics} carrying transportOutcome in {OK, HTTP_ERROR, NO_CANDLES_FIELD, NETWORK_ERROR} plus the real httpStatus; scanPair() records those into pairData EVEN WHEN candles is null (previously both went to null in exactly the case an operator needs them); and the banner names the transport failure, separates it from a legitimate short-history gap, and states plainly that this is a data-availability failure and NOT a market verdict -- MOGO is not reporting that no setups exist, it is reporting that it cannot see the market. FETCHCANDLES\' RETURN CONTRACT IS DELIBERATELY UNCHANGED -- the array on success, bare null on every failure -- so all 21 existing call sites and their null guards behave byte-for-byte as before. Returning [] instead would have been the obvious shape and is exactly wrong: [] is truthy, so every `if(!candles)` guard in the application would have silently stopped firing. Fixture BEHAVIOUR-1 pins this and still passes; INC006-1 pins it a second time, deliberately. completenessState REMAINS THE SOLE EVALUATION CONTRACT (ADR-011): transportOutcome and httpStatus are diagnostics and display only, and no consumer branches on them to decide evaluation -- branching on httpStatus===429 would re-create the original ADR-011 defect, whose actual case was httpStatus===200. CREDENTIAL SAFETY: only the error\'s own message is recorded, never the request, which carries the bearer token in a header; a fixture asserts no Authorization/Bearer text can reach a diagnostic string. EXPLICITLY NOT DONE: no relaxation of the 220-candle lookback, no fabricated or interpolated candles, no stale-data reuse, no retry storm against a failing origin, and NO automatic failover to the live host -- failing a PAPER platform over onto a live-money endpoint is a governance boundary, not a repair. TESTING: v130 grows 25 -> 31 fixtures (INC006-1..6), all passing. Mutation-verified, three mutations each killed: fetchCandles returning [] instead of null kills BEHAVIOUR-1 and INC006-1; discarding httpStatus when candles is null kills INC006-6; dropping the headline distinction kills INC006-6. Gate: 34 suites, 2,386 fixtures. See docs/INCIDENTS.md INC-006.',
@@ -15706,6 +15707,42 @@ const EVIDENCE_C1_ATTESTATION_URL='docs/campaigns/C1/C1_INTEGRITY_ATTESTATION.js
 // short enough that C1 cannot have drifted unnoticed and long enough that a normal session does
 // not have to re-run the verifier mid-flight.
 const EVIDENCE_C1_ATTESTATION_MAX_AGE_MS=24*60*60*1000;
+// ── v12.43.0 OPERATOR DECISION: AGE ALONE NO LONGER STOPS TRADING ────────────────────────────
+//
+// WHAT THIS ATTESTATION ACTUALLY ASSERTS: at the moment it was generated, all 33 manifest
+// artifacts were present and hashed correctly. Two very different things could be wrong with it,
+// and until now they were punished identically:
+//
+//   THE CHECK FAILED    -- artifacts missing, hashes mismatched, the manifest is not the pinned
+//                          one, the verdict is not VERIFIED, the counts contradict the file's own
+//                          detail lists, the timestamp is forged into the future. Something is
+//                          actually wrong with the evidence corpus RIGHT NOW.
+//   THE CHECK IS OLD    -- it passed, and nobody has re-run it since. Nothing is known to be
+//                          wrong; the confirmation is simply not fresh.
+//
+// The second is not a reason to stop trading, and treating it as one had a cost the operator
+// actually paid: the attestation expires every 24 hours, so ALEX locks itself out daily unless
+// someone re-runs and pushes the verifier. A gate that fires on a schedule rather than on a
+// fault trains the operator to route around it, and a system that takes itself down on a day
+// nobody is watching loses the forward evidence it exists to collect.
+//
+// It is also the wrong REMEDY. Halting trading does not repair evidence integrity; it only stops
+// new evidence being produced. A genuine integrity failure still blocks -- writing new records
+// into a corpus you cannot trust is a real problem -- but staleness now WARNS instead.
+//
+// WHAT THIS GIVES UP, stated plainly so the trade is visible: if evidence artifacts are altered
+// or deleted AFTER the last attestation, MOGO will keep trading and will not notice until the
+// verifier is re-run. The window for that is now the backstop below rather than 24 hours.
+// Authorized by the operator 2026-09-04.
+const EVIDENCE_C1_STALENESS_BLOCKS_TRADING=false;
+// The backstop. "Warn instead of block" must not decay into "never checked again": past this age
+// the attestation stops being evidence about anything and staleness becomes blocking once more,
+// whatever the flag above says.
+const EVIDENCE_C1_ATTESTATION_HARD_MAX_AGE_MS=30*24*60*60*1000;
+// The ONLY reason code that can ever be advisory. Everything else means something is wrong now.
+// A future-dated attestation is deliberately NOT here -- that is a broken or forged clock, and it
+// is the direction that could otherwise buy unlimited freshness.
+const EVIDENCE_C1_ADVISORY_REASONS=['STALE_ATTESTATION'];
 // Clocks disagree. A small tolerance avoids refusing a genuine attestation over skew, while an
 // attestation dated meaningfully in the future is refused -- that is a broken or forged clock,
 // and it is the direction that could otherwise buy unlimited freshness.
@@ -15742,12 +15779,30 @@ function evidenceEvaluateCampaignC1Attestation(att,nowMs){
   if(Array.isArray(att.mismatchedFiles)&&att.mismatchedFiles.length) reasons.push('CONTRADICTORY_MISMATCH_LIST');
   if(Array.isArray(att.unlistedFiles)&&att.unlistedFiles.length) reasons.push('CONTRADICTORY_UNLISTED_LIST');
   const t=att.generatedAt?Date.parse(att.generatedAt):NaN;
+  let ageMs=null,beyondHardMax=false;
   if(isNaN(t)) reasons.push('MALFORMED_TIMESTAMP');
   else{
-    if(now-t>EVIDENCE_C1_ATTESTATION_MAX_AGE_MS) reasons.push('STALE_ATTESTATION');
+    ageMs=now-t;
+    if(ageMs>EVIDENCE_C1_ATTESTATION_MAX_AGE_MS) reasons.push('STALE_ATTESTATION');
+    if(ageMs>EVIDENCE_C1_ATTESTATION_HARD_MAX_AGE_MS) beyondHardMax=true;
     if(t-now>EVIDENCE_C1_ATTESTATION_FUTURE_SKEW_MS) reasons.push('FUTURE_DATED_ATTESTATION');
   }
+  // `intact` keeps its original meaning EXACTLY -- every condition positively satisfied -- because
+  // other readers and fixtures depend on it. The blocking/advisory split is ADDITIVE beside it, so
+  // nothing that consumed this function before changes meaning.
+  const advisory=reasons.filter(function(x){
+    if(EVIDENCE_C1_ADVISORY_REASONS.indexOf(x)<0) return false;
+    // Staleness stops being advisory when the operator has said it blocks, or once it is old
+    // enough that it is no longer evidence about anything.
+    if(EVIDENCE_C1_STALENESS_BLOCKS_TRADING===true) return false;
+    if(beyondHardMax) return false;
+    return true;
+  });
+  const blocking=reasons.filter(function(x){ return advisory.indexOf(x)<0; });
   return{intact:reasons.length===0,reasons:reasons,
+    blockingReasons:blocking,advisoryReasons:advisory,
+    blocks:blocking.length>0,
+    ageMs:ageMs,beyondHardMaxAge:beyondHardMax,
     attestation:{generatedAt:att.generatedAt||null,manifestSha256:att.manifestSha256||null,
       verified:a?a.verified:null,total:a?a.total:null,tool:att.tool||null}};
 }
@@ -15833,12 +15888,35 @@ function evidenceEvaluateForwardPaperGate(facts){
     }
   }
 
-  // Campaign C1 must be intact. Anything other than an explicit true is a blocker.
-  if(f.campaignC1Intact!==true) add('CAMPAIGN_C1','Campaign C1 was not positively confirmed intact.');
+  // Campaign C1. A genuine integrity failure blocks; an attestation that merely went stale is
+  // reported as an ADVISORY and does not stop trading (see EVIDENCE_C1_STALENESS_BLOCKS_TRADING).
+  //
+  // BACKWARD COMPATIBLE BY CONSTRUCTION: when campaignC1Blocking is absent -- every caller and
+  // fixture written before this split supplies only campaignC1Intact -- the old rule applies
+  // unchanged, so anything other than an explicit true still blocks. The relaxation reaches only
+  // callers that positively supply the new fact.
+  const advisories=[];
+  if(typeof f.campaignC1Blocking==='boolean'){
+    if(f.campaignC1Blocking===true){
+      add('CAMPAIGN_C1','Campaign C1 integrity FAILED: '
+        +((f.campaignC1&&f.campaignC1.blockingReasons)||[]).join(', ')
+        +'. This is not a staleness warning -- something is wrong with the evidence corpus.');
+    }
+  }else if(f.campaignC1Intact!==true){
+    add('CAMPAIGN_C1','Campaign C1 was not positively confirmed intact.');
+  }
+  ((f.campaignC1&&f.campaignC1.advisoryReasons)||[]).forEach(function(code){
+    const hrs=(f.campaignC1&&typeof f.campaignC1.ageMs==='number')
+      ? (f.campaignC1.ageMs/3600000).toFixed(1)+' h old' : 'age unknown';
+    advisories.push({code:code,detail:'The C1 integrity check PASSED when it was last run ('+hrs
+      +'), and has not been re-run since. Nothing is known to be wrong. Re-run '
+      +'scripts/mogo_c1_refresh.js and commit the attestation to clear this.'});
+  });
 
   return{
     pass:blockers.length===0,
     blockers:blockers,
+    advisories:advisories,
     namedExceptionCount:Object.keys(exceptions).length,
     checkedAt:f.checkedAt||null
   };
@@ -15846,9 +15924,16 @@ function evidenceEvaluateForwardPaperGate(facts){
 // Operator-facing text. Every blocker is printed; a gate that hides why it refused is a gate the
 // operator will learn to route around.
 function evidenceForwardPaperGateText(v){
-  if(v&&v.pass) return 'Evidence preflight PASS — every required condition is satisfied.';
+  const adv=((v&&v.advisories)||[]).map(function(a){ return '  ⚠ '+a.code+': '+a.detail; });
+  if(v&&v.pass){
+    // A pass with an advisory says so. A warning the operator never sees is not a warning.
+    return adv.length
+      ? ['Evidence preflight PASS — with warning(s):',''].concat(adv).join('\n')
+      : 'Evidence preflight PASS — every required condition is satisfied.';
+  }
   const lines=['⛔ EVIDENCE PREFLIGHT FAILED — forward paper trading is blocked.',''];
   ((v&&v.blockers)||[]).forEach(function(b){ lines.push('  • '+b.code+': '+b.detail); });
+  if(adv.length){ lines.push('','Warnings (these are NOT why it refused):'); adv.forEach(function(a){ lines.push(a); }); }
   lines.push('','Forward paper-trading evidence records something that happens once. Resolve every',
     'item above, or add a NAMED exception with a written reason, and try again.');
   return lines.join('\n');
@@ -15897,6 +15982,9 @@ async function evidenceGatherForwardPaperFacts(){
   const c1Eval=evidenceEvaluateCampaignC1Attestation(c1);
   facts.campaignC1=c1Eval;                 // provenance, kept for the operator and the record
   facts.campaignC1Intact=c1Eval.intact;    // false unless positively established
+  // v12.43.0: the fact the gate now decides on. Still false unless positively established -- an
+  // evaluation that could not run at all yields blocking reasons, never an empty list.
+  facts.campaignC1Blocking=c1Eval.blocks===true;
   return facts;
 }
 async function evidenceForwardPaperPreflight(overrides){
