@@ -2006,9 +2006,10 @@ const ALL_PAIRS=[
 // Bump by 1.0 for a major update (new feature/tab), by 0.1 for a small patch/fix.
 // This shows in the header next to the logo and on the Diagnostics tab, so you can
 // glance at the live site and instantly confirm which build actually deployed.
-const APP_VERSION='12.44.0';
+const APP_VERSION='12.45.0';
 const APP_VERSION_DATE='04 Sep 2026';
 const APP_VERSION_LOG=[
+  '12.45.0 — THE FORWARD RECORD COULD NOT PROVE THE FACT THAT PICKED ITS OWN DIRECTION (zero protected-function and zero protected-constant drift; 64/64 functions and 4/4 constants byte-identical). MEASURED, not suspected: across the 86 preserved packages, EVERY REPLAY_RUN package verifies every attribution condition and EVERY forward package leaves at least one unverified -- A_repeatedReaction 1 (ALEX_SR_V1_A_ZONE_STATUS_VALIDATED), B_breakRetest 3 (adding B_ZONE_STATUS_BROKEN, B_FIRST_RETEST_IN_BREAK_CYCLE and B_REACTION_SIDE_MATCHES_BREAK -- the condition that decides whether the trade is a buy or a sell). The data was never missing: alexGCreateSetupRecord (PROTECTED) stores zoneStatusAtQualification, reactionSwingType and reactionFromSide, and alexGConstructLivePosition (PROTECTED) simply does not copy them onto the booked position. Replay reads the setup record directly, which is exactly why replay always verified and forward never did. BOTH PROTECTED FUNCTIONS ARE UNCHANGED: the repair is a join performed at capture time, where the setup record and the closed trade are both already in hand. The join is IDENTITY-CHECKED, never heuristic -- setupId AND qualificationTimestamp must be present on both sides and both match, and every other outcome supplies NOTHING and leaves the package honestly INDETERMINATE, because treating an absent field as agreement is how provenance gets manufactured. The booked trade always wins: the join fills a hole, never overwrites a recorded value. ALEX_SR_V1_B_FIRST_RETEST_IN_BREAK_CYCLE needs a count no single record can carry, so it is taken over (zoneId, breakCycleId, B_breakRetest) -- the uniqueness key the engine itself enforces -- and a record missing either half yields null rather than a count over the wrong population. SAFETY: a contradiction that appears ONLY once the join supplied fields falls back to the pre-v12.45.0 attribution and records CONTRADICTED_BY_JOIN with the offending condition ids, so a stale setup record can never destroy a trade record; a trade that contradicts its own rules on its OWN stored fields still fails capture, unchanged. Packages carry an additive setupRecordJoin block naming exactly which inputs came from the join, validated present-only so the 86 existing packages still validate, import and verify. Callers that supply nothing -- replay and every other seam -- get the pre-v12.45.0 attribution byte-for-byte. 37 new fixtures (SJ-1..SJ-37) including two positive controls that mutate the joined data and require the mirror to notice, and one mutation control proving the same bad data is invisible without the join.',
   '12.44.0 — A CONTROL ARM, AND A REPLAY THAT CANNOT PEEK (zero protected-function and zero protected-constant drift; the new strategy is registered but NOT authorized to trade). WHY: ALEX has never been measured against an alternative, so it could be shown to be winning or losing but never to be ADDING anything -- which is the only question that matters once a strategy is losing. Hutchinson &amp; O\'Brien (2022, Int. Rev. Financial Analysis) tested technical trading rules across currencies and found in-sample Sharpe 0.66 collapsing to 0.06 out of sample, with whatever abnormal return remained FULLY EXPLAINED by time-series momentum. If that holds here, ALEX\'s zone detection, touch counting, break-and-retest sequencing and staleness rules are elaborate machinery producing what a one-line trend check produces for free. Nothing in this repository could test that. THE CONTROL: baselineTrendSignal is the entire entry rule -- the sign of the 3-month return, no filters, no confirmation, no discretion. BT-4 pins that it reads ONLY the two endpoint closes (a wild path and a straight line with identical endpoints give an identical signal), because a control arm with hidden structure is a second strategy rather than a control. It borrows ALEX\'s OWN risk model: same instruments, same 2R target (BT-9 asserts the ratio in both directions, since a divergence there invalidates every conclusion drawn from the comparison), same 1% sizing. THE ONE DISCLOSED DIFFERENCE, recorded on every position rather than left in a comment (BT-12): ALEX places its stop against the zone it traded and a trend rule has no zone, so this uses an ATR multiple. NOT the published TSMOM strategy and must never be reported as one -- academic TSMOM holds a fixed horizon with volatility-scaled sizing and no stop; the question here is narrower and more useful. THE REPLAY IS BUILT SO LOOK-AHEAD IS STRUCTURALLY IMPOSSIBLE, not merely avoided: the signal is handed candles.slice(0,i+1) -- a PREFIX, not an index into the full array -- so no future bar is in scope to read by mistake; the ATR comes off the same prefix; and the entry is bar i+1\'s OPEN, the first price actually transactable after the close that produced the signal, because deciding on a bar and filling inside it is the classic backtest lie. BTR-1 proves the property by TRUNCATION: running the full series and a series cut short yields byte-identical trades for every decision made before the cut, which no leak of a future bar into a signal, an entry or a stop could survive. EXITS REUSE ALEX\'S OWN PROTECTED alexGWalkOutcome AND alexGComputeMAEMFE, UNMODIFIED, so the two arms differ ONLY at entry and no outcome difference can be attributed to bookkeeping -- including conservative ambiguity (a bar touching stop and target both books a Loss, BTR-5). One position per pair at a time (BTR-4); a still-open trade has resultR null and is neither a win nor a loss (BTR-6); a bar that cannot produce geometry is RECORDED as skipped rather than silently dropped, because a missing trade is a fact about coverage (BTR-9). FRICTION IS NOT MODELLED AND THE RESULT SAYS SO (BTR-7): ALEX\'s own replay threads spread and slippage as metadata with zero effect on outcome math, so charging spread here and not there would rig the comparison. Both arms are equally optimistic; the comparison BETWEEN them is valid, neither number is achievable, and neither should ever be quoted as a return. Results are stamped captureBasis REPLAY_RUN at the source -- the analysis tool partitions on exactly that, and a replay result reaching a forward figure is the defect that produced a +20.97R claim where the real forward result was -7.04R. IT CANNOT TRADE: paperTrading, automation and scanning are false (BT-13), the services are inert (BT-16), and BT-14 checks SEVEN named live entry points (alexGLivePollTick, alexGCheckLivePositions, alexGAttemptOpenLivePosition, alexGEvaluatePairForLiveSetups, alexGConstructLivePosition, checkAutoTrades, scanAll) and asserts none of them reference the baseline -- promoting a strategy into PAPER is an operator governance boundary and this has not been promoted. The lookback was chosen from the literature BEFORE looking at any MOGO outcome and is pinned (BT-17), because a lookback tuned against this corpus would make the control as overfitted as the thing it controls for. TWO EXISTING FIXTURES WERE PINNING A SNAPSHOT and registering a fourth strategy broke them -- the defect CLAUDE.md names as this repository\'s most common failure mode. v1231 Fixture 4 asserted buttonCount===3 and is about ONE BUTTON PER ENTRY, so it now compares against the registry\'s own length; Fixture 6 asserted buttonCount===4 after injecting one entry and is about a RELATIONSHIP, so it now asserts one more entry yields exactly one more button, taking its baseline from the registry length rather than by rendering again (an extra render/read there re-enters the workspace chart path and exhausts the harness\'s charting stub, failing a LATER fixture -- a test that breaks another test by measuring is worse than the literal it replaced). 27 new fixtures in tests/run_v144_baseline_trend_tests.js. Gate: 36/36 suites, 2,769/2,769 under Node, plus v144 27/27; zero drift.',
   '12.43.0 — C1 STALENESS IS A WARNING; C1 FAILURE STILL BLOCKS (operator-authorized relaxation of a safety gate, 2026-09-04; zero protected-function and zero protected-constant drift). THE PROBLEM: evidenceEvaluateCampaignC1Attestation returned one flat reason list, and evidenceEvaluateForwardPaperGate refused on any of it. That collapsed two very different facts into one outcome. "Artifacts are missing / hashes mismatch / the manifest is not the pinned one / the verdict is not VERIFIED / the counts contradict the file\'s own detail lists / the timestamp is forged into the future" all mean something is wrong with the evidence corpus RIGHT NOW. "The check passed and nobody has re-run it since" means nothing is known to be wrong and the confirmation is merely not fresh. The attestation expires after 24 h, so the second case fired DAILY and locked ALEX out until the operator re-ran and pushed the verifier -- a gate firing on a schedule rather than on a fault, which trains an operator to route around it and takes the system down on days nobody is watching, losing exactly the forward evidence it exists to protect. It is also the wrong REMEDY: halting trading does not repair evidence integrity, it only stops new evidence being produced. THE CHANGE: STALE_ATTESTATION is now the ONLY reason code that can become advisory (EVIDENCE_C1_ADVISORY_REASONS, asserted to be exactly that one entry by C1AGE-10, so a future edit widening it fails). Everything else still blocks, one fixture per failure mode (C1AGE-5.1..5.9), and staleness combined with a real failure still blocks (C1AGE-9). FUTURE_DATED_ATTESTATION is deliberately NOT advisory -- a broken or forged clock is the one direction that could buy unlimited freshness. A BACKSTOP at EVIDENCE_C1_ATTESTATION_HARD_MAX_AGE_MS (30 days) restores blocking, because "warn instead of block" must not decay into "never checked again" and an attestation from months ago is not evidence about anything (C1AGE-8). The whole policy reverses by setting EVIDENCE_C1_STALENESS_BLOCKS_TRADING back to true -- one constant, proven to restore the old behaviour exactly by C1AGE-11 running the real function in a second realm. ADDITIVE AND BACKWARD COMPATIBLE: `intact` keeps its original meaning (every condition positively satisfied, so a stale attestation is still not intact) and the blocking/advisory split sits beside it; the gate consults the new campaignC1Blocking fact ONLY when a caller positively supplies it, so every call site and fixture written before this split gets the old rule unchanged (C1AGE-12). WHAT IS GIVEN UP, stated plainly rather than buried: if evidence artifacts are altered or deleted AFTER the last attestation, MOGO will keep trading and will not notice until the verifier is re-run; that window is now the 30-day backstop rather than 24 hours. The advisory is SHOWN on the operator text for a passing preflight (C1AGE-4) -- a warning nobody sees is not a warning. 20 new fixtures in tests/run_v143_c1_staleness_policy_tests.js driving the real extracted functions. Gate: 36/36 suites, 2,769/2,769 under Node, plus v143 20/20; zero drift.',
   '12.42.0 — EXIT FIDELITY AND POLL RE-ENTRANCY (six confirmed correctness defects in the ALEX live paper-trading path; zero protected-function and zero protected-constant drift, verified against the committed 12.41.0 baseline — every repair lands in non-protected callers, and the frozen fixed-R booking methodology is deliberately UNCHANGED). D1 (WORST): a rejected ledger commit could book a losing trade as a WINNER. alexGCheckLivePositions advanced pos.lastExitCheckTimestamp PAST the exit bar before attempting the close, and discarded alexGCloseLivePosition\'s return value. That function rolls the ACCOUNT back when commitAlexGLedger rejects (STALE_VERSION from a second tab, a full quota) but cannot roll back a cursor it never saw, so the next tick began AFTER the bar that exited, never saw it again, and left open a position the market had already closed — which later closed at target and was recorded as a Win. The cursor and the excursion are now restored on rejection, the failure is reported through recordAlexGEngineError (stage alexGCheckLivePositions.exitCommitRejected) instead of vanishing, and the tick STOPS: the rollback replaces every object in openPositions with a deep clone, so the loop\'s remaining bindings are detached and their mutations would have been silently discarded. D2: gap-through exits were invisible. A bar that OPENS beyond the trigger — a weekend gap, an NFP spike — could only have filled at the open; the trigger was never traded. Every such exit therefore read as exactly the planned R, making the tail of the loss distribution unobservable. The BOOKING is deliberately left alone (fixed-R accounting is this system\'s disclosed, frozen methodology, pinned by ALEXEXIT.14/.18, and silently re-pricing historical exits would rewrite the meaning of every figure already derived from the corpus); instead the true executable price is CAPTURED beside the booked one as exitExecutablePrice/exitPriceBasis/exitGapPips/exitGapR, bounded so it can only ever record a fill AGAINST the position. Whether to change the booking is now an operator decision with the evidence in hand rather than an invisible one. D3: MFE/MAE absorbed the exit bar. alexGReconstructExitFromCandles (PROTECTED, unedited) folds each bar\'s full high/low into the excursion and only THEN tests for the exit, so movement after the position was already closed was recorded as excursion the trade experienced — mfeR could exceed plannedRR on a record whose resultR is −1, biasing every partial-exit study upward. Intra-minute ordering is not knowable at M1 resolution, so this does not guess: the recorded figure is rewound to the last bar completing strictly BEFORE the exit bar (the largest excursion the trade is KNOWN to have had while open) and the exit bar\'s own extreme is kept beside it as mfeRUpperBound with excursionBoundedByExitBar. What is established and what is merely possible stay distinguishable. D4: exitTimestamp in every evidence package read closedAt — the moment the POLLER NOTICED the exit, not the moment it happened. The two differ by the whole of any downtime: a laptop asleep from Friday reopens Monday, reconstructs a Friday 20:41 stop from M1 history, and stamped it Monday 07:00, so holding-period, exit-session and day-of-week figures were computed against the wrong instant. It now prefers the exitDetectedAt that was already being recorded, with exitTimestampBasis naming which was used. D5: setInterval(alexGLivePollTick, 60000) never awaited its async callback, so a tick outrunning its own period overlapped the next one while both shared alexGAccount, the per-position exit cursors and alexGLastEvaluatedCloseTime. This is the mechanism behind the continuity card\'s backwards intervals (startedAt is stamped at tick entry, seq at write, so overlapping ticks write rows whose two orderings disagree), and it can let two ticks both pass the pair+timeframe overlap check while suspended on await fetchBidAsk. A new alexGLivePollTickGuarded wrapper holds an in-flight flag; the tick itself is byte-identical and its exceptions still propagate. A skipped tick is RECORDED as SKIPPED_POLL_IN_FLIGHT with its own tickId, because an overlap that never reaches the ledger is indistinguishable from downtime. D6: a disabled tick wrote TWO poll rows under one natural key (POLL|strategyId|tickId) — one SKIPPED_DISABLED with 0 instruments from an early return, one OK with 12 NOT_REACHED from the finally block — both fire-and-forget async, so which survived the IndexedDB race was nondeterministic and the ledger\'s own uptime counts were not reproducible across runs of identical code. The outcome is now set on the tick\'s single writer; the surviving row is strictly richer. TESTING: new tests/run_v142_exit_fidelity_reentrancy_tests.js (22 fixtures) drives the REAL alexGCheckLivePositions and alexGLivePollTickGuarded extracted verbatim from this file, with the real protected alexGReconstructExitFromCandles, stubbing only the boundaries (candle fetch, the protected close, bid/ask, persistence). Every repair carries a NEGATIVE CONTROL: the recorded executable price cannot move in the position\'s favour (EXITFID-4); the excursion bound is not always set (EXITFID-8); a SUCCESSFUL close still advances the cursor, so the rejection fixture is not passing on code that never advances it (EXITFID-10); both positions are processed when the close succeeds, so the stop-the-tick fixture is not passing on a loop that only ever runs once (EXITFID-14); the guard releases its flag even when the tick THROWS (PRE-6), since a leaked flag would silently end live polling for the session — strictly worse than the overlap it prevents. tests/run_v1233_jvm_autotrade_reliability_tests.js JVMTMR-3/4/5 now assert against the wrapper, which is what is actually scheduled; PRE-1..PRE-7 pin that the wrapper calls through, so those three cannot decay into proving only that SOMETHING is scheduled. Full gate: 36/36 suites, 2,769/2,769 fixtures under Node, plus 22 (v142) and 43 (v138), zero drift. ALSO IN THIS RELEASE: (a) the forward-observation continuity figures no longer inherit the poll-ordering fault -- evidenceSummarizeObservations sorted by seq (write order) and differenced startedAt (entry order), so a disordered pair produced a negative gap the arithmetic refused AND a compensating oversized one it counted in full. Re-sorting by startedAt was tried and is WRONG (it converts a backwards CLOCK into a confident positive gap and invents downtime from it, which L10d exists to prevent); instead both members of every local inversion are marked, any pair touching one contributes no interval, no maxGap and no missed count, and intervalPairsExcludedAsDisordered reports how many pairs were dropped rather than absorbing them. The trailing ongoing-outage term now measures from the NEWEST start time rather than whichever poll was last in write order -- after a reordering that is an OLDER tick, so a running loop could be reported as minutes dead. An adjacent swap now inflates nothing (was 1 invented interval and a doubled maxGap); a record displaced by ten positions goes from >=10 invented intervals to 1, and PCO-6 pins that residue explicitly because a partial repair reported as a clean one is the same class of error as the defect. (b) ALEXG_LIVE_RISK_POLICY: two operator risk limits, BOTH OFF BY DEFAULT and off meaning byte-identical behaviour -- a spread-over-risk cap and a per-instrument open-exposure cap (optionally same-direction-only). Enforced at the same non-protected post-construction seam as the D3C geometry gate, before the position reaches openPositions or the ledger, with the same permanent status row, pipeline stage and decision event every other refusal gets. RISK_INSTRUMENT_EXPOSURE_LIMIT registered before use. Both thresholds come from measurements over the whole corpus (spread/risk median 9.5% and worst 39.7%; five same-instrument overlaps, four in the same direction, EUR_USD H1+H4 for 47 h) and a threshold must be chosen on principle, never by which past trades it would have excluded. NO setup-type gate was added: ALEX_V11_SETUP_EXECUTION_POLICY already suspends A_repeatedReaction, and a second mechanism doing the same job is how two gates end up disagreeing. (c) That suspension\'s recorded basis is REVIEWED, not rewritten: the original 1W/17L reason is left byte-identical as the operator\'s recorded authority. CORRECTION ISSUED WITHIN THIS RELEASE: the first version of that review claimed the corpus showed A_repeatedReaction at 17W/34L, \'exactly breakeven\', and it was WRONG -- it was computed over 91 packages of which 42 were REPLAY_RUN backtests counted as forward trades, breaking this repository\'s own rule that forward statistics never silently include replay observations. FORWARD ONLY: A_repeatedReaction is 24 trades, 4W/20L, 16.7%, -12.13R, which AGREES with the recorded basis rather than softening it; B_breakRetest is 16 trades, 43.8%, +5.09R at P=0.26, which is not evidence of an edge; the whole forward sample is 40 trades at 27.5% for -7.04R, matching the operator\'s own screen, which had been correct all along. scripts/mogo_forward_trade_analysis.js now partitions by captureBasis, defaults to FORWARD, fails CLOSED on an unrecognised basis, and prints the population and the excluded counts in its header; six fixtures (FTA-43..FTA-48) pin the split, including an end-to-end regression where two profitable backtests flip a losing forward sample positive. NOT CHANGED, deliberately: the fixed-R booking; alexGReconstructExitFromCandles and every other protected function; the evidence package date partition (changing which day a package files under has blast radius through sequence allocation and the identity manifest, and the misattribution it caused is fixed at exitTimestamp instead).',
@@ -16777,6 +16778,90 @@ function alexGBuildRuleAttribution(record,setupType,cfg,ctx){
   };
 }
 
+// ══ v12.45.0 — SETUP-RECORD JOIN: the live capture path lost the fields the mirror reads ══════
+// MEASURED, not assumed. Across the 86 preserved packages: every REPLAY_RUN package verifies
+// every condition (0 unverified), and EVERY forward package fails to verify at least one --
+// A_repeatedReaction leaves 1, B_breakRetest leaves 3, including
+// ALEX_SR_V1_B_REACTION_SIDE_MATCHES_BREAK, the condition that decides trade direction.
+//
+// The cause is not missing data. alexGCreateSetupRecord (PROTECTED) already stores
+// zoneStatusAtQualification, reactionSwingType and reactionFromSide; alexGConstructLivePosition
+// (PROTECTED) simply does not copy them onto the booked position. Replay reads the setup record
+// directly, which is exactly why replay has always verified and forward never has. Both protected
+// functions stay byte-identical -- the repair belongs at capture time, where the setup record and
+// the closed trade are both in hand.
+//
+// The join is IDENTITY-CHECKED, never heuristic. setupId AND qualificationTimestamp must both be
+// present on both sides and both match. alexGSetupState is rebuilt deterministically from candles
+// on every poll, so a matching pair is the same qualification event on the same bar. Anything else
+// supplies NOTHING and the package stays honestly INDETERMINATE -- an absent field is the absence
+// of evidence, and treating absence as agreement is precisely how provenance gets manufactured.
+//
+// The booked trade always wins: the join can fill a hole, never overwrite a recorded value.
+const ALEX_SETUP_JOIN_FIELDS=Object.freeze([
+  'zoneStatusAtQualification','reactionSwingType','reactionFromSide','brokenAtBar','brokenAt'
+]);
+// Every status the join can report. Enumerated so a package carrying an unrecognised one fails
+// validation instead of quietly claiming a provenance no code path can produce.
+const EVIDENCE_SETUP_JOIN_STATUSES=Object.freeze([
+  'NOT_ATTEMPTED','SETUP_STATE_EMPTY','TRADE_HAS_NO_SETUP_ID','SETUP_NOT_FOUND',
+  'QUALIFICATION_TIMESTAMP_UNAVAILABLE','QUALIFICATION_TIMESTAMP_MISMATCH',
+  'JOINED','CONTRADICTED_BY_JOIN'
+]);
+function alexGEmptySetupJoin(status){
+  return{status:status||'NOT_ATTEMPTED',fieldsSupplied:[],breakCycleSetupCountSupplied:false,
+    contradictedConditionIds:[],mirrorVersion:ALEX_RULE_ATTRIBUTION_MIRROR_VERSION};
+}
+function alexGFindSetupRecordForTrade(trade,setups){
+  if(!trade||typeof trade!=='object') return{record:null,status:'NOT_ATTEMPTED'};
+  if(!Array.isArray(setups)||!setups.length) return{record:null,status:'SETUP_STATE_EMPTY'};
+  const sid=trade.setupId;
+  if(sid==null) return{record:null,status:'TRADE_HAS_NO_SETUP_ID'};
+  let found=null;
+  for(let i=0;i<setups.length;i++){
+    const s=setups[i];
+    if(s&&s.setupId===sid){ found=s; break; }
+  }
+  if(!found) return{record:null,status:'SETUP_NOT_FOUND'};
+  const a=trade.qualificationTimestamp,b=found.qualificationTimestamp;
+  if(a==null||b==null) return{record:null,status:'QUALIFICATION_TIMESTAMP_UNAVAILABLE'};
+  if(Number(a)!==Number(b)) return{record:null,status:'QUALIFICATION_TIMESTAMP_MISMATCH'};
+  return{record:found,status:'JOINED'};
+}
+// ALEX_SR_V1_B_FIRST_RETEST_IN_BREAK_CYCLE needs a count no single record can carry. The engine
+// admits at most one B_breakRetest per (zoneId, breakCycleId) -- see the guard in
+// alexGEvaluateBreakRetest -- so the count is taken over exactly that key, and a record missing
+// either half of it yields null (UNAVAILABLE) rather than a count over the wrong population.
+function alexGCountBreakCycleSetups(setupRecord,setups){
+  if(!setupRecord||typeof setupRecord!=='object'||!Array.isArray(setups)) return null;
+  const cycle=setupRecord.breakCycleId,zone=setupRecord.zoneId;
+  if(cycle==null||zone==null) return null;
+  let n=0;
+  for(let i=0;i<setups.length;i++){
+    const s=setups[i];
+    if(s&&s.setupType==='B_breakRetest'&&s.breakCycleId===cycle&&s.zoneId===zone) n++;
+  }
+  return n;
+}
+function alexGResolveAttributionInputs(trade,setupRecord,joinStatus){
+  const base=(trade&&typeof trade==='object')?trade:{};
+  const status=joinStatus||'NOT_ATTEMPTED';
+  if(status!=='JOINED'||!setupRecord||typeof setupRecord!=='object'){
+    return{record:base,join:alexGEmptySetupJoin(status)};
+  }
+  const out={},supplied=[];
+  Object.keys(base).forEach(function(k){ out[k]=base[k]; });
+  for(let i=0;i<ALEX_SETUP_JOIN_FIELDS.length;i++){
+    const f=ALEX_SETUP_JOIN_FIELDS[i];
+    const tradeHas=Object.prototype.hasOwnProperty.call(base,f)&&base[f]!=null;
+    const setupHas=Object.prototype.hasOwnProperty.call(setupRecord,f)&&setupRecord[f]!=null;
+    if(!tradeHas&&setupHas){ out[f]=setupRecord[f]; supplied.push(f); }
+  }
+  const join=alexGEmptySetupJoin('JOINED');
+  join.fieldsSupplied=supplied.sort();
+  return{record:out,join};
+}
+
 // ══ v12.10.0 UNIT A -- CORR-3: REALIZED R FROM THE ACTUAL EXIT ═══════════════════════════════
 // realizedR was null in every package while the number sat in recordedResultR, so a consumer
 // reading the obvious field got nothing. This computes R from the OBSERVED exit -- entry, exit,
@@ -17189,9 +17274,34 @@ function evidenceBuildPackageFromTrade(trade,opts){
   // The seams call this inside their per-trade try/catch, so a failure is recorded and skipped;
   // it can never propagate into replay, the ledger, an account or the trading tick.
   const attributionCfg=(cfgSnapshot&&cfgSnapshot.config)?cfgSnapshot.config:null;
-  const attribution=alexGBuildRuleAttribution(trade,pick('setupType'),attributionCfg,{
-    breakCycleSetupCount:(typeof trade.breakCycleSetupCount==='number')?trade.breakCycleSetupCount:null
-  });
+  // v12.45.0: the setup record, when the caller supplies one and its identity checks out, fills the
+  // condition inputs alexGConstructLivePosition never copied. Callers that supply nothing get the
+  // pre-v12.45.0 behaviour exactly -- the record is the trade and the join reports NOT_ATTEMPTED.
+  const __joined=alexGResolveAttributionInputs(trade,o.setupRecord||null,o.setupRecordJoinStatus||'NOT_ATTEMPTED');
+  const __ctxTrade={breakCycleSetupCount:(typeof trade.breakCycleSetupCount==='number')?trade.breakCycleSetupCount:null};
+  const __ctx={breakCycleSetupCount:__ctxTrade.breakCycleSetupCount};
+  if(__ctx.breakCycleSetupCount==null&&__joined.join.status==='JOINED'&&typeof o.breakCycleSetupCount==='number'){
+    __ctx.breakCycleSetupCount=o.breakCycleSetupCount;
+    __joined.join.breakCycleSetupCountSupplied=true;
+  }
+  let attribution=alexGBuildRuleAttribution(__joined.record,pick('setupType'),attributionCfg,__ctx);
+  let setupRecordJoin=__joined.join;
+  // A contradiction that appears ONLY because the join supplied fields must never destroy the trade
+  // record. Capturing without the join is precisely today's behaviour, so fall back to it and
+  // record the disagreement as a first-class finding rather than throwing the evidence away.
+  // A trade that contradicts its own rules on its OWN stored fields still fails capture, unchanged.
+  if(attribution.verdict==='CONTRADICTS_RECORDED_CLASSIFICATION'&&setupRecordJoin.status==='JOINED'&&
+     (setupRecordJoin.fieldsSupplied.length||setupRecordJoin.breakCycleSetupCountSupplied)){
+    const __bare=alexGBuildRuleAttribution(trade,pick('setupType'),attributionCfg,__ctxTrade);
+    if(__bare.verdict!=='CONTRADICTS_RECORDED_CLASSIFICATION'){
+      setupRecordJoin={status:'CONTRADICTED_BY_JOIN',
+        fieldsSupplied:setupRecordJoin.fieldsSupplied,
+        breakCycleSetupCountSupplied:setupRecordJoin.breakCycleSetupCountSupplied,
+        contradictedConditionIds:attribution.attribution.failedConditionIds.slice(),
+        mirrorVersion:setupRecordJoin.mirrorVersion};
+      attribution=__bare;
+    }
+  }
   if(attribution.verdict==='CONTRADICTS_RECORDED_CLASSIFICATION'){
     throw new Error('EVIDENCE_RULE_ATTRIBUTION_MISMATCH: '+String(pick('setupType'))+
       ' failed '+attribution.attribution.failedConditionIds.join(',')+
@@ -17272,6 +17382,10 @@ function evidenceBuildPackageFromTrade(trade,opts){
           ruleIds:attribution.ruleIds,
           triggeredConditions:attribution.triggeredConditions,
           ruleAttribution:attribution.attribution,
+          // v12.45.0. ADDITIVE and always present. States exactly which condition inputs came from
+          // the setup-record join rather than off the booked trade, so a reader is never left to
+          // assume a verified condition was verified from the position's own stored fields.
+          setupRecordJoin:setupRecordJoin,
           // v12.13.0 Unit C2-M1: structural lineage. Every value is an identifier the engine
           // already stored; nothing is derived and no decision event is implied.
           lineage:lineage,
@@ -17452,6 +17566,27 @@ function evidenceValidatePackage(pkg){
       if(qs.ruleAttribution&&qs.ruleAttribution.contradictsEngineClassification===true){
         errors.push('objects.qualifiedSetups['+i+'].ruleAttribution contradicts the recorded classification');
       }
+      // v12.45.0 setupRecordJoin: present-only, for the same reason as every additive block above --
+      // the 86 preserved packages omit it and must still validate, import and verify. A carried key
+      // must state a known status and list the fields it supplied, because a join that cannot say
+      // what it contributed is worse than no join at all.
+      if('setupRecordJoin' in qs&&qs.setupRecordJoin!==null){
+        const at='objects.qualifiedSetups['+i+'].setupRecordJoin';
+        const sj=qs.setupRecordJoin;
+        if(typeof sj!=='object'||Array.isArray(sj)) errors.push(at+' must be an object or null');
+        else{
+          if(EVIDENCE_SETUP_JOIN_STATUSES.indexOf(sj.status)===-1) errors.push(at+'.status is not a known join status: '+sj.status);
+          if(!Array.isArray(sj.fieldsSupplied)) errors.push(at+'.fieldsSupplied must be an array');
+          else if(sj.fieldsSupplied.some(function(f){return ALEX_SETUP_JOIN_FIELDS.indexOf(f)===-1;}))
+            errors.push(at+'.fieldsSupplied names a field the join does not supply');
+          if(!Array.isArray(sj.contradictedConditionIds)) errors.push(at+'.contradictedConditionIds must be an array');
+          // Only a JOINED or CONTRADICTED_BY_JOIN join can have contributed anything. Any other
+          // status claiming supplied fields is a capture-path regression, not a legacy shape.
+          if(sj.status!=='JOINED'&&sj.status!=='CONTRADICTED_BY_JOIN'&&
+             ((Array.isArray(sj.fieldsSupplied)&&sj.fieldsSupplied.length)||sj.breakCycleSetupCountSupplied===true))
+            errors.push(at+' reports supplied inputs but its status is '+sj.status);
+        }
+      }
       // v12.13.0 Unit C2-M1 lineage: present-only, and every link must be an identifier, never an
       // object graph -- a package must stay a flat, hashable record.
       if(qs.lineage!=null){
@@ -17613,7 +17748,17 @@ async function evidenceCaptureClosedTradesAsync(trades){
       if(await evidenceHasPackageForTrade(trade.tradeId)) continue;   // S8 idempotence
       // Explicit identity: this seam reads alexGAccount, so the strategy is known for certain
       // rather than inferred from a field a legacy record might not carry.
-      await evidencePersistTradePackage(trade,'LIVE_CLOSE',trade.strategy||STRATEGY_ALEXG);
+      // v12.45.0: join the setup record back in. Read-only over alexGSetupState, identity-checked
+      // inside alexGFindSetupRecordForTrade, and every failure mode returns a null record, which
+      // reproduces the pre-v12.45.0 package exactly. A JVM position carries no setupId and is
+      // rejected by the join before it ever touches ALEX setup state.
+      const __setups=(typeof alexGSetupState!=='undefined'&&Array.isArray(alexGSetupState))?alexGSetupState:[];
+      const __sj=alexGFindSetupRecordForTrade(trade,__setups);
+      await evidencePersistTradePackage(trade,'LIVE_CLOSE',trade.strategy||STRATEGY_ALEXG,{
+        setupRecord:__sj.record,
+        setupRecordJoinStatus:__sj.status,
+        breakCycleSetupCount:alexGCountBreakCycleSetups(__sj.record,__setups)
+      });
       captured++;
     }catch(e){
       // A ConstraintError means another path already captured this trade -- not a failure.
@@ -17653,7 +17798,11 @@ async function evidencePersistTradePackageResolved(trade,basis,strategyId,extra)
     configHash:x.configHash, paramsHash:x.paramsHash,
     // v12.10.0 Unit A (CORR-2): forwarded verbatim; absent for callers that do not supply them,
     // which then record UNAVAILABLE rather than a guessed release identity.
-    releaseVersion:x.releaseVersion, releaseGatesApplied:x.releaseGatesApplied
+    releaseVersion:x.releaseVersion, releaseGatesApplied:x.releaseGatesApplied,
+    // v12.45.0: forwarded verbatim. A caller that supplies none of these gets the pre-v12.45.0
+    // attribution unchanged, so replay and every other seam are untouched until they opt in.
+    setupRecord:x.setupRecord, setupRecordJoinStatus:x.setupRecordJoinStatus,
+    breakCycleSetupCount:x.breakCycleSetupCount
   });
   await evidenceFinalizePackage(pkg);
   const v=evidenceValidatePackage(pkg);
