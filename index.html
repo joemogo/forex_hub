@@ -2205,9 +2205,10 @@ const ALL_PAIRS=[
 // Bump by 1.0 for a major update (new feature/tab), by 0.1 for a small patch/fix.
 // This shows in the header next to the logo and on the Diagnostics tab, so you can
 // glance at the live site and instantly confirm which build actually deployed.
-const APP_VERSION='12.50.0';
+const APP_VERSION='12.51.0';
 const APP_VERSION_DATE='04 Sep 2026';
 const APP_VERSION_LOG=[
+  '12.51.0 — THE SETUPS MOGO DECLINED WERE BEING THROWN AWAY (zero protected-function and zero protected-constant drift; 64/64 and 4/4 byte-identical). MOGO recorded what it DID and nothing about what it DECLINED. Every rejection -- price moved too far from the signal, an existing position on the pair, no bid/ask -- was emitted as a decision event into decisionEventLog: an IN-MEMORY array, capped at 500, NEVER written to storage while 26 other keys are persisted. All 46 preserved forward packages carry zero decisions and zero candidates. So every declined setup died on the next page reload. That is half the information a strategy produces, and it made the strongest remaining explanation for the replay/live divergence UNTESTABLE: replay takes every qualifying setup, live refuses any whose price has moved more than maxLiveEntryDelayPips (5) from the signal, and if running away from a level correlates with the move continuing then live is systematically discarding the winners while replay counts them at a price live could never have obtained. Declines are now recorded DURABLY and BOUNDEDLY under fxhub_alexg_declined, carrying the identity a later replay needs to find the same setup again -- pair, timeframe, qualification bar and close, zone bounds -- plus the OWN status and reason of the protected constructor, verbatim, never re-derived or softened. Deduplicated by (setupId, reason) so a setup re-declined on every poll is one fact rather than a measure of poll frequency; a decline for a DIFFERENT reason is a new fact and is kept. Capped at 500 oldest-out, and the summary STATES when it is at the cap rather than silently shrinking the population it exists to measure. NO OUTCOME IS REPORTED AND NONE EXISTS: a declined setup was never traded, so there is no win, no loss and no R -- the summary carries no such field and the panel says so explicitly, together with the fact that the question IS answerable by replaying the same period. Record-only: it runs inside the existing failure branch AFTER the protected constructor has returned its verdict, swallows its own failures, and writes to no account, position or setup state. MUTATION-VERIFIED: removing the call from the seam fails DECL-13. 15 fixtures (DECL-1..15).',
   '12.50.0 — A STRATEGY WAS TRADING AND NOTHING WAS INGESTING IT (zero protected-function and zero protected-constant drift; 64/64 and 4/4 byte-identical). Every evidence capture seam reads alexGAccount -- evidenceCaptureClosedTrades and evidenceBackfillFromLocalStorage both do, and NOTHING anywhere reads paperAccount. JVM has therefore been paper trading with no evidence preserved at all, while the Analytics panel -- which reads the evidence store -- presented itself as what MOGO has learned. That is the same error the coverage caveat addresses one level down: a figure computed over an unstated subset. There the subset was preserved-trades-not-all-closes; here it is one-strategy-not-all-strategies-that-trade. The panel now names every strategy that trades and is never ingested, with its own ledger figures, and states plainly that NO figure above describes them -- not the win rate, not the sample size, not the trades-needed number -- and that those ledger numbers carry none of the provenance the corpus does (no rule attribution, no excursions, no market context). DELIBERATELY NOT INGESTED: JVM positions carry a different shape (`id` not `tradeId`, no setupId, no zone or setup record) and evidencePersistTradePackage already fails closed on an unattributable trade precisely so a JVM position can never be filed as ALEX by accident. Building that path changes every forward figure by adding a second strategy to the population, which is an operator decision rather than one to take by writing it -- so the gap is REPORTED, with the reason, and left for the operator. Test and developer positions are excluded from the reported figures, and the win/P&L values are read as the ledger stored them rather than recomputed, because a second opinion on a booked outcome belongs to the ledger that booked it. 8 fixtures (UNCOV-1..8), including UNCOV-1 which proves the seams read alexGAccount and never paperAccount rather than asserting it.',
   '12.49.0 — REPLAY RECORDED A COST MODEL IT NEVER APPLIED (zero protected-function and zero protected-constant drift; 64/64 and 4/4 byte-identical). alexGConstructTrade accepts spreadMode, fixedSpreadPips and slippagePips, STAMPS ALL THREE onto every trade record, and applies NONE of them: entry is setup.qualificationClose untouched, and alexGWalkOutcome has no cost parameter at all. A run with fixedSpreadPips:2 therefore returns results IDENTICAL to a zero-cost run while every record asserts it accounted for 2 pips. A record that misstates its own basis is worse than a missing feature. Both functions are PROTECTED, so the arithmetic cannot be repaired -- the response is to FAIL CLOSED: runAlexGReplay now refuses any non-zero cost parameter, before any candle is fetched, with a message that says the result would have been mislabelled rather than merely unavailable. The zero-cost run the UI actually performs is unaffected. MEASURED ON THE REAL FORWARD CORPUS (n=40): live fills land a median 9.8% of risk distance in spread, and 85% of them WORSE than the signal price for a median +5.5% adverse slippage -- a mean total entry drag of 22.1% that replay charges at zero. THE COSTS DO NOT EXPLAIN THE REPLAY/LIVE DIVERGENCE: stressed at the full 22.1%, ALEX replay falls from +0.571R to +0.429R per trade against a live record of -0.176R, closing under a fifth of the gap; the baseline falls from -0.092R to -0.205R, confirming the benchmark is clearly negative once costs are real. A COST STRESS ESTIMATOR is added to Analytics for replay populations only (forward trades already paid these costs and charging them twice would understate the live record): a win whose recorded adverse excursion came within the cost of its stop is reclassified as a loss. It is labelled an ESTIMATE, states that it does not model a cost moving which bar an exit lands on and cannot see setups the live path would have refused, excludes trades with no recorded excursion rather than assuming them unaffected, and is monotone in the cost. ALSO FIXED: the replay section of Analytics was reporting ONE combined figure across two different strategies now that the trend baseline exists -- a figure over two strategies describes neither, so replay is segmented by strategyId. MUTATION-VERIFIED: disabling the cost guard fails COST-5. 21 fixtures (COST-1..8, STRESS-1..13).',
   '12.48.0 — MULTI-YEAR ALEX REPLAY, SO THE CONTROL ARM COMPARISON IS ACTUALLY POSSIBLE (zero protected-function and zero protected-constant drift; 64/64 and 4/4 byte-identical). The baseline control arm produced 502 trades over 4 years on DAILY bars; ALEX\'s replay produced 42 over 7 months on H1/H4. Comparing them answered nothing, because the two arms never traded the same thing -- different timeframes, different periods, sample sizes an order of magnitude apart. Making the comparison possible needed exactly ONE change: the lookback dropdown stopped at 365 days. Every layer beneath it already supported more -- fetchAlexGReplayDatasets caps H1 at 40,000 bars (4 years needs 35,100) and fetchCandlesRange paginates at 5,000 per request under a 20-page guard (4 years needs 8). Options for 2, 3 and 4 years added; the 90-day default is unchanged. BOTH protected engine functions (alexGRunSetupEngine, alexGRunSetupReplay) are untouched -- this is a dropdown and the fetch path it feeds, not the strategy. An option in a <select> is not evidence the run works, so the fixtures check the FETCH ARITHMETIC against the real formulas and real limits read out of the source rather than retyped: every offered lookback must fit under its per-timeframe cap AND inside the pagination guard, because a capped fetch returns a SHORTER history than the operator selected while still labelling it with their choice. MYR-6 derives the largest safe lookback from the source itself (~1,655 days) and requires the dropdown to offer nothing beyond it -- MUTATION-VERIFIED: adding a 10-year option fails MYR-3 and MYR-6 rather than producing a quietly truncated 4.5-year history labelled as ten. Multi-year runs need several pages instead of one, which makes ADR-011\'s termination classification and the per-page identity check materially more important; MYR-7/8 pin both. 10 fixtures (MYR-1..MYR-10).',
@@ -3587,6 +3588,85 @@ function saveAlexGAccountGuarded(){
 // under the right opening words survived the entire 2,180-fixture gate. Provenance is now recorded
 // by the writer instead of inferred by the reader. Additive: the {message,at} shape is unchanged
 // for every existing caller and every existing reader.
+// ══ v12.51.0 — THE SETUPS MOGO DECLINED, WHICH WERE BEING THROWN AWAY ═════════════════════════
+// MOGO recorded what it DID and nothing about what it DECLINED. Every rejection -- price moved too
+// far from the signal, an existing position on the pair, no bid/ask -- was emitted as a decision
+// event into decisionEventLog: an in-memory array, capped at 500, and never written to storage,
+// while 26 other keys are persisted. All 46 preserved forward packages carry zero decisions and
+// zero candidates. So every declined setup died on the next page reload.
+//
+// That is half the information a strategy produces. It also makes the strongest remaining
+// explanation for the replay/live divergence UNTESTABLE: replay takes every qualifying setup, live
+// refuses any whose price has moved more than maxLiveEntryDelayPips from the signal, and if running
+// away from a level correlates with the move continuing, live is systematically discarding the
+// winners while replay counts them at a price live could never have gotten.
+//
+// This records the DECLINE, durably and boundedly. It does NOT claim to know what the trade would
+// have done -- that is knowable only by replaying the same period, and the projection below carries
+// exactly the identity a replay needs to find the same setup again. Record-only: it runs after the
+// protected constructor has already returned its verdict, and can never alter, delay or repeat a
+// trading decision.
+const ALEXG_DECLINED_MAX=500;
+let alexGDeclinedSetups=[];
+function alexGDeclinedProjection(setup,result,signalId,scanId){
+  if(!setup||typeof setup!=='object') return null;
+  const r=result||{};
+  return{
+    // Identity a later replay can match on -- the same pair AND the same qualification bar.
+    setupId:setup.setupId!=null?String(setup.setupId):null,
+    signalId:signalId!=null?String(signalId):null,
+    pair:setup.pair||null,timeframe:setup.timeframe||null,
+    setupType:setup.setupType||null,
+    qualificationTimestamp:setup.qualificationTimestamp!=null?setup.qualificationTimestamp:null,
+    qualificationClose:typeof setup.qualificationClose==='number'?setup.qualificationClose:null,
+    zoneId:setup.zoneId!=null?setup.zoneId:null,
+    zoneLow:typeof setup.zoneLow==='number'?setup.zoneLow:null,
+    zoneHigh:typeof setup.zoneHigh==='number'?setup.zoneHigh:null,
+    // The constructor's OWN status and reason, verbatim. Never re-derived, never mapped to a
+    // friendlier word -- the reason a trade did not happen is exactly as the engine stated it.
+    status:r.status!=null?String(r.status):null,
+    reason:r.reason!=null?String(r.reason):null,
+    direction:r.direction||null,
+    scanId:scanId!=null?String(scanId):null,
+    declinedAt:new Date().toISOString(),
+    createdByEngineVersion:(typeof APP_VERSION!=='undefined'?APP_VERSION:null)
+  };
+}
+function alexGRecordDeclinedSetup(setup,result,signalId,scanId){
+  try{
+    const p=alexGDeclinedProjection(setup,result,signalId,scanId);
+    if(!p||!p.setupId) return null;
+    // One row per decision. A setup re-evaluated on a later poll and declined again for the SAME
+    // reason is the same fact, not a new one; a decline for a DIFFERENT reason is a new fact.
+    for(let i=0;i<alexGDeclinedSetups.length;i++){
+      const e=alexGDeclinedSetups[i];
+      if(e&&e.setupId===p.setupId&&e.reason===p.reason) return e;
+    }
+    alexGDeclinedSetups.push(p);
+    // Oldest first out. Bounded so a long unattended run cannot exhaust storage, and the cap is
+    // stated rather than silent -- see alexGDeclinedSetupsSummary().
+    while(alexGDeclinedSetups.length>ALEXG_DECLINED_MAX) alexGDeclinedSetups.shift();
+    return p;
+  }catch(e){ return null; }   // recording must never be able to affect a trading decision
+}
+// Read-only. Counts by reason, and states plainly that an outcome is NOT known.
+function alexGDeclinedSetupsSummary(list){
+  const rows=Array.isArray(list)?list:alexGDeclinedSetups;
+  const byReason={};
+  rows.forEach(function(d){
+    const k=(d&&d.reason)?d.reason:'UNRECORDED';
+    byReason[k]=(byReason[k]||0)+1;
+  });
+  return{
+    total:rows.length,
+    atCap:rows.length>=ALEXG_DECLINED_MAX,
+    cap:ALEXG_DECLINED_MAX,
+    byReason:byReason,
+    // Deliberately absent: any win rate, expectancy or R figure. Nothing here has an outcome --
+    // a declined setup was never traded, and inventing one would be the worst thing this could do.
+    outcomesKnown:false
+  };
+}
 function recordAlexGEngineError(msg,meta){
   // v12.36.5 (MOGO-021 §18.32): the timestamp and the message are set AFTER the meta merge, and
   // `toJSON` is refused outright. Previously `at` was written first and the caller's meta was
@@ -3625,6 +3705,8 @@ function saveAlexGRest(){
     persistStorageKey('fxhub_alexg_auto',JSON.stringify(alexGAutoTrading));
     persistStorageKey('fxhub_alexg_zones',JSON.stringify(alexGZoneState));
     persistStorageKey('fxhub_alexg_setups',JSON.stringify(alexGSetupState));
+    // v12.51.0: the declined setups, persisted for the same reason the taken ones are.
+    persistStorageKey('fxhub_alexg_declined',JSON.stringify(alexGDeclinedSetups));
   }catch(e){
     try{ evidenceRecordWriteFailure('saveAlexGRest',e); }catch(e2){/* never throw outward */}
   }
@@ -3711,6 +3793,7 @@ function loadAlexGSaved(){
   loadStoredKey('fxhub_alexg_auto',v=>{alexGAutoTrading=JSON.parse(v);});
   loadStoredKey('fxhub_alexg_zones',v=>{alexGZoneState=JSON.parse(v);});
   loadStoredKey('fxhub_alexg_setups',v=>{alexGSetupState=JSON.parse(v);});
+  loadStoredKey('fxhub_alexg_declined',v=>{const a=JSON.parse(v); if(Array.isArray(a)) alexGDeclinedSetups=a;});
 }
 
 // ══════════════════════════════════════════════════════════════════════════
@@ -5264,6 +5347,9 @@ async function alexGAttemptOpenLivePosition(setup,datasets,evalMeta,scanId){
     // the protected constructor's OWN status and reason -- never a re-derived one.
     alexGRecordPipelineStage('REQUEST_FAILED',{scanId:scanId,pair:setup.pair,timeframe:setup.timeframe,
       setupId:setup.setupId,signalId:signalId,status:result.status,reason:result.reason});
+    // v12.51.0: durable record of the setup that did NOT become a trade. Record-only, after the
+    // protected constructor has already decided; it cannot alter, delay or repeat that decision.
+    alexGRecordDeclinedSetup(setup,result,signalId,scanId);
     alexGRecordLiveSetupStatus(base);
     // MOGO-021 DECISIONS 2+3: record the decision under identities that survive a zone re-anchor,
     // a window roll and a close-time re-estimation. Placed at exactly the sites that already write the
@@ -21913,6 +21999,32 @@ function obsRenderSegment(seg){
   });
   return h+'</tbody></table></div>';
 }
+function obsRenderDeclined(){
+  let sum=null;
+  try{ if(typeof alexGDeclinedSetupsSummary==='function') sum=alexGDeclinedSetupsSummary(); }catch(e){}
+  if(!sum) return'';
+  if(!sum.total)
+    return'<div class="obs-band"><div class="obs-band-title">Setups declined</div>'
+      +'<div class="obs-band-note">None recorded yet. Declines are captured from v12.51.0 onward — '
+      +'everything MOGO refused before that was held only in memory and is gone.</div></div>';
+  const keys=Object.keys(sum.byReason).sort(function(a,b){ return sum.byReason[b]-sum.byReason[a]; });
+  let h='<div class="obs-band"><div class="obs-band-title">Setups declined — qualified, and not traded</div>'
+    +'<table class="obs-table"><thead><tr><th>Reason the trade did not happen</th><th>Count</th></tr></thead><tbody>';
+  keys.forEach(function(k){
+    h+='<tr><td>'+obsEsc(k)+'</td><td>'+sum.byReason[k]+'</td></tr>';
+  });
+  h+='</tbody></table>'
+    +'<div class="obs-band-note" style="margin-top:10px"><b>No outcome is shown, because none is known.</b> '
+    +'These setups were never traded, so there is no win, no loss and no R — and inventing one would be the worst '
+    +'thing this table could do. What each would have done is answerable by replaying the same period: every row '
+    +'carries the pair and the qualification bar a replay needs to find it again.</div>'
+    +'<div class="obs-band-note">This matters because replay takes every qualifying setup and live does not. If the '
+    +'setups live refuses differ systematically from the ones it takes, that alone would explain a backtest and a '
+    +'live record disagreeing — and until v12.51.0 the question could not be asked at all.</div>';
+  if(sum.atCap)
+    h+='<div class="obs-warn">At the '+sum.cap+'-row cap — the oldest declines are being dropped. Export or analyse before this grows further.</div>';
+  return h+'</div>';
+}
 function obsRenderUningested(list){
   if(!list||!list.length) return'';
   let h='<div class="obs-uncov"><div class="obs-band-title">Trading, but not in any figure above</div>';
@@ -22036,6 +22148,7 @@ async function renderObservatory(){
   // Stated near the forward figures, because that is where a reader would otherwise assume
   // these numbers cover everything MOGO trades.
   h+=obsRenderUningested(obsReadUningestedStrategies());
+  h+=obsRenderDeclined();
   if(fwd.sampleSize){
     h+=obsRenderSegment(obsSegment(fwdRows,'setupType'));
     h+=obsRenderSegment(obsSegment(fwdRows,'timeframe'));
