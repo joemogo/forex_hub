@@ -60,8 +60,6 @@ vm.runInContext(constBlock('const ALEXG_REPLAY_COST_PARAMS='), ctx);
 vm.runInContext(constBlock("const OBS_COST_SOURCE_NOTE="), ctx);
 vm.runInContext(fn('alexGReplayIgnoredCostParams'), ctx);
 vm.runInContext(fn('obsCostStress'), ctx);
-vm.runInContext(constBlock('const OBS_INGESTED_STRATEGY_IDS='), ctx);
-vm.runInContext(fn('obsReadUningestedStrategies'), ctx);
 const O = ctx;
 // `const` in a vm context is a lexical binding, not a property of the context object -- only
 // `function` declarations land on ctx. Reading it back by evaluating its name; asserting against
@@ -270,86 +268,77 @@ t('STRESS-13', 'the replay section is split BY STRATEGY. Replay now holds more t
     detail: 'replay segmented by strategyId before the stress table' };
 });
 
-// ══ STRATEGIES THAT TRADE AND ARE NEVER INGESTED ═════════════════════════════════════════════
+// ══ JVM COVERAGE — correcting a false claim this suite previously asserted ═══════════════════
+// UNCOV-1 used to assert that NO capture seam reads paperAccount and that JVM produced no evidence.
+// That was wrong, and the fixture "proved" it by checking only the two ALEX seams. The corrected
+// fixtures below check the whole file, which is what the original claim was actually about.
 
-t('UNCOV-1', 'the defect is real: NO evidence capture seam reads the JVM account. Both seams read '
-  + 'alexGAccount, so JVM has been paper trading with nothing preserved', function () {
-  const live = fn('evidenceCaptureClosedTrades');
-  const backfill = fn('evidenceBackfillFromLocalStorage');
-  const readsAlex = /alexGAccount\.closedPositions/.test(live) && /alexGAccount\.closedPositions/.test(backfill);
-  const readsJvm = /paperAccount/.test(live) || /paperAccount/.test(backfill);
-  return { pass: readsAlex && !readsJvm,
-    detail: 'both seams read alexGAccount; either reads paperAccount: ' + readsJvm };
+t('JVM-1', 'a JVM capture seam DOES exist, with its own normalizer, wired into the JVM ledger commit '
+  + 'path. This is the fixture whose earlier form asserted the opposite by looking at only two '
+  + 'functions instead of the file', function () {
+  const seam = /function evidenceCaptureClosedPaperTrades\(/.test(SRC);
+  const normalizer = /function evidenceNormalizeJvmTrade\(/.test(SRC);
+  const reads = /paperAccount\.closedPositions\.slice\(0,25\)/.test(SRC);
+  const wired = /evidenceCaptureClosedPaperTrades\(\)/.test(SRC);
+  return { pass: seam && normalizer && reads && wired,
+    detail: 'seam=' + seam + ' normalizer=' + normalizer + ' readsAccount=' + reads + ' called=' + wired };
 });
 
-t('UNCOV-2', 'a JVM account with closed trades is REPORTED, with its own ledger figures', function () {
-  const c = { paperAccount: { openPositions: [{}, {}], closedPositions: [
-    { result: 'Win', pnl: 30 }, { result: 'Loss', pnl: -10 }, { result: 'Loss', pnl: -20 }] } };
+t('JVM-2', 'the false claim is gone from the code -- no function asserts JVM is uningested', function () {
+  return { pass: SRC.indexOf('obsReadUningestedStrategies') === -1,
+    detail: 'uningested engine removed' };
+});
+
+t('JVM-3', 'JVM is reported by COVERAGE -- preserved packages against ledger closes -- which is the '
+  + 'same measure ALEX gets, and the question actually worth asking', function () {
+  const c = { paperAccount: { openPositions: [{}], closedPositions: [
+    { result: 'Loss' }, { result: 'Loss' }, { result: 'Win', isDeveloperTrade: true }] } };
   vm.createContext(c);
-  vm.runInContext(fn('obsReadUningestedStrategies'), c);
-  const out = vm.runInContext('obsReadUningestedStrategies()', c);
-  return { pass: out.length === 1 && out[0].label === 'JVM' && out[0].closed === 3
-      && out[0].open === 2 && out[0].wins === 1 && close(out[0].winRate, 1 / 3) && close(out[0].pnl, 0),
-    detail: JSON.stringify(out[0]) };
+  vm.runInContext(fn('obsCoverageAgainstAccount'), c);
+  vm.runInContext(fn('obsJvmCoverage'), c);
+  const out = vm.runInContext('obsJvmCoverage([{strategyId:"current_strategy"},'
+    + '{strategyId:"alex_g_sr_v1"},{strategyId:"current_strategy",isDeveloperTrade:true}])', c);
+  return { pass: out.preserved === 1 && out.accountClosed === 2 && out.open === 1
+      && out.coverage && out.coverage.missingFromStore === 1,
+    detail: '1 preserved of 2 closed -> ' + out.coverage.missingFromStore + ' unpreserved; ALEX rows excluded' };
 });
 
-t('UNCOV-3', 'an account that has never traded produces NOTHING, so the warning does not appear on '
-  + 'a system where it does not apply', function () {
+t('JVM-4', 'an unreadable JVM ledger renders UNKNOWN coverage rather than implying it is complete -- '
+  + 'the same rule the ALEX coverage follows', function () {
+  const c = {};
+  vm.createContext(c);
+  vm.runInContext(fn('obsCoverageAgainstAccount'), c);
+  vm.runInContext(fn('obsJvmCoverage'), c);
+  const out = vm.runInContext('obsJvmCoverage([])', c);
+  const r = fn('obsRenderJvmCoverage');
+  return { pass: out.accountClosed === null && out.coverage === null && /could not be read/.test(r),
+    detail: 'null ledger -> null coverage, rendered as unknown' };
+});
+
+t('JVM-5', 'the panel states JVM is NOT pooled into the ALEX figures, because one figure over two '
+  + 'strategies would describe neither', function () {
+  const r = fn('obsRenderJvmCoverage');
+  return { pass: /included in the ALEX figures/.test(r) && /never pooled/.test(r)
+      && /describe neither/.test(r),
+    detail: 'separation stated' };
+});
+
+t('JVM-6', 'the panel names what JVM records LACK, so its packages are not read as equivalent to '
+  + 'ALEX ones', function () {
+  const r = fn('obsRenderJvmCoverage');
+  return { pass: /no timeframe/.test(r) && /no setup record/.test(r) && /no excursions/.test(r),
+    detail: 'shape difference disclosed' };
+});
+
+t('JVM-7', 'nothing rendered at all when JVM has never traded, so the section does not appear on a '
+  + 'system where it does not apply', function () {
   const c = { paperAccount: { openPositions: [], closedPositions: [] } };
   vm.createContext(c);
-  vm.runInContext(fn('obsReadUningestedStrategies'), c);
-  const empty = vm.runInContext('obsReadUningestedStrategies()', c);
-  const c2 = {};
-  vm.createContext(c2);
-  vm.runInContext(fn('obsReadUningestedStrategies'), c2);
-  const absent = vm.runInContext('obsReadUningestedStrategies()', c2);
-  return { pass: empty.length === 0 && absent.length === 0,
-    detail: 'empty account and absent account both report nothing' };
-});
-
-t('UNCOV-4', 'test and developer positions are excluded, or the warning would quote invented '
-  + 'outcomes as the strategy\'s record', function () {
-  const c = { paperAccount: { openPositions: [], closedPositions: [
-    { result: 'Win', pnl: 10 }, { result: 'Win', pnl: 99, isTest: true },
-    { result: 'Win', pnl: 99, isDeveloperTrade: true }] } };
-  vm.createContext(c);
-  vm.runInContext(fn('obsReadUningestedStrategies'), c);
-  const out = vm.runInContext('obsReadUningestedStrategies()', c);
-  return { pass: out[0].closed === 1 && close(out[0].pnl, 10),
-    detail: '1 real close counted, 2 synthetic excluded' };
-});
-
-t('UNCOV-5', 'the figures are read from the ledger and NOT recomputed -- a second opinion on a win '
-  + 'or a P&L belongs to the ledger that booked it', function () {
-  const b = fn('obsReadUningestedStrategies');
-  return { pass: /String\(p\.result\|\|''\)\.toLowerCase\(\)==='win'/.test(b)
-      && /typeof p\.pnl==='number'\?p\.pnl:0/.test(b)
-      && !/entryPrice|exitPrice|Math\.abs/.test(b),
-    detail: 'reads result and pnl as stored; no price arithmetic' };
-});
-
-t('UNCOV-6', 'the panel states these trades are in NO figure above -- not the win rate, not the '
-  + 'sample size, not the trades-needed number', function () {
-  const r = fn('obsRenderUningested');
-  return { pass: /no evidence packages/.test(r) && /not the win rate/.test(r)
-      && /not the sample size/.test(r) && /not the trades-needed/.test(r),
-    detail: 'exclusion stated explicitly against each headline figure' };
-});
-
-t('UNCOV-7', 'the panel says WHY ingesting is not a switch, so the gap does not read as a bug to '
-  + 'be fixed by flipping something', function () {
-  const r = fn('obsRenderUningested');
-  return { pass: /not a switch/.test(r) && /fails closed/.test(r)
-      && /change every forward figure/.test(r),
-    detail: 'shape, fail-closed attribution and population change all disclosed' };
-});
-
-t('UNCOV-8', 'the warning is rendered beside the FORWARD figures, where a reader would otherwise '
-  + 'assume they cover everything MOGO trades', function () {
-  const render = fn('renderObservatory');
-  const iU = render.indexOf('obsRenderUningested');
-  const iRep = render.indexOf('obsRenderAnalysis(rep)');
-  return { pass: iU > 0 && iU < iRep, detail: 'rendered in the forward section, before replay' };
+  vm.runInContext(fn('obsCoverageAgainstAccount'), c);
+  vm.runInContext(fn('obsJvmCoverage'), c);
+  vm.runInContext(fn('obsRenderJvmCoverage'), c);
+  const html = vm.runInContext('obsRenderJvmCoverage(obsJvmCoverage([]))', c);
+  return { pass: html === '', detail: 'empty ledger renders nothing' };
 });
 
 results.forEach(function (r) {
