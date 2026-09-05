@@ -2205,9 +2205,10 @@ const ALL_PAIRS=[
 // Bump by 1.0 for a major update (new feature/tab), by 0.1 for a small patch/fix.
 // This shows in the header next to the logo and on the Diagnostics tab, so you can
 // glance at the live site and instantly confirm which build actually deployed.
-const APP_VERSION='12.52.0';
+const APP_VERSION='12.53.0';
 const APP_VERSION_DATE='04 Sep 2026';
 const APP_VERSION_LOG=[
+  '12.53.0 — THE FORWARD HEADLINE WAS POOLING TWO STRATEGIES, IN THE PANEL BUILT TO PREVENT THAT (zero protected-function and zero protected-constant drift; 64/64 and 4/4 byte-identical). CAUGHT ON THE DEPLOYED BUILD, from the operator screenshots. The Analytics forward figures were computed over EVERY forward strategy while the JVM block immediately below asserted those trades were NOT included in them. They were. JVM records carry no setupType and no timeframe, so they surfaced as an (unrecorded) row in both segment tables -- 2 trades, 0W/2L, -2.14R -- and moved the headline. Correcting it changed the numbers materially: 42 closed / 26.2% / -9.17R became 40 closed / 27.5% / -7.04R, because two JVM losses had been dragging ALEX down by 2.13R. This is the exact error the panel exists to prevent, committed inside the panel, and it was invisible until real data with two strategies in it was rendered -- synthetic fixtures had only ever exercised one. THE FIX: the forward headline and every forward slice are restricted to OBS_PRIMARY_FORWARD_STRATEGY; the JVM coverage block continues to read the UNFILTERED rows, or it would count zero JVM packages and report every JVM close as unpreserved; and the population COMPOSITION is now rendered as its own strategy segment, so the restriction is visible rather than silent. The forward heading names ALEX explicitly. 4 fixtures (JVM-8..11), which assert the filtered rows reach the headline AND the slices AND that the JVM block does not receive them.',
   '12.52.0 — CORRECTION: v12.50.0 ASSERTED SOMETHING FALSE ABOUT JVM (zero protected-function and zero protected-constant drift; 64/64 and 4/4 byte-identical). v12.50.0 claimed no evidence capture seam reads paperAccount and that JVM produced no evidence at all, shipped that claim in a release note and in the Analytics panel, and had a fixture asserting it. IT WAS WRONG. evidenceCaptureClosedPaperTrades exists, has its own field normalizer evidenceNormalizeJvmTrade, and is wired into the successful-commit path of commitPaperLedger, so it is reached by every JVM close route -- automatic, manual and developer-test. Real current_strategy packages exist in the corpus and were sitting in the operator export directory the whole time. THE ERROR: the two ALEX seams were grepped for paperAccount, nothing was found, and absence in those two functions was taken as absence in the file. The fixture repeated the same mistake and therefore confirmed it. Both are corrected, and the false claim is recorded in the source rather than quietly deleted. WHAT REPLACES IT: JVM now gets the same measure ALEX gets -- COVERAGE. Preserved current_strategy packages are counted against closed trades in the JVM ledger, developer and test positions excluded from both sides, and an unreadable ledger renders UNKNOWN rather than implying complete coverage. Evidence is perishable, so an unpreserved close is silently absent from every figure and cannot be recovered later; that gap, not a nonexistent capture path, is the thing worth watching. The panel also states what JVM records LACK -- no timeframe, no setup record, no zone structure, no excursions -- so its packages are not read as equivalent to ALEX ones, and that the two populations are never pooled because one figure over two strategies would describe neither. 7 fixtures (JVM-1..7), replacing UNCOV-1..8; JVM-1 checks the WHOLE FILE for the seam, which is what the original claim was actually about.',
   '12.51.0 — THE SETUPS MOGO DECLINED WERE BEING THROWN AWAY (zero protected-function and zero protected-constant drift; 64/64 and 4/4 byte-identical). MOGO recorded what it DID and nothing about what it DECLINED. Every rejection -- price moved too far from the signal, an existing position on the pair, no bid/ask -- was emitted as a decision event into decisionEventLog: an IN-MEMORY array, capped at 500, NEVER written to storage while 26 other keys are persisted. All 46 preserved forward packages carry zero decisions and zero candidates. So every declined setup died on the next page reload. That is half the information a strategy produces, and it made the strongest remaining explanation for the replay/live divergence UNTESTABLE: replay takes every qualifying setup, live refuses any whose price has moved more than maxLiveEntryDelayPips (5) from the signal, and if running away from a level correlates with the move continuing then live is systematically discarding the winners while replay counts them at a price live could never have obtained. Declines are now recorded DURABLY and BOUNDEDLY under fxhub_alexg_declined, carrying the identity a later replay needs to find the same setup again -- pair, timeframe, qualification bar and close, zone bounds -- plus the OWN status and reason of the protected constructor, verbatim, never re-derived or softened. Deduplicated by (setupId, reason) so a setup re-declined on every poll is one fact rather than a measure of poll frequency; a decline for a DIFFERENT reason is a new fact and is kept. Capped at 500 oldest-out, and the summary STATES when it is at the cap rather than silently shrinking the population it exists to measure. NO OUTCOME IS REPORTED AND NONE EXISTS: a declined setup was never traded, so there is no win, no loss and no R -- the summary carries no such field and the panel says so explicitly, together with the fact that the question IS answerable by replaying the same period. Record-only: it runs inside the existing failure branch AFTER the protected constructor has returned its verdict, swallows its own failures, and writes to no account, position or setup state. MUTATION-VERIFIED: removing the call from the seam fails DECL-13. 15 fixtures (DECL-1..15).',
   '12.50.0 — A STRATEGY WAS TRADING AND NOTHING WAS INGESTING IT (zero protected-function and zero protected-constant drift; 64/64 and 4/4 byte-identical). Every evidence capture seam reads alexGAccount -- evidenceCaptureClosedTrades and evidenceBackfillFromLocalStorage both do, and NOTHING anywhere reads paperAccount. JVM has therefore been paper trading with no evidence preserved at all, while the Analytics panel -- which reads the evidence store -- presented itself as what MOGO has learned. That is the same error the coverage caveat addresses one level down: a figure computed over an unstated subset. There the subset was preserved-trades-not-all-closes; here it is one-strategy-not-all-strategies-that-trade. The panel now names every strategy that trades and is never ingested, with its own ledger figures, and states plainly that NO figure above describes them -- not the win rate, not the sample size, not the trades-needed number -- and that those ledger numbers carry none of the provenance the corpus does (no rule attribution, no excursions, no market context). DELIBERATELY NOT INGESTED: JVM positions carry a different shape (`id` not `tradeId`, no setupId, no zone or setup record) and evidencePersistTradePackage already fails closed on an unattributable trade precisely so a JVM position can never be filed as ALEX by accident. Building that path changes every forward figure by adding a second strategy to the population, which is an operator decision rather than one to take by writing it -- so the gap is REPORTED, with the reason, and left for the operator. Test and developer positions are excluded from the reported figures, and the win/P&L values are read as the ledger stored them rather than recomputed, because a second opinion on a booked outcome belongs to the ledger that booked it. 8 fixtures (UNCOV-1..8), including UNCOV-1 which proves the seams read alexGAccount and never paperAccount rather than asserting it.',
@@ -21622,6 +21623,9 @@ const TJR_SERVICES={
 // differential fixtures run BOTH over the same packages and require identical output. Drift
 // between the two is a test failure, not a discrepancy discovered later in a report.
 const OBS_FORWARD_BASES=Object.freeze(['LIVE_CLOSE','HISTORICAL_BACKFILL']);
+// The strategy the forward headline describes. Every other forward strategy is reported in its
+// own block; none is ever pooled into this one.
+const OBS_PRIMARY_FORWARD_STRATEGY='alex_g_sr_v1';
 const OBS_REPLAY_BASES=Object.freeze(['REPLAY_RUN']);
 // From Harvey/Liu/Zhu-style power arithmetic: n ~ 7.85*(sigma/delta)^2 for 80% power at alpha=.05,
 // two-sided. Stated as a constant so the number on screen can be traced to something.
@@ -22122,7 +22126,15 @@ async function renderObservatory(){
     return;
   }
   const parts=obsPartitionByPopulation(packages);
-  const fwdRows=obsRowsFromPackages(parts.FORWARD);
+  const fwdRowsAll=obsRowsFromPackages(parts.FORWARD);
+  // v12.53.0: the forward headline was computed over EVERY forward strategy while the JVM block
+  // below asserted those trades were not included in it. They were: JVM has no setupType and no
+  // timeframe, so it surfaced as an "(unrecorded)" row in both segment tables and quietly moved the
+  // headline win rate and net R. That is precisely the error this panel exists to prevent -- one
+  // figure over two strategies describes neither -- committed in the panel itself.
+  // The forward figures are ALEX's. Every other forward strategy is reported in its own block, and
+  // the composition of the population is shown rather than assumed.
+  const fwdRows=fwdRowsAll.filter(function(r){ return r&&r.strategyId===OBS_PRIMARY_FORWARD_STRATEGY; });
   const repRows=obsRowsFromPackages(parts.REPLAY);
   const fwd=obsAnalyze(fwdRows);
   const rep=obsAnalyze(repRows);
@@ -22138,7 +22150,7 @@ async function renderObservatory(){
     +(parts.UNKNOWN.length?'<span class="obs-pop obs-pop-unk"><b>'+parts.UNKNOWN.length
       +'</b> unrecognised — excluded</span>':'')
     +'<span class="obs-pop-note">Forward and replay are never mixed. An unrecognised capture basis is excluded from both rather than assumed to be forward.</span></div>';
-  h+='<h3 class="obs-h">Forward — trades taken live, against real incoming prices</h3>';
+  h+='<h3 class="obs-h">Forward — ALEX trades taken live, against real incoming prices</h3>';
   h+=obsRenderAnalysis(fwd);
   // ALEX is the only strategy with a live account to compare against; a mixed-strategy corpus
   // compares only its ALEX rows, and says which strategy the coverage statement is about.
@@ -22147,9 +22159,11 @@ async function renderObservatory(){
   h+=obsRenderEvidenceQuality(fwd);
   // Stated near the forward figures, because that is where a reader would otherwise assume
   // these numbers cover everything MOGO trades.
-  h+=obsRenderJvmCoverage(obsJvmCoverage(fwdRows));
+  h+=obsRenderJvmCoverage(obsJvmCoverage(fwdRowsAll));
   h+=obsRenderDeclined();
   if(fwd.sampleSize){
+    // Composition first: which strategies are in the forward population at all.
+    h+=obsRenderSegment(obsSegment(fwdRowsAll,'strategyId'));
     h+=obsRenderSegment(obsSegment(fwdRows,'setupType'));
     h+=obsRenderSegment(obsSegment(fwdRows,'timeframe'));
     h+=obsRenderSegment(obsSegment(fwdRows,'instrument'));

@@ -341,6 +341,41 @@ t('JVM-7', 'nothing rendered at all when JVM has never traded, so the section do
   return { pass: html === '', detail: 'empty ledger renders nothing' };
 });
 
+t('JVM-8', 'the FORWARD headline is computed over ALEX rows only. It was pooling every forward '
+  + 'strategy while the JVM block below asserted the opposite -- JVM carries no setupType and no '
+  + 'timeframe, so it surfaced as an "(unrecorded)" row in both segment tables and moved the '
+  + 'headline win rate and net R. Caught on the deployed build', function () {
+  const render = fn('renderObservatory');
+  const filtered = /const fwdRows=fwdRowsAll\.filter\(function\(r\)\{ return r&&r\.strategyId===OBS_PRIMARY_FORWARD_STRATEGY; \}\)/.test(render);
+  const headlineUsesFiltered = /const fwd=obsAnalyze\(fwdRows\)/.test(render);
+  const segmentsUseFiltered = /obsSegment\(fwdRows,'setupType'\)/.test(render)
+    && /obsSegment\(fwdRows,'timeframe'\)/.test(render);
+  return { pass: filtered && headlineUsesFiltered && segmentsUseFiltered,
+    detail: 'filtered=' + filtered + ' headline=' + headlineUsesFiltered + ' segments=' + segmentsUseFiltered };
+});
+
+t('JVM-9', 'the population COMPOSITION is shown -- which strategies are in the forward set at all -- '
+  + 'so the restriction is visible rather than silent', function () {
+  const render = fn('renderObservatory');
+  const iComp = render.indexOf("obsSegment(fwdRowsAll,'strategyId')");
+  const iSetup = render.indexOf("obsSegment(fwdRows,'setupType')");
+  return { pass: iComp > 0 && iComp < iSetup, detail: 'strategy composition rendered before the ALEX slices' };
+});
+
+t('JVM-10', 'the JVM coverage block reads the UNFILTERED forward rows, or it would count zero JVM '
+  + 'packages and report every JVM close as unpreserved', function () {
+  const render = fn('renderObservatory');
+  return { pass: /obsRenderJvmCoverage\(obsJvmCoverage\(fwdRowsAll\)\)/.test(render),
+    detail: 'JVM coverage uses fwdRowsAll' };
+});
+
+t('JVM-11', 'the forward heading names ALEX, so the figures are not read as covering everything '
+  + 'MOGO trades', function () {
+  const render = fn('renderObservatory');
+  return { pass: /Forward — ALEX trades taken live/.test(render),
+    detail: 'heading scoped to ALEX' };
+});
+
 results.forEach(function (r) {
   console.log((r.pass ? 'PASS' : 'FAIL') + ' -- ' + r.name + ': ' + r.desc + (r.detail ? '  [' + r.detail + ']' : ''));
 });
