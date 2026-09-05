@@ -704,6 +704,77 @@ button.danger:hover{background:var(--red-dim)}
   .setup-stamp{margin-top:14px}
 }
 
+
+/* ══ v12.47.0 — Observatory ═══════════════════════════════════════════════════════════════ */
+.obs-wrap{padding:22px 26px;max-width:1180px;margin:0 auto;overflow-y:auto;height:100%}
+.obs-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:20px;flex-wrap:wrap}
+.obs-title{font-size:19px;font-weight:700;color:var(--text1);margin:0 0 3px}
+.obs-sub{font-size:12.5px;color:var(--text2)}
+.obs-refresh{padding:8px 14px;border:1px solid var(--border);border-radius:8px;background:var(--bg2);
+  color:var(--text2);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit}
+.obs-refresh:hover{border-color:var(--green);color:var(--green)}
+.obs-h{font-size:13px;font-weight:700;color:var(--text1);margin:28px 0 12px;
+  text-transform:uppercase;letter-spacing:.6px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+.obs-h-replay{color:var(--text2)}
+.obs-empty{font-size:13px;color:var(--text2);padding:22px 0}
+.obs-verdict{border-radius:11px;padding:17px 19px;margin-bottom:16px;border:1px solid var(--border);background:var(--bg1)}
+.obs-verdict.obs-notable{border-color:var(--gold);background:var(--gold-dim)}
+.obs-verdict-head{font-size:14.5px;font-weight:700;color:var(--text1);margin-bottom:6px;line-height:1.45}
+.obs-verdict-detail{font-size:12.5px;color:var(--text2);line-height:1.7}
+.obs-pops{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-bottom:6px}
+.obs-pop{font-size:11px;padding:4px 10px;border-radius:20px;border:1px solid var(--border);color:var(--text2)}
+.obs-pop b{color:var(--text1)}
+.obs-pop-fwd{border-color:var(--green2);background:var(--green-dim);color:var(--green)}
+.obs-pop-rep{border-color:var(--border2)}
+.obs-pop-unk{border-color:rgba(245,166,35,.4);background:var(--gold-dim);color:var(--gold)}
+.obs-pop-note{font-size:11px;color:var(--text3);line-height:1.5;flex:1;min-width:220px}
+.obs-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:11px;margin-bottom:14px}
+.obs-stat{background:var(--bg1);border:1px solid var(--border);border-radius:10px;padding:14px 15px}
+.obs-stat-label{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:7px}
+.obs-stat-value{font-size:23px;font-weight:700;color:var(--text1);line-height:1.1}
+.obs-stat-sub{font-size:11px;color:var(--text2);margin-top:5px;line-height:1.5}
+.obs-pos .obs-stat-value{color:var(--green)}
+.obs-neg .obs-stat-value{color:var(--red)}
+.obs-band{background:var(--bg1);border:1px solid var(--border);border-radius:10px;padding:16px 18px;margin-bottom:14px}
+.obs-band-wide{border-color:var(--border2)}
+.obs-band-title{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px}
+.obs-band-figure{font-size:20px;font-weight:700;color:var(--text1);margin-bottom:9px}
+.obs-band-figure span{font-size:13px;font-weight:500;color:var(--text2)}
+.obs-band-note{font-size:11.5px;color:var(--text2);line-height:1.7}
+.obs-need{background:var(--bg1);border:1px solid var(--border);border-radius:10px;padding:16px 18px;margin-bottom:14px}
+.obs-need>b{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;display:block;margin-bottom:10px}
+.obs-need-rows{display:flex;flex-direction:column;gap:7px;margin-bottom:9px}
+.obs-need-rows>div{font-size:12.5px;color:var(--text2)}
+.obs-need-rows span{font-size:15px;font-weight:700;color:var(--gold);margin-right:6px}
+.obs-need-now{color:var(--text1)!important;padding-top:5px}
+.obs-need-now b{color:var(--green)}
+.obs-quality{background:var(--bg1);border:1px solid var(--border);border-radius:10px;padding:16px 18px;margin-bottom:14px}
+.obs-quality-bar{height:7px;border-radius:4px;background:var(--bg3);overflow:hidden;margin-bottom:10px}
+.obs-quality-bar>div{height:100%;background:var(--green);border-radius:4px;transition:width .3s}
+.obs-quality-line{font-size:12.5px;color:var(--text2);margin-bottom:7px}
+.obs-quality-line b{color:var(--text1)}
+.obs-warn{font-size:12px;color:var(--gold);background:var(--gold-dim);border:1px solid rgba(245,166,35,.3);
+  border-radius:8px;padding:11px 13px;margin-top:9px;line-height:1.6}
+.obs-seg{margin-bottom:18px}
+.obs-seg-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:5px}
+.obs-seg-head b{font-size:12.5px;color:var(--text1)}
+.obs-seg-alpha{font-size:10.5px;color:var(--gold)}
+.obs-seg-why{font-size:11.5px;color:var(--text3);line-height:1.6;margin-bottom:9px}
+.obs-table{width:100%;border-collapse:collapse;font-size:12px}
+.obs-table th{text-align:left;font-size:9.5px;font-weight:700;color:var(--text3);text-transform:uppercase;
+  letter-spacing:.5px;padding:7px 9px;border-bottom:1px solid var(--border)}
+.obs-table td{padding:8px 9px;border-bottom:1px solid var(--border);color:var(--text2)}
+.obs-table td:first-child{color:var(--text1);font-weight:600}
+.obs-row-notable td{background:var(--gold-dim)}
+.obs-pos{color:var(--green)}
+.obs-neg{color:var(--red)}
+.obs-foot{font-size:11px;color:var(--text3);margin-top:22px;padding-top:14px;border-top:1px solid var(--border);line-height:1.6}
+@media(max-width:760px){
+  .obs-wrap{padding:16px 14px}
+  .obs-table{font-size:11px}
+  .obs-table th,.obs-table td{padding:6px 5px}
+}
+
 /* Toast */
 .toast{position:fixed;top:12px;right:12px;background:var(--bg1);
   border:1px solid var(--border);border-radius:12px;padding:14px 18px;
@@ -866,7 +937,7 @@ button.danger:hover{background:var(--red-dim)}
         <button class="nav-group-btn" onclick="toggleNavGroup(this.parentElement)">Performance<span class="nav-group-caret">▾</span></button>
         <div class="nav-dropdown">
           <button class="nav-btn" onclick="showPanel('journal',this);closeAllNavGroups()">Journal</button>
-          <button class="nav-btn" onclick="comingSoonOpen('Analytics','Deeper performance analytics beyond the Journal\'s filters — equity curves, R-multiple distribution, and setup-type breakdowns. For now, trade-level filtering and stats are available on the Journal page.');closeAllNavGroups()">Analytics <span class="badge" style="font-size:8px;background:var(--gold-dim);color:var(--gold);border-color:transparent;vertical-align:middle">SOON</span></button>
+          <button class="nav-btn" onclick="showPanel('observatory',this);closeAllNavGroups()">Analytics</button>
           <button class="nav-btn" onclick="comingSoonOpen('Reports','Exportable performance reports for a selected date range or strategy. For now, the same underlying data is fully browsable on the Journal page.');closeAllNavGroups()">Reports <span class="badge" style="font-size:8px;background:var(--gold-dim);color:var(--gold);border-color:transparent;vertical-align:middle">SOON</span></button>
           <button class="nav-btn" onclick="openTradeInspectorPanel(null);closeAllNavGroups()">Trade Inspector</button>
         </div>
@@ -1974,7 +2045,19 @@ button.danger:hover{background:var(--red-dim)}
       <!-- v8.0: shared "Coming Soon" feature-preview panel -- used by every nav
            leaf that doesn't have a dedicated page yet (see comingSoonOpen() below),
            instead of silently routing to an unrelated existing page. -->
-      <div id="panel-comingsoon" class="panel">
+      <div id="panel-observatory" class="panel">
+  <div class="obs-wrap">
+    <div class="obs-head">
+      <div>
+        <h2 class="obs-title">Analytics</h2>
+        <div class="obs-sub">What the filed evidence actually supports — and what it does not yet.</div>
+      </div>
+      <button class="obs-refresh" onclick="renderObservatory()">Re-read store</button>
+    </div>
+    <div id="observatoryBody"><div class="obs-empty">Opening…</div></div>
+  </div>
+</div>
+<div id="panel-comingsoon" class="panel">
         <div class="coming-soon-panel">
           <div class="coming-soon-badge">Coming Soon</div>
           <div class="coming-soon-title" id="comingSoonTitle"></div>
@@ -2109,9 +2192,10 @@ const ALL_PAIRS=[
 // Bump by 1.0 for a major update (new feature/tab), by 0.1 for a small patch/fix.
 // This shows in the header next to the logo and on the Diagnostics tab, so you can
 // glance at the live site and instantly confirm which build actually deployed.
-const APP_VERSION='12.46.0';
+const APP_VERSION='12.47.0';
 const APP_VERSION_DATE='04 Sep 2026';
 const APP_VERSION_LOG=[
+  '12.47.0 — THE OBSERVATORY: WHAT THE EVIDENCE ACTUALLY SUPPORTS (zero protected-function and zero protected-constant drift; 64/64 and 4/4 byte-identical). MOGO could take trades and file them, but nothing in the app could say what the filed trades MEAN -- every reading so far came from a Node script run by hand, which does not survive anyone being unavailable and cannot be checked against the store it describes. The Analytics nav entry, previously a coming-soon dialog, is now a real panel that reads the evidence store directly. The hard part is not the arithmetic, it is refusing to overstate: at n=43 the honest headline is that nothing is settled, and a screen showing a win rate without saying what that number can support is exactly how the withdrawn +20.97R claim happened. So every figure carries its uncertainty. The 95% interval on mean R is reported beside the point estimate and, on the real corpus, spans zero -- stated on screen as consistent with no edge at all. The trades needed to resolve a strong (+0.15R) and a realistic (+0.05R) edge are computed from the sample\'s OWN spread and shown against what the operator actually has. Populations are partitioned before any arithmetic and an unrecognised capture basis is excluded from BOTH rather than assumed forward. Every segmented view carries a Sidak-adjusted threshold, because reporting the best of several slices of the same trades is how noise becomes a finding. A sample without one uniform planned reward:risk gets NO breakeven rate and NO significance figure rather than an invented threshold. Evidence quality is surfaced from the v12.45.0 attribution metric, so it is watched rather than asserted. The panel makes NO recommendation. THE ANALYSIS IS A SECOND IMPLEMENTATION of scripts/mogo_forward_trade_analysis.js -- a browser file and a Node script cannot share a module here -- so OBS-1..OBS-6 run BOTH over the operator\'s 91 real preserved packages and require identical answers; OBS-1 asserts that set is non-empty so the differential cannot pass vacuously. A DEFECT FOUND BY RENDERING IT AGAINST REAL DATA: excluding developer trades emptied a DEV_TEST slice to n=0, and that empty group was still counted as a comparison, inflating the multiple-comparison correction so every other slice faced a stricter threshold than the real number of comparisons justified (OBS-17b). Read-only throughout: no transaction of its own, no write to any account, position, rule or configuration (OBS-24/25). 28 fixtures (OBS-1..OBS-27).',
   '12.46.0 — THE CONNECT SCREEN (display-only; zero protected-function and zero protected-constant drift, 64/64 and 4/4 byte-identical). The first thing the operator saw was a narrow centred box on flat black that oversold what MOGO does -- and, the operator said, was ugly and unmotivating. A tool you dislike opening is one you check less, and this one needs checking. Rebuilt as a two-column card: what this instrument IS on the left, credentials on the right, stacking to one column below 860px with the screen allowed to scroll (a fixed 100vh clipped the connect button on a phone). Ambient depth is pure CSS gradients -- no font, image, script or stylesheet is fetched, preserving the zero-external-dependency property recorded in docs/SECURITY.md -- and the drift animation stops under prefers-reduced-motion. HONESTY: the landing panel states NO NUMBER (CS-9 pins this by scanning the rendered text for digits). Nothing is connected when this screen is shown, so any figure it quoted could only be stale or invented; the only value on it is the version, read from APP_VERSION rather than typed into the markup, so it cannot misreport which build is deployed. The paper-only guarantee is stated three times, including beside the live-account switch. THREE REAL DEFECTS FIXED, not cosmetics: (1) connect() resolved its button as `event.target`. The screen now supports Enter-to-connect, where event.target is the INPUT -- that line would have written \'Connecting...\' into the field the operator had just pasted their API key into. Now resolved by id, null-guarded, and the button is restored on every failure path. (2) A 503 surfaced as a bare \'Error: HTTP 503\', which reads like a fault in this app; it is OANDA saying its own service is down -- seen 2026-09-04 shortly after the Friday 17:00 ET close, and recorded once before in the v12.6.0 note. Now named as OANDA\'s outage, with the weekend-close window explained. (3) The help text still told the operator to open the file directly rather than use the deployed page. Two full-bleed decorative layers cover the viewport, so CS-11/12 pin pointer-events:none and the card\'s z-index -- verified in a real browser via elementFromPoint at the button and the key field. Every id, handler and field the connect path reads is unchanged (CS-1/2/3). 24 fixtures (CS-1..CS-24).',
   '12.45.0 — THE FORWARD RECORD COULD NOT PROVE THE FACT THAT PICKED ITS OWN DIRECTION (zero protected-function and zero protected-constant drift; 64/64 functions and 4/4 constants byte-identical). MEASURED, not suspected: across the 86 preserved packages, EVERY REPLAY_RUN package verifies every attribution condition and EVERY forward package leaves at least one unverified -- A_repeatedReaction 1 (ALEX_SR_V1_A_ZONE_STATUS_VALIDATED), B_breakRetest 3 (adding B_ZONE_STATUS_BROKEN, B_FIRST_RETEST_IN_BREAK_CYCLE and B_REACTION_SIDE_MATCHES_BREAK -- the condition that decides whether the trade is a buy or a sell). The data was never missing: alexGCreateSetupRecord (PROTECTED) stores zoneStatusAtQualification, reactionSwingType and reactionFromSide, and alexGConstructLivePosition (PROTECTED) simply does not copy them onto the booked position. Replay reads the setup record directly, which is exactly why replay always verified and forward never did. BOTH PROTECTED FUNCTIONS ARE UNCHANGED: the repair is a join performed at capture time, where the setup record and the closed trade are both already in hand. The join is IDENTITY-CHECKED, never heuristic -- setupId AND qualificationTimestamp must be present on both sides and both match, and every other outcome supplies NOTHING and leaves the package honestly INDETERMINATE, because treating an absent field as agreement is how provenance gets manufactured. The booked trade always wins: the join fills a hole, never overwrites a recorded value. ALEX_SR_V1_B_FIRST_RETEST_IN_BREAK_CYCLE needs a count no single record can carry, so it is taken over (zoneId, breakCycleId, B_breakRetest) -- the uniqueness key the engine itself enforces -- and a record missing either half yields null rather than a count over the wrong population. SAFETY: a contradiction that appears ONLY once the join supplied fields falls back to the pre-v12.45.0 attribution and records CONTRADICTED_BY_JOIN with the offending condition ids, so a stale setup record can never destroy a trade record; a trade that contradicts its own rules on its OWN stored fields still fails capture, unchanged. Packages carry an additive setupRecordJoin block naming exactly which inputs came from the join, validated present-only so the 86 existing packages still validate, import and verify. Callers that supply nothing -- replay and every other seam -- get the pre-v12.45.0 attribution byte-for-byte. 37 new fixtures (SJ-1..SJ-37) including two positive controls that mutate the joined data and require the mirror to notice, and one mutation control proving the same bad data is invisible without the join.',
   '12.44.0 — A CONTROL ARM, AND A REPLAY THAT CANNOT PEEK (zero protected-function and zero protected-constant drift; the new strategy is registered but NOT authorized to trade). WHY: ALEX has never been measured against an alternative, so it could be shown to be winning or losing but never to be ADDING anything -- which is the only question that matters once a strategy is losing. Hutchinson &amp; O\'Brien (2022, Int. Rev. Financial Analysis) tested technical trading rules across currencies and found in-sample Sharpe 0.66 collapsing to 0.06 out of sample, with whatever abnormal return remained FULLY EXPLAINED by time-series momentum. If that holds here, ALEX\'s zone detection, touch counting, break-and-retest sequencing and staleness rules are elaborate machinery producing what a one-line trend check produces for free. Nothing in this repository could test that. THE CONTROL: baselineTrendSignal is the entire entry rule -- the sign of the 3-month return, no filters, no confirmation, no discretion. BT-4 pins that it reads ONLY the two endpoint closes (a wild path and a straight line with identical endpoints give an identical signal), because a control arm with hidden structure is a second strategy rather than a control. It borrows ALEX\'s OWN risk model: same instruments, same 2R target (BT-9 asserts the ratio in both directions, since a divergence there invalidates every conclusion drawn from the comparison), same 1% sizing. THE ONE DISCLOSED DIFFERENCE, recorded on every position rather than left in a comment (BT-12): ALEX places its stop against the zone it traded and a trend rule has no zone, so this uses an ATR multiple. NOT the published TSMOM strategy and must never be reported as one -- academic TSMOM holds a fixed horizon with volatility-scaled sizing and no stop; the question here is narrower and more useful. THE REPLAY IS BUILT SO LOOK-AHEAD IS STRUCTURALLY IMPOSSIBLE, not merely avoided: the signal is handed candles.slice(0,i+1) -- a PREFIX, not an index into the full array -- so no future bar is in scope to read by mistake; the ATR comes off the same prefix; and the entry is bar i+1\'s OPEN, the first price actually transactable after the close that produced the signal, because deciding on a bar and filling inside it is the classic backtest lie. BTR-1 proves the property by TRUNCATION: running the full series and a series cut short yields byte-identical trades for every decision made before the cut, which no leak of a future bar into a signal, an entry or a stop could survive. EXITS REUSE ALEX\'S OWN PROTECTED alexGWalkOutcome AND alexGComputeMAEMFE, UNMODIFIED, so the two arms differ ONLY at entry and no outcome difference can be attributed to bookkeeping -- including conservative ambiguity (a bar touching stop and target both books a Loss, BTR-5). One position per pair at a time (BTR-4); a still-open trade has resultR null and is neither a win nor a loss (BTR-6); a bar that cannot produce geometry is RECORDED as skipped rather than silently dropped, because a missing trade is a fact about coverage (BTR-9). FRICTION IS NOT MODELLED AND THE RESULT SAYS SO (BTR-7): ALEX\'s own replay threads spread and slippage as metadata with zero effect on outcome math, so charging spread here and not there would rig the comparison. Both arms are equally optimistic; the comparison BETWEEN them is valid, neither number is achievable, and neither should ever be quoted as a return. Results are stamped captureBasis REPLAY_RUN at the source -- the analysis tool partitions on exactly that, and a replay result reaching a forward figure is the defect that produced a +20.97R claim where the real forward result was -7.04R. IT CANNOT TRADE: paperTrading, automation and scanning are false (BT-13), the services are inert (BT-16), and BT-14 checks SEVEN named live entry points (alexGLivePollTick, alexGCheckLivePositions, alexGAttemptOpenLivePosition, alexGEvaluatePairForLiveSetups, alexGConstructLivePosition, checkAutoTrades, scanAll) and asserts none of them reference the baseline -- promoting a strategy into PAPER is an operator governance boundary and this has not been promoted. The lookback was chosen from the literature BEFORE looking at any MOGO outcome and is pinned (BT-17), because a lookback tuned against this corpus would make the control as overfitted as the thing it controls for. TWO EXISTING FIXTURES WERE PINNING A SNAPSHOT and registering a fourth strategy broke them -- the defect CLAUDE.md names as this repository\'s most common failure mode. v1231 Fixture 4 asserted buttonCount===3 and is about ONE BUTTON PER ENTRY, so it now compares against the registry\'s own length; Fixture 6 asserted buttonCount===4 after injecting one entry and is about a RELATIONSHIP, so it now asserts one more entry yields exactly one more button, taking its baseline from the registry length rather than by rendering again (an extra render/read there re-enters the workspace chart path and exhausts the harness\'s charting stub, failing a LATER fixture -- a test that breaks another test by measuring is worse than the literal it replaced). 27 new fixtures in tests/run_v144_baseline_trend_tests.js. Gate: 36/36 suites, 2,769/2,769 under Node, plus v144 27/27; zero drift.',
@@ -21377,6 +21461,346 @@ const TJR_SERVICES={
 // in this file -- the manifest registers it, the pure functions below compute it, and nothing
 // calls them from the poll tick. Promoting a strategy into PAPER is an operator governance
 // boundary (CLAUDE.md, "Discovery is not authorisation"), and this has not been promoted.
+// ══ v12.47.0 — THE OBSERVATORY: what the evidence actually supports ═══════════════════════════
+// MOGO could take trades and file them, but nothing in the app could tell the operator what the
+// filed trades MEAN. Every reading so far has come from a Node script run by hand, which does not
+// survive anyone being unavailable and cannot be checked against the store it describes.
+//
+// The hard part of this panel is not the arithmetic. It is refusing to overstate. At n=40 the
+// honest headline is "nothing here is significant yet", and a screen that shows a win rate without
+// saying what that number can and cannot support is worse than no screen at all -- it manufactures
+// confidence, which is the exact failure that produced the withdrawn +20.97R claim.
+//
+// So every figure below is reported WITH its uncertainty, populations are never mixed, and the
+// panel makes no recommendation whatsoever. It reports; the operator decides.
+//
+// These functions mirror scripts/mogo_forward_trade_analysis.js. They are a SECOND implementation
+// -- a browser file and a Node script cannot share a module in this architecture -- so the v147
+// differential fixtures run BOTH over the same packages and require identical output. Drift
+// between the two is a test failure, not a discrepancy discovered later in a report.
+const OBS_FORWARD_BASES=Object.freeze(['LIVE_CLOSE','HISTORICAL_BACKFILL']);
+const OBS_REPLAY_BASES=Object.freeze(['REPLAY_RUN']);
+// From Harvey/Liu/Zhu-style power arithmetic: n ~ 7.85*(sigma/delta)^2 for 80% power at alpha=.05,
+// two-sided. Stated as a constant so the number on screen can be traced to something.
+const OBS_POWER_CONSTANT=7.85;
+function obsPackagePopulation(pkg){
+  const basis=pkg&&pkg.captureBasis;
+  if(OBS_FORWARD_BASES.indexOf(basis)>=0) return 'FORWARD';
+  if(OBS_REPLAY_BASES.indexOf(basis)>=0) return 'REPLAY';
+  return 'UNKNOWN';                       // fails CLOSED: an unrecognised basis is never forward
+}
+function obsPartitionByPopulation(packages){
+  const out={FORWARD:[],REPLAY:[],UNKNOWN:[]};
+  (packages||[]).forEach(function(p){ out[obsPackagePopulation(p)].push(p); });
+  return out;
+}
+// One row per closed position. Mirrors rowsFromPackages() in the CLI, restricted to the fields
+// this panel reports -- adding a field here means adding it there, and the differential fixture
+// only compares what both produce.
+function obsRowsFromPackages(packages){
+  const rows=[];
+  (packages||[]).forEach(function(pkg){
+    const objs=pkg&&pkg.objects?pkg.objects:{};
+    const positions=objs.positions||[],outcomes=objs.outcomes||[],setups=objs.qualifiedSetups||[];
+    const byPosition={};
+    outcomes.forEach(function(o){ if(o&&o.positionId) byPosition[o.positionId]=o; });
+    positions.forEach(function(p){
+      const o=byPosition[p.positionId]||null;
+      let setup=null;
+      for(let i=0;i<setups.length;i++){ if(setups[i]&&setups[i].setupId===p.setupId){ setup=setups[i]; break; } }
+      const ra=setup&&setup.ruleAttribution?setup.ruleAttribution:null;
+      rows.push({
+        strategyId:(pkg.identity&&pkg.identity.strategyId)||null,
+        instrument:p.instrument||null,
+        timeframe:p.timeframe||null,
+        setupType:setup?(setup.setupType||null):null,
+        direction:p.direction||null,
+        session:(setup&&setup.contextRefs)?(setup.contextRefs.session||null):null,
+        realizedR:(o&&typeof o.realizedR==='number')?o.realizedR:null,
+        recordedResultR:(o&&typeof o.recordedResultR==='number')?o.recordedResultR:null,
+        plannedR:(o&&typeof o.plannedR==='number')?o.plannedR
+          :(typeof p.plannedRR==='number'?p.plannedRR:null),
+        unverifiedConditions:(ra&&typeof ra.unverifiedConditionCount==='number')?ra.unverifiedConditionCount:null,
+        // v12.45.0: whether the setup-record join contributed, so evidence quality can be watched
+        // improving on new trades rather than asserted.
+        joinStatus:(setup&&setup.setupRecordJoin)?(setup.setupRecordJoin.status||null):null,
+        isDeveloperTrade:!!(p&&p.isDeveloperTrade)
+      });
+    });
+  });
+  return rows;
+}
+function obsSum(a){ return a.reduce(function(x,y){ return x+y; },0); }
+function obsMean(a){ return a.length?obsSum(a)/a.length:null; }
+// Sample standard deviation (n-1). Returns null below two observations rather than 0, because a
+// single trade has no spread and reporting 0 would imply certainty it cannot have.
+function obsStdDev(a){
+  if(!a||a.length<2) return null;
+  const m=obsMean(a);
+  return Math.sqrt(obsSum(a.map(function(x){ return (x-m)*(x-m); }))/(a.length-1));
+}
+// 95% interval on the MEAN, normal approximation. Deliberately not dressed up as exact: individual
+// R outcomes here are bimodal (about -1 or about +2), so this rests on the central limit theorem
+// applying to their average, which is reasonable by n~30 and is stated on screen as approximate.
+function obsMeanCI95(values){
+  const n=values.length,sd=obsStdDev(values),m=obsMean(values);
+  if(n<2||sd==null||m==null) return null;
+  const half=1.96*sd/Math.sqrt(n);
+  return{mean:m,sd:sd,n:n,low:m-half,high:m+half,halfWidth:half};
+}
+// How many trades it would take to distinguish an edge of `delta` R/trade from zero, at this
+// sample's own observed spread. This is the number that puts every other figure in proportion.
+function obsTradesNeeded(sd,delta){
+  if(sd==null||!(delta>0)) return null;
+  return Math.ceil(OBS_POWER_CONSTANT*Math.pow(sd/delta,2));
+}
+// Exact binomial upper tail, in log space so large n does not overflow. Identical to the CLI's.
+function obsBinomialTailAtLeast(n,k,p){
+  if(!(n>0)||!(p>0)||!(p<1)) return null;
+  if(k<=0) return 1;
+  if(k>n) return 0;
+  let logC=0,total=0;
+  for(let i=0;i<=n;i++){
+    if(i>0) logC+=Math.log((n-i+1)/i);
+    if(i>=k) total+=Math.exp(logC+i*Math.log(p)+(n-i)*Math.log(1-p));
+  }
+  return Math.min(1,total);
+}
+function obsMedian(values){
+  const v=values.filter(function(x){ return typeof x==='number'&&isFinite(x); }).sort(function(a,b){ return a-b; });
+  if(!v.length) return null;
+  const mid=Math.floor(v.length/2);
+  return v.length%2?v[mid]:(v[mid-1]+v[mid])/2;
+}
+function obsAnalyze(rows,opts){
+  const o=opts||{};
+  const all=(rows||[]).filter(function(r){ return o.includeDeveloperTrades?true:!r.isDeveloperTrade; });
+  const developerTradesFound=(rows||[]).filter(function(r){ return r.isDeveloperTrade; }).length;
+  const closed=all.filter(function(r){ return typeof r.realizedR==='number'; });
+  const rs=closed.map(function(r){ return r.realizedR; });
+  const wins=closed.filter(function(r){ return r.realizedR>0; }).length;
+  const winRate=closed.length?wins/closed.length:null;
+  // The breakeven win rate is 1/(1+R) for the sample's own planned reward:risk -- and is reported
+  // ONLY when every closed trade shares one. A mixed-target sample has no single threshold, and
+  // inventing one would make the significance figure describe a comparison that was never run.
+  const planned=closed.map(function(r){ return r.plannedR; }).filter(function(x){ return typeof x==='number'; });
+  const uniquePlanned=[];
+  planned.forEach(function(x){ if(uniquePlanned.indexOf(x)===-1) uniquePlanned.push(x); });
+  const uniform=uniquePlanned.length===1&&uniquePlanned[0]>0;
+  const breakevenWinRate=uniform?1/(1+uniquePlanned[0]):null;
+  const ci=obsMeanCI95(rs);
+  const netR=closed.length?obsSum(rs):null;
+  return{
+    sampleSize:closed.length,
+    unresolved:all.length-closed.length,
+    developerTradesFound:developerTradesFound,
+    developerTradesIncluded:!!o.includeDeveloperTrades,
+    wins:wins,losses:closed.length-wins,winRate:winRate,
+    netR:netR,
+    expectancyR:closed.length&&netR!=null?netR/closed.length:null,
+    medianPlannedR:obsMedian(planned),
+    plannedRIsUniform:uniform,
+    breakevenWinRate:breakevenWinRate,
+    // The probability a coin with the breakeven win rate produces AT LEAST this many wins. A large
+    // value is the honest reading of a small sample, not a disappointing one.
+    pAtLeastWins:(uniform&&closed.length)?obsBinomialTailAtLeast(closed.length,wins,breakevenWinRate):null,
+    meanCI95:ci,
+    // Trades needed to resolve a strong edge and a realistic one, at THIS sample's spread.
+    tradesNeededStrongEdge:ci?obsTradesNeeded(ci.sd,0.15):null,
+    tradesNeededRealisticEdge:ci?obsTradesNeeded(ci.sd,0.05):null,
+    // Evidence quality, from the attribution mirror. fullyVerified is the number that should climb
+    // toward the sample size on trades captured after v12.45.0.
+    evidence:{
+      withAttribution:all.filter(function(r){ return r.unverifiedConditions!=null; }).length,
+      fullyVerified:all.filter(function(r){ return r.unverifiedConditions===0; }).length,
+      withUnverified:all.filter(function(r){ return r.unverifiedConditions>0; }).length,
+      maxUnverified:all.reduce(function(m,r){ return Math.max(m,r.unverifiedConditions||0); },0),
+      joinedFromSetupRecord:all.filter(function(r){ return r.joinStatus==='JOINED'; }).length,
+      joinContradicted:all.filter(function(r){ return r.joinStatus==='CONTRADICTED_BY_JOIN'; }).length
+    }
+  };
+}
+// Šidák correction. Looking at k slices of the same 40 trades and reporting the best one at p<.05
+// is how noise becomes a finding; this states the threshold a slice must actually clear.
+function obsAdjustedAlpha(k,alpha){
+  const a=(typeof alpha==='number')?alpha:0.05;
+  if(!(k>0)) return null;
+  return 1-Math.pow(1-a,1/k);
+}
+function obsSegment(rows,field,opts){
+  const groups={};
+  (rows||[]).forEach(function(r){
+    const key=(r&&r[field]!=null)?String(r[field]):'(unrecorded)';
+    (groups[key]=groups[key]||[]).push(r);
+  });
+  // A group with no CLOSED trade is not a comparison and must not be counted as one. Excluding
+  // developer trades can empty a group entirely (a DEV_TEST slice at n=0 was produced this way on
+  // the real corpus); counting it inflated the Šidák denominator and made every OTHER slice face
+  // a stricter threshold than the number of real comparisons justifies. Analysed first, counted
+  // second -- the emptiness is a property of the analysis, not of the grouping.
+  const analysed=Object.keys(groups).sort().map(function(k){
+    const a=obsAnalyze(groups[k],opts); a.key=k; return a;
+  }).filter(function(a){ return a.sampleSize>0; });
+  const out={field:field,comparisons:analysed.length,
+    emptyGroupsExcluded:Object.keys(groups).length-analysed.length,
+    adjustedAlpha:obsAdjustedAlpha(analysed.length,0.05),groups:[]};
+  analysed.forEach(function(a){
+    // Significance is judged against the ADJUSTED threshold, never the bare 0.05, and a group is
+    // only ever marked when its own planned R was uniform enough to have a threshold at all.
+    a.clearsAdjustedThreshold=(a.pAtLeastWins!=null&&out.adjustedAlpha!=null)
+      ? a.pAtLeastWins<out.adjustedAlpha : null;
+    out.groups.push(a);
+  });
+  return out;
+}
+
+// ── The Observatory panel. Read-only over the evidence store: it opens no transaction that
+// writes, touches no account, and cannot influence a trading decision. ────────────────────────
+let obsLastRead=null;
+function obsFmtR(x,dp){ return x==null?'—':(x>=0?'+':'')+x.toFixed(dp==null?2:dp)+'R'; }
+function obsFmtPct(x){ return x==null?'—':(x*100).toFixed(1)+'%'; }
+function obsFmtP(x){ return x==null?'—':(x<0.001?'<0.001':x.toFixed(3)); }
+function obsEsc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){
+  return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+// The verdict line. Deliberately the FIRST thing rendered and deliberately conservative: with a
+// sample this size the answer is almost always "not yet", and saying so plainly is the panel's
+// whole reason to exist.
+function obsReadUnderstanding(a){
+  if(!a||!a.sampleSize) return{tone:'neutral',headline:'No closed forward trades yet.',
+    detail:'Nothing can be concluded from an empty sample. This is the correct state before trading has produced closes, not a fault.'};
+  if(a.pAtLeastWins==null) return{tone:'neutral',headline:'Not testable as one sample.',
+    detail:'These '+a.sampleSize+' trades do not share a single planned reward:risk, so there is no one breakeven win rate to test them against. Segment them below, or compare only trades with the same target.'};
+  const need=a.tradesNeededStrongEdge;
+  if(a.clearsAdjusted===false||a.pAtLeastWins>=0.05){
+    return{tone:'neutral',headline:'No demonstrated edge — and this sample is too small to show one.',
+      detail:'A coin at the breakeven win rate would produce at least this many wins '+obsFmtPct(a.pAtLeastWins)
+        +' of the time. That is not evidence the strategy fails; it is evidence the question is still open.'
+        +(need?' Resolving an edge of +0.15R per trade at this sample’s own spread would take about '+need+' trades.':'')};
+  }
+  return{tone:'notable',headline:'This slice clears the plain 5% threshold — treat it as a lead, not a result.',
+    detail:'P = '+obsFmtP(a.pAtLeastWins)+' against the breakeven win rate. Before acting on it: this is one of several slices of the same trades, so check it against the adjusted threshold below, and check whether it holds in the second half of the sample as well as the first.'};
+}
+function obsStatCard(label,value,sub,tone){
+  return'<div class="obs-stat'+(tone?' obs-'+tone:'')+'">'
+    +'<div class="obs-stat-label">'+obsEsc(label)+'</div>'
+    +'<div class="obs-stat-value">'+value+'</div>'
+    +(sub?'<div class="obs-stat-sub">'+sub+'</div>':'')+'</div>';
+}
+function obsRenderAnalysis(a){
+  if(!a||!a.sampleSize) return'<div class="obs-empty">No closed trades in this population.</div>';
+  const ci=a.meanCI95;
+  let h='<div class="obs-stats">';
+  h+=obsStatCard('Closed trades',String(a.sampleSize),
+    a.unresolved?a.unresolved+' still open or unresolved':'all resolved');
+  h+=obsStatCard('Win rate',obsFmtPct(a.winRate),a.wins+'W / '+a.losses+'L');
+  h+=obsStatCard('Net',obsFmtR(a.netR),'expectancy '+obsFmtR(a.expectancyR,3)+' per trade',
+    a.netR!=null?(a.netR>0?'pos':'neg'):null);
+  if(a.breakevenWinRate!=null)
+    h+=obsStatCard('Breakeven needs',obsFmtPct(a.breakevenWinRate),
+      'at '+a.medianPlannedR+':1 planned reward:risk');
+  h+='</div>';
+  if(ci){
+    // The interval, not the point estimate, is the honest summary of a small sample.
+    const spansZero=ci.low<0&&ci.high>0;
+    h+='<div class="obs-band'+(spansZero?' obs-band-wide':'')+'">'
+      +'<div class="obs-band-title">Average result per trade, with its uncertainty</div>'
+      +'<div class="obs-band-figure">'+obsFmtR(ci.mean,3)+' <span>(95% range '
+      +obsFmtR(ci.low,3)+' to '+obsFmtR(ci.high,3)+')</span></div>'
+      +'<div class="obs-band-note">'
+      +(spansZero
+        ? 'This range contains zero, so the sample is consistent with the strategy having no edge at all — as well as with it having one. That is what '+a.sampleSize+' trades buys you.'
+        : 'This range excludes zero. That is worth attention, but it is one reading of one sample; check it against the adjusted threshold below.')
+      +' Approximate (normal) interval — individual results are bimodal, so this relies on averaging rather than on the results themselves being bell-shaped.</div></div>';
+  }
+  if(a.tradesNeededStrongEdge){
+    h+='<div class="obs-need"><b>How much more data would settle this</b>'
+      +'<div class="obs-need-rows">'
+      +'<div><span>'+a.tradesNeededStrongEdge+'</span> trades to resolve a strong edge (+0.15R each)</div>'
+      +'<div><span>'+a.tradesNeededRealisticEdge+'</span> trades to resolve a realistic edge (+0.05R each)</div>'
+      +'<div class="obs-need-now">You have <b>'+a.sampleSize+'</b>.</div>'
+      +'</div><div class="obs-band-note">Computed from this sample’s own spread of results. A wider spread needs more trades.</div></div>';
+  }
+  return h;
+}
+function obsRenderSegment(seg){
+  if(!seg||!seg.groups.length) return'';
+  let h='<div class="obs-seg"><div class="obs-seg-head"><b>By '+obsEsc(seg.field)+'</b>'
+    +'<span class="obs-seg-alpha">'+seg.comparisons+' slices — a slice must beat P &lt; '
+    +seg.adjustedAlpha.toFixed(4)+', not 0.05</span></div>'
+    +'<div class="obs-seg-why">Looking at several slices of the same trades and reporting the best one is how noise becomes a finding. The adjusted threshold is what a slice has to clear to mean anything.</div>'
+    +'<table class="obs-table"><thead><tr><th>Slice</th><th>n</th><th>W/L</th><th>Win rate</th>'
+    +'<th>Net</th><th>Per trade</th><th>P vs breakeven</th></tr></thead><tbody>';
+  seg.groups.forEach(function(g){
+    const flag=g.clearsAdjustedThreshold===true?' class="obs-row-notable"':'';
+    h+='<tr'+flag+'><td>'+obsEsc(g.key)+'</td><td>'+g.sampleSize+'</td>'
+      +'<td>'+g.wins+'/'+g.losses+'</td><td>'+obsFmtPct(g.winRate)+'</td>'
+      +'<td class="'+(g.netR>0?'obs-pos':'obs-neg')+'">'+obsFmtR(g.netR)+'</td>'
+      +'<td>'+obsFmtR(g.expectancyR,3)+'</td>'
+      +'<td>'+obsFmtP(g.pAtLeastWins)+(g.clearsAdjustedThreshold===true?' ✳':'')+'</td></tr>';
+  });
+  return h+'</tbody></table></div>';
+}
+function obsRenderEvidenceQuality(a){
+  const e=a&&a.evidence;
+  if(!e||!e.withAttribution) return'';
+  const pct=e.withAttribution?e.fullyVerified/e.withAttribution:null;
+  return'<div class="obs-quality"><div class="obs-band-title">Evidence quality</div>'
+    +'<div class="obs-quality-bar"><div style="width:'+((pct||0)*100).toFixed(1)+'%"></div></div>'
+    +'<div class="obs-quality-line"><b>'+e.fullyVerified+' of '+e.withAttribution
+    +'</b> trades have every rule condition proven from their own record.</div>'
+    +(e.withUnverified?'<div class="obs-band-note">'+e.withUnverified+' trade'+(e.withUnverified===1?'':'s')
+      +' still carry up to '+e.maxUnverified+' condition'+(e.maxUnverified===1?'':'s')
+      +' that could not be checked. Trades captured before v12.45.0 keep this gap; it is not repaired retroactively.</div>':'')
+    +(e.joinedFromSetupRecord?'<div class="obs-band-note">'+e.joinedFromSetupRecord
+      +' had condition inputs supplied by the setup-record join.</div>':'')
+    +(e.joinContradicted?'<div class="obs-warn">'+e.joinContradicted
+      +' trade(s) disagreed with their own setup record. Worth investigating — the trade was kept and the disagreement recorded.</div>':'')
+    +'</div>';
+}
+async function renderObservatory(){
+  const el=document.getElementById('observatoryBody');
+  if(!el) return;
+  el.innerHTML='<div class="obs-empty">Reading the evidence store…</div>';
+  let packages=[];
+  try{ packages=await evidenceListPackages(); }
+  catch(e){
+    el.innerHTML='<div class="obs-warn">Could not read the evidence store: '+obsEsc(e&&e.message?e.message:String(e))
+      +'<br><br>Nothing is reported rather than reporting a partial figure that would read as a whole one.</div>';
+    return;
+  }
+  const parts=obsPartitionByPopulation(packages);
+  const fwdRows=obsRowsFromPackages(parts.FORWARD);
+  const repRows=obsRowsFromPackages(parts.REPLAY);
+  const fwd=obsAnalyze(fwdRows);
+  const rep=obsAnalyze(repRows);
+  obsLastRead={at:new Date().toISOString(),packages:packages.length,
+    forward:parts.FORWARD.length,replay:parts.REPLAY.length,unknown:parts.UNKNOWN.length};
+  const verdict=obsReadUnderstanding(fwd);
+  let h='';
+  h+='<div class="obs-verdict obs-'+verdict.tone+'"><div class="obs-verdict-head">'
+    +obsEsc(verdict.headline)+'</div><div class="obs-verdict-detail">'+obsEsc(verdict.detail)+'</div></div>';
+  h+='<div class="obs-pops">'
+    +'<span class="obs-pop obs-pop-fwd"><b>'+parts.FORWARD.length+'</b> forward</span>'
+    +'<span class="obs-pop obs-pop-rep"><b>'+parts.REPLAY.length+'</b> replay</span>'
+    +(parts.UNKNOWN.length?'<span class="obs-pop obs-pop-unk"><b>'+parts.UNKNOWN.length
+      +'</b> unrecognised — excluded</span>':'')
+    +'<span class="obs-pop-note">Forward and replay are never mixed. An unrecognised capture basis is excluded from both rather than assumed to be forward.</span></div>';
+  h+='<h3 class="obs-h">Forward — trades taken live, against real incoming prices</h3>';
+  h+=obsRenderAnalysis(fwd);
+  h+=obsRenderEvidenceQuality(fwd);
+  if(fwd.sampleSize){
+    h+=obsRenderSegment(obsSegment(fwdRows,'setupType'));
+    h+=obsRenderSegment(obsSegment(fwdRows,'timeframe'));
+    h+=obsRenderSegment(obsSegment(fwdRows,'instrument'));
+  }
+  h+='<h3 class="obs-h obs-h-replay">Replay — backtests over history. Never counted as forward.</h3>';
+  h+='<div class="obs-band-note" style="margin-bottom:12px">Replay is how you get sample size cheaply; forward is how you get truth. Use replay to rule ideas out, and only forward-test what survives.</div>';
+  h+=obsRenderAnalysis(rep);
+  h+='<div class="obs-foot">Read '+new Date().toLocaleString()+' — '+packages.length
+    +' package'+(packages.length===1?'':'s')+' in the store. Read-only; nothing here changes an account, a position or a rule.</div>';
+  el.innerHTML=h;
+}
+
 const BASELINE_TREND_STRATEGY_ID='baseline_trend_v1';
 const BASELINE_TREND_VERSION='baseline_trend_v1';
 const RULES_BASELINE_TREND={
@@ -23526,6 +23950,7 @@ function showPanel(name,btn){
   if(svcEntryForOpen&&svcEntryForOpen.services&&svcEntryForOpen.services.onOpen) svcEntryForOpen.services.onOpen();
   else if(name==='paper'&&!getStrategyServices('current_strategy')) initJvmPaperPanel();
   else if(name==='alexg'&&!getStrategyServices('alex_g_sr_v1')) initAlexGPair();
+  if(name==='observatory') renderObservatory();
   if(name==='ai') renderAiMessages();
   if(name==='backtest') initBacktestPair();
   if(name==='truemtf') initMTFPair();
