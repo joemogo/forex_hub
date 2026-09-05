@@ -758,3 +758,92 @@ documented public API for a verified-track-record platform the single highest-va
 look for next, and the reason HAQ-3's remedy is an operator-supplied export rather than
 anything autonomous.
 
+
+---
+
+## Session 2026-09-05 — the documented-public-API question, answered
+
+Scope: the single item N-19.4 named as highest-value next — *"a documented public API for a
+verified-track-record platform"* — checked against the standing binding gap, observed trades for
+any candidate (`reconstructability.py` reports acquisition as binding for all 58).
+
+Method: web search plus `WebFetch` of the platforms' own published API documentation. No login
+was attempted, no paywall approached, nothing bypassed. Only documentation pages were retrieved;
+no platform's data endpoints were called.
+
+### N-20.1 — Myfxbook API — `SOURCE_DOES_NOT_STATE`
+
+`https://www.myfxbook.com/api` retrieved successfully. Thirteen endpoints are documented, and
+three of them are exactly the shape this project needs: `get-history` returns closed trades
+carrying `openPrice`, `closePrice`, `tp`, `sl` and `profit`; `get-open-trades` returns live
+positions with the same fields; `get-open-orders` returns pending orders.
+
+**It does not close the gap, for one decisive reason stated in the documentation itself: the API
+"allows access to personal information only."** A session is mandatory and `get-my-accounts`
+returns the requester's OWN accounts. There is no endpoint that reads an arbitrary public
+account's trades. Obtaining a third party's trades through it would require that trader's
+credentials, which is not an acquisition route — it is impersonation, and is not attempted.
+
+`get-watched-accounts` returns summaries of watched accounts, not their trades. Recorded so a
+future session does not mistake the presence of trade-shaped endpoints for third-party access.
+
+### N-20.2 — Darwinex DARWIN API — `SOURCE_DOES_NOT_STATE`
+
+`https://darwinex.github.io/darwin-api-tutorials/` retrieved successfully. The API exposes DARWIN
+**quotes**, **scores**, **OHLC candlesticks** and live streaming quotes — the strategy as an
+investable instrument with its own price series.
+
+The underlying trader's instrument-by-instrument activity — entry, stop, target, direction — is
+not among the documented data types. This is not an oversight to route around: abstracting the
+method into a price series is what Darwinex sells. An equity curve is not a reconstructable rule
+set, and this project's own standard is that a strategy must be specifiable mechanically.
+
+`https://www.darwinex.com/eu/algorithmic-trading/darwin-api` — `CONTENT_NOT_RETRIEVABLE`,
+redirect loop. Not retried; the tutorials site answered the question.
+
+### N-20.3 — Collective2 API — `SOURCE_DOES_NOT_STATE` (provisional)
+
+`https://www.collective2.com/api-docs/latest` → 302 → `https://api-docs.collective2.com/`,
+retrieved successfully. The documented orientation is **publishing**: "write your own software to
+control Collective2", managing "Strategies and Subscribers", and "how to submit signals to C2".
+
+Collective2 is the only platform checked whose model publishes trades **before their outcome is
+known**, which is this project's stated evidence bar. But the landing page names no endpoint for
+reading a system one does not own, and reading another system's signals is a paid subscription to
+that system — a commercial paywall, not a technical obstacle, and not approached.
+
+**Marked PROVISIONAL and honestly so: only the landing page was retrieved, not the General API
+Reference.** A future session with reason to revisit should read that reference before treating
+this as settled. It is the one candidate here where the remaining question is commercial rather
+than structural.
+
+### N-20.4 — the finding, which is structural rather than a list of blocked doors
+
+The four obstacles in N-19.4 were about *access*. This session found a fifth that access cannot
+fix, and it explains why all 58 candidates fail reconstructability:
+
+> **Verification and reconstructability are in tension by design. A platform that rigorously
+> verifies a track record does so by protecting the method, because the method is the trader's
+> asset. The more trustworthy the record, the less reconstructable the rules.**
+
+Myfxbook verifies performance and exposes trades only to their owner. Darwinex verifies most
+rigorously of all — by converting the strategy into a price series that reveals nothing. Collective2
+publishes trades pre-outcome and charges for them. In each case the trade-level detail is either
+the trader's private property or the platform's product.
+
+**This is not a door to keep knocking on.** The absence of a usable third-party trade API is not a
+gap in coverage; it is what these businesses are. N-19.4's recommendation — "a documented public
+API for a verified-track-record platform" — is hereby answered: for the platforms reachable and
+checked, no such thing exists, and the reason it does not exist is not incidental.
+
+**What this does NOT establish:** that no such source exists anywhere. Regulatory disclosures,
+academic datasets of real order flow (the Osler NY Fed order dataset is the known example), and
+operator-supplied exports remain untouched by this finding. An operator who holds an export, or a
+trader who consents to share one, closes the gap immediately — which is why HAQ-3's remedy stands
+unchanged.
+
+**Practical consequence for strategy discovery.** The path with no acquisition problem at all is a
+strategy whose rules are *already published in mechanically specified form* — the research
+literature rather than a person. `baseline_trend_v1` is exactly that and needed no acquisition
+step. That route should be preferred over trader reconstruction until an operator-supplied export
+or a consenting trader changes the evidence position.
