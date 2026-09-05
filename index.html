@@ -2070,6 +2070,13 @@ button.danger:hover{background:var(--red-dim)}
     <div id="observatoryBody"><div class="obs-empty">Opening…</div></div>
   </div>
 </div>
+<div id="panel-psychlevel" class="panel">
+  <div style="padding:20px 24px;max-width:1100px;margin:0 auto;overflow-y:auto;height:100%">
+    <div class="card" id="psyWsHeaderCard"></div>
+    <div class="card" id="psyWsControlsCard" style="margin-top:10px"></div>
+    <div id="psyWsResultsContainer"></div>
+  </div>
+</div>
 <div id="panel-comingsoon" class="panel">
         <div class="coming-soon-panel">
           <div class="coming-soon-badge">Coming Soon</div>
@@ -2205,9 +2212,10 @@ const ALL_PAIRS=[
 // Bump by 1.0 for a major update (new feature/tab), by 0.1 for a small patch/fix.
 // This shows in the header next to the logo and on the Diagnostics tab, so you can
 // glance at the live site and instantly confirm which build actually deployed.
-const APP_VERSION='12.53.0';
+const APP_VERSION='12.54.0';
 const APP_VERSION_DATE='04 Sep 2026';
 const APP_VERSION_LOG=[
+  '12.54.0 — ROUND-NUMBER LEVELS, WITH A CONTROL THAT CAN FALSIFY THEM (zero protected-function and zero protected-constant drift; 64/64 and 4/4 byte-identical). The one mechanism in the research with a published empirical basis: Osler, NY Fed Staff Report 125, examined 9,667 REAL orders and found take-profit orders cluster AT round numbers and stop-losses just beyond. psych_level_v1 trades that claim directly -- reach a round level, fail to close through it, fade the approach, stop placed BEYOND the level where the order study locates the stop cluster, 2R target so the R figures compare against every other arm. THE CONTROL IS THE POINT AND IS THE REASON THIS IS WORTH RUNNING: a mean-reversion rule can profit on ANY evenly spaced grid, so the identical rule also runs on a grid shifted half an interval -- levels as regular and as arbitrary as the round ones -- over THE SAME BARS in the same pass. If the round grid does not beat that control there is no round-number effect here, only a mean-reversion rule that would work anywhere. PSY-C3 is the fixture that matters: the two arms must be CAPABLE of differing on the same bars, or the experiment is theatre that always reports no effect. No verdict is computed anywhere -- the comparison returns two records and the gap between them, and whether a gap means anything is a judgement about sample size rather than arithmetic. REPLAY ONLY: seven named live entry points are asserted to reference nothing in it, and results are labelled REPLAY_RUN at the point of production. Look-ahead is structurally impossible -- the signal is handed a PREFIX and entry is the next bar OPEN -- and PSY-L1 proves it by truncation. A DEFECT THIS RELEASE CAUGHT IN ITSELF: 28 fixtures passed while the deployed page was DEAD ON LOAD with a duplicate top-level declaration, because every fixture extracts ONE function into a fresh realm and a per-function test cannot see a collision BETWEEN functions. PSY-P1 now parses the whole page script and is mutation-verified against exactly that failure; PSY-V1/V2 additionally check the arm produces a workable and BALANCED number of trades on a deterministic random walk, since a rule firing three times in two years answers nothing. 34 fixtures (PSY-G1..4, S1..6, L1..4, M1..2, C1..7, X1..5, P1..4, V1..2).',
   '12.53.0 — THE FORWARD HEADLINE WAS POOLING TWO STRATEGIES, IN THE PANEL BUILT TO PREVENT THAT (zero protected-function and zero protected-constant drift; 64/64 and 4/4 byte-identical). CAUGHT ON THE DEPLOYED BUILD, from the operator screenshots. The Analytics forward figures were computed over EVERY forward strategy while the JVM block immediately below asserted those trades were NOT included in them. They were. JVM records carry no setupType and no timeframe, so they surfaced as an (unrecorded) row in both segment tables -- 2 trades, 0W/2L, -2.14R -- and moved the headline. Correcting it changed the numbers materially: 42 closed / 26.2% / -9.17R became 40 closed / 27.5% / -7.04R, because two JVM losses had been dragging ALEX down by 2.13R. This is the exact error the panel exists to prevent, committed inside the panel, and it was invisible until real data with two strategies in it was rendered -- synthetic fixtures had only ever exercised one. THE FIX: the forward headline and every forward slice are restricted to OBS_PRIMARY_FORWARD_STRATEGY; the JVM coverage block continues to read the UNFILTERED rows, or it would count zero JVM packages and report every JVM close as unpreserved; and the population COMPOSITION is now rendered as its own strategy segment, so the restriction is visible rather than silent. The forward heading names ALEX explicitly. 4 fixtures (JVM-8..11), which assert the filtered rows reach the headline AND the slices AND that the JVM block does not receive them.',
   '12.52.0 — CORRECTION: v12.50.0 ASSERTED SOMETHING FALSE ABOUT JVM (zero protected-function and zero protected-constant drift; 64/64 and 4/4 byte-identical). v12.50.0 claimed no evidence capture seam reads paperAccount and that JVM produced no evidence at all, shipped that claim in a release note and in the Analytics panel, and had a fixture asserting it. IT WAS WRONG. evidenceCaptureClosedPaperTrades exists, has its own field normalizer evidenceNormalizeJvmTrade, and is wired into the successful-commit path of commitPaperLedger, so it is reached by every JVM close route -- automatic, manual and developer-test. Real current_strategy packages exist in the corpus and were sitting in the operator export directory the whole time. THE ERROR: the two ALEX seams were grepped for paperAccount, nothing was found, and absence in those two functions was taken as absence in the file. The fixture repeated the same mistake and therefore confirmed it. Both are corrected, and the false claim is recorded in the source rather than quietly deleted. WHAT REPLACES IT: JVM now gets the same measure ALEX gets -- COVERAGE. Preserved current_strategy packages are counted against closed trades in the JVM ledger, developer and test positions excluded from both sides, and an unreadable ledger renders UNKNOWN rather than implying complete coverage. Evidence is perishable, so an unpreserved close is silently absent from every figure and cannot be recovered later; that gap, not a nonexistent capture path, is the thing worth watching. The panel also states what JVM records LACK -- no timeframe, no setup record, no zone structure, no excursions -- so its packages are not read as equivalent to ALEX ones, and that the two populations are never pooled because one figure over two strategies would describe neither. 7 fixtures (JVM-1..7), replacing UNCOV-1..8; JVM-1 checks the WHOLE FILE for the seam, which is what the original claim was actually about.',
   '12.51.0 — THE SETUPS MOGO DECLINED WERE BEING THROWN AWAY (zero protected-function and zero protected-constant drift; 64/64 and 4/4 byte-identical). MOGO recorded what it DID and nothing about what it DECLINED. Every rejection -- price moved too far from the signal, an existing position on the pair, no bid/ask -- was emitted as a decision event into decisionEventLog: an IN-MEMORY array, capped at 500, NEVER written to storage while 26 other keys are persisted. All 46 preserved forward packages carry zero decisions and zero candidates. So every declined setup died on the next page reload. That is half the information a strategy produces, and it made the strongest remaining explanation for the replay/live divergence UNTESTABLE: replay takes every qualifying setup, live refuses any whose price has moved more than maxLiveEntryDelayPips (5) from the signal, and if running away from a level correlates with the move continuing then live is systematically discarding the winners while replay counts them at a price live could never have obtained. Declines are now recorded DURABLY and BOUNDEDLY under fxhub_alexg_declined, carrying the identity a later replay needs to find the same setup again -- pair, timeframe, qualification bar and close, zone bounds -- plus the OWN status and reason of the protected constructor, verbatim, never re-derived or softened. Deduplicated by (setupId, reason) so a setup re-declined on every poll is one fact rather than a measure of poll frequency; a decline for a DIFFERENT reason is a new fact and is kept. Capped at 500 oldest-out, and the summary STATES when it is at the cap rather than silently shrinking the population it exists to measure. NO OUTCOME IS REPORTED AND NONE EXISTS: a declined setup was never traded, so there is no win, no loss and no R -- the summary carries no such field and the panel says so explicitly, together with the fact that the question IS answerable by replaying the same period. Record-only: it runs inside the existing failure branch AFTER the protected constructor has returned its verdict, swallows its own failures, and writes to no account, position or setup state. MUTATION-VERIFIED: removing the call from the seam fails DECL-13. 15 fixtures (DECL-1..15).',
@@ -22181,6 +22189,229 @@ async function renderObservatory(){
   el.innerHTML=h;
 }
 
+// ══ v12.54.0 — ROUND-NUMBER LEVELS, WITH AN OFF-ROUND CONTROL ═════════════════════════════════
+// The one mechanism in the research with a published empirical basis. Osler (NY Federal Reserve
+// Staff Report 125) examined 9,667 REAL orders and found take-profit orders cluster AT round
+// numbers while stop-loss orders cluster JUST BEYOND them. If that order structure still exists,
+// price approaching a round number meets resting take-profits and tends to reverse there.
+//
+// That is a testable claim, and this arm tests it directly: reach a round level, fail to close
+// through it, and fade the approach.
+//
+// THE CONTROL IS THE POINT. The identical rule is also run on a grid shifted half an interval, so
+// its levels are as evenly spaced and as arbitrary as the round ones -- x.xx50 rather than x.xx00.
+// If the round grid does not beat the offset grid, there is no round-number effect here, only a
+// mean-reversion rule that would work anywhere. A strategy that cannot beat its own scrambled
+// control has not demonstrated the mechanism it claims, however profitable it looks.
+//
+// REPLAY ONLY. It cannot trade, is not in any live path, and does not touch the forward sample.
+const PSYCH_LEVEL_STRATEGY_ID='psych_level_v1';
+const PSYCH_LEVEL_VERSION='psych_level_v1';
+const RULES_PSYCH_LEVEL={
+  ruleVersion:'psych_level_v1',
+  config:{
+    levelIntervalPips:100,      // the grid: 100 pips apart, so x.xx00 on a major
+    levelOffsetPips:0,          // 0 = round numbers. interval/2 = the off-round control.
+    atrPeriod:14,
+    stopATRMultiple:1.5,        // stop sits BEYOND the level, where Osler puts the stop cluster
+    targetRR:2,                 // same target as every other arm, so the R figures compare
+    maxCloseDistanceATR:1.0,    // the close must come back near the level: a rejection, not a run
+    riskPercent:1
+  }
+};
+// The offset that turns this arm into its own control. Half an interval is maximally "not round"
+// while keeping the spacing identical, which is exactly what a control needs to hold constant.
+function psychLevelControlOffsetPips(cfg){
+  const c=(cfg&&cfg.config)?cfg.config:(cfg||RULES_PSYCH_LEVEL.config);
+  return c.levelIntervalPips/2;
+}
+// The level grid. Deliberately a pure function of price and the two grid parameters -- no state,
+// no history, nothing that could differ between the two arms except the offset.
+function psychLevelNearest(price,cfg,pip){
+  const c=(cfg&&cfg.config)?cfg.config:(cfg||RULES_PSYCH_LEVEL.config);
+  if(typeof price!=='number'||!isFinite(price)||!(pip>0)) return null;
+  const interval=c.levelIntervalPips*pip;
+  const offset=(c.levelOffsetPips||0)*pip;
+  if(!(interval>0)) return null;
+  const k=Math.round((price-offset)/interval);
+  return offset+k*interval;
+}
+// Every grid level touched by [low,high]. Returns them in ascending order.
+function psychLevelsTouched(low,high,cfg,pip){
+  const c=(cfg&&cfg.config)?cfg.config:(cfg||RULES_PSYCH_LEVEL.config);
+  const out=[];
+  if(typeof low!=='number'||typeof high!=='number'||!isFinite(low)||!isFinite(high)||low>high) return out;
+  const interval=c.levelIntervalPips*pip,offset=(c.levelOffsetPips||0)*pip;
+  if(!(interval>0)) return out;
+  let k=Math.ceil((low-offset)/interval);
+  let guard=0;
+  for(;;){
+    const lvl=offset+k*interval;
+    if(lvl>high||++guard>512) break;      // guard: a degenerate interval must not spin
+    out.push(lvl);
+    k++;
+  }
+  return out;
+}
+// PREFIX-ONLY. `candles` is the entire world the decision may see; the last element is the bar
+// being decided on. Nothing after it is read, which is what makes the look-ahead truncation test
+// meaningful rather than decorative.
+function psychLevelSignal(candles,cfg,pip){
+  const c=(cfg&&cfg.config)?cfg.config:(cfg||RULES_PSYCH_LEVEL.config);
+  if(!Array.isArray(candles)||candles.length<2||!(pip>0)) return null;
+  const i=candles.length-1;
+  const bar=candles[i],prev=candles[i-1];
+  if(!bar||!prev) return null;
+  if(typeof bar.h!=='number'||typeof bar.l!=='number'||typeof bar.c!=='number') return null;
+  if(typeof prev.c!=='number') return null;
+  const touched=psychLevelsTouched(bar.l,bar.h,c,pip);
+  if(!touched.length) return null;
+  // With more than one level inside the bar's range the move ran THROUGH a level rather than
+  // stalling at one, which is the opposite of the mechanism being tested. Skipped, not guessed at.
+  if(touched.length>1) return null;
+  const level=touched[0];
+  // The approach side is decided by the PREVIOUS close, so the signal bar's own range cannot
+  // define the direction it is then traded against.
+  if(prev.c===level) return null;
+  const approachFromBelow=prev.c<level;
+  // Rejection: the close must return to the side it came from. A close through the level is a
+  // break, and this arm does not trade breaks.
+  if(approachFromBelow ? !(bar.c<level) : !(bar.c>level)) return null;
+  // ...and it must come back NEAR the level. A close far below after a spike is a different event.
+  const atr=calcATR(candles,c.atrPeriod);
+  if(atr==null||!isFinite(atr)||atr<=0) return null;
+  if(Math.abs(bar.c-level)>c.maxCloseDistanceATR*atr) return null;
+  return{
+    // Fade the approach: reached the level, failed to close through it.
+    direction:approachFromBelow?'sell':'buy',
+    level:level,approachFromBelow:approachFromBelow,
+    closeDistanceATR:Math.abs(bar.c-level)/atr,
+    atr:atr
+  };
+}
+// Stop sits BEYOND the level -- where Osler locates the stop cluster -- so the geometry follows the
+// mechanism rather than being chosen for convenience. Fails closed on any degenerate distance.
+function psychLevelGeometry(direction,entry,level,atr,cfg){
+  const c=(cfg&&cfg.config)?cfg.config:(cfg||RULES_PSYCH_LEVEL.config);
+  if(!direction||typeof entry!=='number'||!isFinite(entry)) return null;
+  if(typeof level!=='number'||!isFinite(level)) return null;
+  if(typeof atr!=='number'||!isFinite(atr)||atr<=0) return null;
+  const buffer=c.stopATRMultiple*atr;
+  const stop=direction==='buy'?level-buffer:level+buffer;
+  const risk=direction==='buy'?entry-stop:stop-entry;
+  if(!isFinite(risk)||risk<=0) return null;          // entry already through its own stop
+  const target=direction==='buy'?entry+c.targetRR*risk:entry-c.targetRR*risk;
+  if(!isFinite(target)) return null;
+  return{direction:direction,stop:stop,target:target,plannedRR:c.targetRR,atrAtEntry:atr,
+    level:level,stopBasis:'LEVEL_PLUS_ATR_MULTIPLE',stopATRMultiple:c.stopATRMultiple};
+}
+
+// The walker. Deliberately the same shape as baselineTrendReplayTrades: prefix-only signal, entry
+// at the NEXT bar's open, exits resolved by the same PROTECTED alexGWalkOutcome, one position at a
+// time. The two arms must differ only where they are meant to differ.
+function psychLevelReplayTrades(candles,cfg,opts){
+  const c=(cfg&&cfg.config)?cfg.config:(cfg||RULES_PSYCH_LEVEL.config);
+  const o=opts||{};
+  const pair=o.pair||null;
+  const pip=pipSize(pair||'EUR_USD');
+  const timeframe=o.timeframe||'H4';
+  const out={trades:[],skipped:[],barsScanned:0,
+    frictionModelled:false,entryBasis:'NEXT_BAR_OPEN',ambiguousMode:'conservative',
+    levelIntervalPips:c.levelIntervalPips,levelOffsetPips:c.levelOffsetPips||0,
+    arm:(c.levelOffsetPips||0)===0?'ROUND':'OFFSET_CONTROL'};
+  if(!Array.isArray(candles)||candles.length<c.atrPeriod+3) return out;
+  let i=c.atrPeriod+1,guard=0;
+  while(i<candles.length-1){
+    if(++guard>candles.length+2) break;
+    out.barsScanned++;
+    const window=candles.slice(0,i+1);          // the prefix IS the world
+    const sig=psychLevelSignal(window,c,pip);
+    if(!sig){ i++; continue; }
+    const entryBarIndex=i+1;
+    const entryBar=candles[entryBarIndex];
+    const entry=(entryBar&&typeof entryBar.o==='number')?entryBar.o:null;
+    const g=(entry==null)?null:psychLevelGeometry(sig.direction,entry,sig.level,sig.atr,c);
+    if(!g){
+      out.skipped.push({barIndex:i,reason:entry==null?'NO_ENTRY_PRICE':'NO_GEOMETRY',
+        level:sig.level,direction:sig.direction});
+      i++; continue;
+    }
+    const w=alexGWalkOutcome(candles,entryBarIndex,g.direction,g.stop,g.target,'conservative',timeframe);
+    const ex=alexGComputeMAEMFE(candles,entryBarIndex,w.exitBarIndex,g.direction,entry,pip);
+    const riskPips=Math.abs(entry-g.stop)/pip;
+    out.trades.push({
+      strategyId:PSYCH_LEVEL_STRATEGY_ID,arm:out.arm,
+      pair:pair,timeframe:timeframe,
+      direction:g.direction,entry:entry,stop:g.stop,target:g.target,
+      plannedRR:g.plannedRR,atrAtEntry:g.atrAtEntry,
+      stopBasis:g.stopBasis,stopATRMultiple:g.stopATRMultiple,
+      level:sig.level,approachFromBelow:sig.approachFromBelow,
+      closeDistanceATR:sig.closeDistanceATR,
+      signalBarIndex:i,entryBarIndex:entryBarIndex,exitBarIndex:w.exitBarIndex,
+      entryTimestamp:entryBar.t||null,exitTimestamp:w.exitTimestamp,
+      result:w.result,ambiguous:w.ambiguous,stillOpen:w.stillOpen,exitPrice:w.exitPrice,
+      resultR:w.stillOpen?null:(w.result==='Win'?g.plannedRR:-1),
+      riskPips:riskPips,maePips:ex.maePips,mfePips:ex.mfePips,
+      maeR:riskPips>0?ex.maePips/riskPips:null,
+      mfeR:riskPips>0?ex.mfePips/riskPips:null
+    });
+    i=w.stillOpen?candles.length:Math.max(w.exitBarIndex,i+1);
+  }
+  return out;
+}
+// Runs BOTH arms over the SAME candles in one pass, because a control compared against a different
+// dataset is not a control. The only difference between the two calls is the grid offset.
+function psychLevelRunBothArms(candles,cfg,opts){
+  const base=(cfg&&cfg.config)?cfg.config:(cfg||RULES_PSYCH_LEVEL.config);
+  const round=Object.assign({},base,{levelOffsetPips:0});
+  const control=Object.assign({},base,{levelOffsetPips:psychLevelControlOffsetPips(base)});
+  return{
+    round:psychLevelReplayTrades(candles,round,opts),
+    control:psychLevelReplayTrades(candles,control,opts),
+    sameCandles:true,candlesUsed:Array.isArray(candles)?candles.length:0
+  };
+}
+// The comparison, stated as a comparison rather than as two separate results the reader must hold
+// in their head. NO verdict is returned -- only the two records and the difference between them.
+function psychLevelCompareArms(both){
+  if(!both||!both.round||!both.control) return null;
+  const summarise=function(r){
+    const decided=r.trades.filter(function(t){ return typeof t.resultR==='number'; });
+    const wins=decided.filter(function(t){ return t.resultR>0; }).length;
+    const net=decided.reduce(function(s,t){ return s+t.resultR; },0);
+    return{n:decided.length,wins:wins,losses:decided.length-wins,
+      winRate:decided.length?wins/decided.length:null,
+      netR:decided.length?net:null,
+      perTrade:decided.length?net/decided.length:null,
+      signals:r.trades.length,skipped:r.skipped.length,barsScanned:r.barsScanned};
+  };
+  const a=summarise(both.round),b=summarise(both.control);
+  return{
+    round:a,control:b,
+    // The whole experiment in one number. Positive means the round grid did better than an
+    // equally-spaced arbitrary grid on the same bars.
+    perTradeDifference:(a.perTrade!=null&&b.perTrade!=null)?a.perTrade-b.perTrade:null,
+    winRateDifference:(a.winRate!=null&&b.winRate!=null)?a.winRate-b.winRate:null,
+    comparable:!!(a.n&&b.n)
+  };
+}
+async function runPsychLevelReplay(oPair,days,onProgress,shouldCancel){
+  const cfg=RULES_PSYCH_LEVEL.config;
+  const tf='H4';
+  const count=Math.min(Math.ceil((days||0)*6)+cfg.atrPeriod+60,10000);
+  if(onProgress) onProgress('Fetching H4 candles for '+oPair.replace('_','/')+'...');
+  const H4=await fetchCandlesRange(oPair,tf,count);
+  if(shouldCancel&&shouldCancel()) return{cancelled:true};
+  if(!H4||H4.length<cfg.atrPeriod+3){
+    return{error:'Not enough H4 history for '+oPair+' (need at least '+(cfg.atrPeriod+3)+' bars, got '+((H4&&H4.length)||0)+').'};
+  }
+  if(onProgress) onProgress('Walking both grids over the same bars...');
+  const both=psychLevelRunBothArms(H4,cfg,{pair:oPair,timeframe:tf});
+  return Object.assign({pair:oPair,candlesUsed:H4.length,
+    captureBasis:'REPLAY_RUN',population:'REPLAY',
+    comparison:psychLevelCompareArms(both)},both);
+}
+
 const BASELINE_TREND_STRATEGY_ID='baseline_trend_v1';
 const BASELINE_TREND_VERSION='baseline_trend_v1';
 const RULES_BASELINE_TREND={
@@ -22264,6 +22495,90 @@ function baselineTrendGeometry(direction,entry,atr,cfg){
 // captureBasis is REPLAY_RUN and mode is REPLAY, stated at the top of the file, so the analyser
 // buckets it correctly without being told and a human opening the JSON sees it in the first
 // screenful.
+function psychLevelBuildReplayPackage(runs,cfg,opts){
+  const c=(cfg&&cfg.config)?cfg.config:(cfg||RULES_PSYCH_LEVEL.config);
+  const o=opts||{};
+  const positions=[],outcomes=[],setups=[];
+  let seq=0,stillOpen=0;
+  (runs||[]).forEach(function(run){
+    // Both arms are exported into ONE package, each trade carrying its own arm, so the round and
+    // control results can never drift into separate files that get compared across runs.
+    const all=[].concat((run&&run.round&&run.round.trades)||[],(run&&run.control&&run.control.trades)||[]);
+    if(!all.length) return;
+    all.forEach(function(t){
+      // A still-open trade is NOT exported as an outcome. It has no result, and writing one with
+      // a null realizedR invites a reader to treat it as a zero.
+      if(t.stillOpen){ stillOpen++; return; }
+      const id='PSY|'+PSYCH_LEVEL_STRATEGY_ID+'|'+(t.pair||run.pair||'?')+'|'+(++seq);
+      setups.push({
+        setupId:id,setupType:(t.arm==='ROUND'?'psych_round':'psych_offset_control'),setupLabel:(t.arm==='ROUND'?'ROUND LEVEL':'OFF-ROUND CONTROL'),
+        strategyId:PSYCH_LEVEL_STRATEGY_ID,
+        instrument:t.pair||run.pair||null,timeframe:t.timeframe||'H4',
+        ruleAttribution:{ruleSetId:PSYCH_LEVEL_STRATEGY_ID,
+          // Nothing is unverified here: the rule is one arithmetic comparison and every input to
+          // it is on the record. That is the point of a control arm.
+          unverifiedConditionCount:0,contradictsEngineClassification:false,failedConditionIds:[]},
+        contextRefs:{session:null,trendContext:null,
+          atrAtEntry:t.atrAtEntry},
+        structureRefs:{level:t.level,arm:t.arm,approachFromBelow:t.approachFromBelow,
+          closeDistanceATR:t.closeDistanceATR,stopBasis:t.stopBasis,stopATRMultiple:t.stopATRMultiple}
+      });
+      positions.push({
+        positionId:id,setupId:id,
+        instrument:t.pair||run.pair||null,timeframe:t.timeframe||'H4',
+        direction:t.direction,entryPrice:t.entry,
+        entryTimestamp:t.entryTimestamp?new Date(t.entryTimestamp).toISOString():null,
+        // Spread is genuinely NOT MODELLED here, so it is left absent rather than written as 0.
+        // A recorded zero spread and an unmodelled spread are different facts, and the analyser
+        // excludes an absent one from its spread statistics instead of averaging a fiction in.
+        entrySpreadPips:undefined,
+        originalStop:t.stop,currentStop:t.stop,target:t.target,
+        plannedRR:t.plannedRR,riskPercent:c.riskPercent,
+        isDeveloperTrade:false,tradeSource:'replay',
+        evidenceCompleteness:'PARTIAL'
+      });
+      outcomes.push({
+        outcomeId:id+'|outcome',positionId:id,
+        exitPrice:t.exitPrice,
+        exitTimestamp:t.exitTimestamp?new Date(t.exitTimestamp).toISOString():null,
+        exitReasonCode:t.result,exitDetectionSource:'replay_candle',
+        plannedR:t.plannedRR,recordedResultR:t.resultR,realizedR:t.resultR,
+        realizedRProvenance:'FIXED_R_BY_METHODOLOGY',
+        realizedRBasis:{entryPrice:t.entry,exitPrice:t.exitPrice,direction:t.direction,
+          riskDistance:Math.abs(t.entry-t.stop),riskDistanceSource:'abs(entry-stop)'},
+        // pnl is deliberately absent: no account, no position size, no friction. Writing a
+        // currency figure here would be inventing one.
+        pnl:undefined,
+        maeR:t.maeR,mfeR:t.mfeR,maePips:t.maePips,mfePips:t.mfePips,
+        ambiguous:t.ambiguous,evidenceCompleteness:'PARTIAL'
+      });
+    });
+  });
+  return{
+    packageSchemaVersion:'mogo.evidence-package.v1',
+    packageId:'PKG|'+PSYCH_LEVEL_STRATEGY_ID+'|REPLAY|'+(o.stamp||Date.now()),
+    captureBasis:'REPLAY_RUN',
+    identity:{strategyId:PSYCH_LEVEL_STRATEGY_ID,strategyVersion:BASELINE_TREND_VERSION,
+      strategyVersionProvenance:'OBSERVED',mode:'REPLAY',engineVersion:APP_VERSION,
+      captureOrigin:(typeof location!=='undefined'&&location&&location.origin)?location.origin:null},
+    configSnapshot:{ruleVersion:RULES_PSYCH_LEVEL.ruleVersion,config:c},
+    configSnapshotProvenance:'OBSERVED',
+    objects:{candidates:[],decisions:[],marketContexts:[],
+      qualifiedSetups:setups,positions:positions,outcomes:outcomes},
+    objectCounts:{candidates:0,decisions:0,marketContexts:0,
+      qualifiedSetups:setups.length,positions:positions.length,outcomes:outcomes.length},
+    // Every caveat that must travel with these numbers, in the file rather than in someone's memory.
+    replayDisclosures:{
+      frictionModelled:false,
+      frictionNote:'Spread and slippage are NOT charged. ALEX\'s own replay also does not charge them, so the two arms are equally optimistic. The comparison BETWEEN them is valid; neither figure is an achievable return.',
+      entryBasis:'NEXT_BAR_OPEN',
+      ambiguousMode:'conservative',
+      lookAheadControl:'The signal and the ATR see only candles[0..i]; entry is bar i+1 open. Verified by truncation (fixture BTR-1).',
+      exitEngine:'alexGWalkOutcome / alexGComputeMAEMFE — ALEX\'s own protected functions, unmodified, so the arms differ only at entry.',
+      stillOpenExcluded:stillOpen
+    }
+  };
+}
 function baselineTrendBuildReplayPackage(runs,cfg,opts){
   const c=(cfg&&cfg.config)?cfg.config:(cfg||RULES_BASELINE_TREND.config);
   const o=opts||{};
@@ -22537,6 +22852,138 @@ async function runBaselineTrendReplay(oPair,days,onProgress,shouldCancel){
     captureBasis:'REPLAY_RUN',population:'REPLAY'},r);
 }
 
+let psychLevelLastRuns=null,psychLevelRunning=false;
+const PSYCH_LEVEL_MANIFEST={
+  id:PSYCH_LEVEL_STRATEGY_ID,
+  family:'research_arm',
+  version:PSYCH_LEVEL_VERSION,
+  label:'Round Levels',
+  navLabel:'ROUND LEVELS',
+  panelId:'psychlevel',
+  workspaceTitle:'Round Levels — a published mechanism, with its own control',
+  currentPhase:'Replay only. Not authorized to paper trade.',
+  fullName:'Psychological Levels (round-number reversion, controlled)',
+  description:'Tests one published claim: Osler (NY Fed SR125) found, across 9,667 real orders, that take-profits cluster AT round numbers. If that holds, price reaching a round level and failing to close through it should reverse. The identical rule ALSO runs on a grid shifted half an interval -- equally spaced, deliberately not round. If the round grid does not beat that control, there is no round-number effect here. NOT authorized to paper trade.',
+  author:'MOGO',
+  ownership:'internal',
+  status:'development',
+  trustLevel:'unverified',
+  badgeColor:'var(--muted)',
+  capabilities:{
+    scanning:false,paperTrading:false,automation:false,journal:false,
+    statistics:false,alerts:false,replay:true,backtesting:false,
+    aiReview:false,aiCoaching:false,reports:false,academyContent:false,
+    diagnostics:false,settings:false,strategyCenterContent:false
+  },
+  dependencies:['candleData'],
+  dna:{
+    style:'Fade the approach to a round number. No trend filter, no discretion, and a scrambled-grid control run on the same bars.',
+    difficulty:'Simple by design',
+    marketType:'Forex, the same 12 instruments ALEX observes',
+    preferredSessions:[],idealConditions:[],avoidConditions:[],strengths:[],weaknesses:[]
+  }
+};
+const PSYCH_LEVEL_SERVICES={
+  getAccount:()=>null,
+  getJournal:()=>[],
+  onOpen:()=>{ try{ initPsychLevelWorkspace(); }catch(e){} }
+};
+function initPsychLevelWorkspace(){
+  const h=document.getElementById('psyWsHeaderCard');
+  if(h) h.innerHTML='<div style="font-size:15px;font-weight:700">Round Levels — with its own control</div>'
+    +'<div class="muted" style="margin-top:6px;line-height:1.5">Osler (NY Fed SR125) examined 9,667 real orders and found take-profits cluster '
+    +'<b>at</b> round numbers and stop-losses just beyond. This fades the approach: reach a level, fail to close through it, trade back.<br>'
+    +'<b>The control is the point.</b> The same rule runs on a grid shifted '+psychLevelControlOffsetPips(RULES_PSYCH_LEVEL.config)
+    +' pips — equally spaced, deliberately not round — over the same bars. If the round grid does not beat it, there is no round-number effect '
+    +'here, only a mean-reversion rule that would work on any grid.<br><b>Replay only — this cannot open a live position.</b> '
+    +'Spread is not charged, so neither arm is a return you could have earned. The difference between them is the result.</div>';
+  renderPsychLevelControls();
+  renderPsychLevelResults();
+}
+function renderPsychLevelControls(){
+  const el=document.getElementById('psyWsControlsCard');
+  if(!el) return;
+  el.innerHTML='<div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">'
+    +'<div><div class="muted" style="font-size:11px;margin-bottom:4px">Days of history</div>'
+    +'<input id="psyWsDays" type="number" value="720" min="60" max="1460" style="width:110px"></div>'
+    +'<button class="btn" id="psyWsRunBtn" onclick="runPsychLevelReplayAll()">Run both arms on all '+SCAN_PAIRS.length+' pairs</button>'
+    +'<button class="btn" id="psyWsExportBtn" onclick="exportPsychLevelReplay()">Export results</button>'
+    +'</div><div id="psyWsProgress" class="muted" style="margin-top:8px;font-size:12px"></div>';
+}
+function psychLevelAggregate(runs,arm){
+  let n=0,w=0,net=0,open=0;
+  (runs||[]).forEach(function(r){
+    const a=r&&r[arm];
+    ((a&&a.trades)||[]).forEach(function(t){
+      if(t.stillOpen){ open++; return; }
+      n++; if(t.result==='Win') w++; net+=(t.resultR||0);
+    });
+  });
+  return{n:n,wins:w,netR:net,open:open,winRate:n?w/n:null,perTrade:n?net/n:null};
+}
+function renderPsychLevelResults(){
+  const el=document.getElementById('psyWsResultsContainer');
+  if(!el) return;
+  if(!psychLevelLastRuns){ el.innerHTML=''; return; }
+  const errs=(psychLevelLastRuns||[]).filter(function(r){ return r&&r.error; })
+    .map(function(r){ return (r.pair||'?')+': '+r.error; });
+  const R=psychLevelAggregate(psychLevelLastRuns,'round');
+  const C=psychLevelAggregate(psychLevelLastRuns,'control');
+  const fmt=function(x,d){ return x==null?'—':x.toFixed(d==null?2:d); };
+  const row=function(label,a,tone){
+    return '<tr'+(tone?' style="color:'+tone+'"':'')+'><td style="padding:7px 9px;font-weight:600">'+label+'</td>'
+      +'<td style="padding:7px 9px">'+a.n+'</td>'
+      +'<td style="padding:7px 9px">'+(a.winRate==null?'—':(a.winRate*100).toFixed(1)+'%')+'</td>'
+      +'<td style="padding:7px 9px">'+fmt(a.netR,1)+'R</td>'
+      +'<td style="padding:7px 9px">'+fmt(a.perTrade,3)+'R</td>'
+      +'<td style="padding:7px 9px">'+a.open+'</td></tr>';
+  };
+  const diff=(R.perTrade!=null&&C.perTrade!=null)?R.perTrade-C.perTrade:null;
+  el.innerHTML='<div class="card" style="margin-top:10px">'
+    +'<div style="font-size:14px;font-weight:700;margin-bottom:8px">Replay result — REPLAY, not forward performance</div>'
+    +'<table style="width:100%;border-collapse:collapse;font-size:12px">'
+    +'<thead><tr style="text-align:left;font-size:10px;letter-spacing:.5px">'
+    +'<th style="padding:6px 9px">Arm</th><th style="padding:6px 9px">Closed</th><th style="padding:6px 9px">Win rate</th>'
+    +'<th style="padding:6px 9px">Net</th><th style="padding:6px 9px">Per trade</th><th style="padding:6px 9px">Open</th></tr></thead>'
+    +'<tbody>'+row('Round numbers',R)+row('Off-round control',C)+'</tbody></table>'
+    +'<div style="margin-top:12px;font-size:13px">'
+    +(diff==null
+      ? '<b>Not comparable yet</b> — one or both arms produced no closed trades.'
+      : '<b>Difference: '+(diff>=0?'+':'')+diff.toFixed(3)+'R per trade</b> in favour of '
+        +(diff>=0?'the round grid':'the off-round control')+'.')
+    +'</div>'
+    +'<div class="muted" style="margin-top:8px;font-size:12px;line-height:1.6">'
+    +'A difference near zero means the round-number mechanism is not present in this data — the rule would work as well on any grid. '
+    +'Whether a difference is large enough to believe depends on the sample size, which this table does not judge. '
+    +'Export and read it in Analytics, where the population is separated and the threshold is adjusted for the number of slices looked at.</div>'
+    +(errs.length?'<div class="muted" style="margin-top:10px;font-size:12px;color:var(--red)">'+escapeHtml(errs.join(' | '))+'</div>':'')
+    +'</div>';
+}
+async function runPsychLevelReplayAll(){
+  if(psychLevelRunning) return;
+  psychLevelRunning=true;
+  const prog=document.getElementById('psyWsProgress');
+  const daysEl=document.getElementById('psyWsDays');
+  const days=Math.max(60,Math.min(1460,parseInt(daysEl&&daysEl.value,10)||720));
+  const runs=[];
+  try{
+    for(let i=0;i<SCAN_PAIRS.length;i++){
+      const oPair=SCAN_PAIRS[i].replace('/','_');
+      if(prog) prog.textContent='('+(i+1)+'/'+SCAN_PAIRS.length+') '+oPair+' ...';
+      try{ runs.push(await runPsychLevelReplay(oPair,days,function(m){ if(prog) prog.textContent='('+(i+1)+'/'+SCAN_PAIRS.length+') '+m; })); }
+      catch(e){ runs.push({pair:oPair,error:(e&&e.message)?e.message:String(e)}); }
+    }
+    psychLevelLastRuns=runs;
+    if(prog) prog.textContent='Done — '+runs.length+' pair(s), both arms.';
+    renderPsychLevelResults();
+  } finally { psychLevelRunning=false; }
+}
+function exportPsychLevelReplay(){
+  if(!psychLevelLastRuns){ alert('Run the replay first.'); return; }
+  const pkg=psychLevelBuildReplayPackage(psychLevelLastRuns,RULES_PSYCH_LEVEL.config,{stamp:Date.now()});
+  downloadTextFile('mogo-evidence-'+PSYCH_LEVEL_STRATEGY_ID+'-REPLAY-'+Date.now()+'.json',
+    'application/json',JSON.stringify(pkg,null,2));
+}
 const BASELINE_TREND_MANIFEST={
   id:BASELINE_TREND_STRATEGY_ID,
   family:'baseline_control',
@@ -22581,7 +23028,8 @@ const STRATEGY_REGISTRY=[
   {manifest:JVM_MANIFEST,services:JVM_SERVICES},
   {manifest:ALEX_MANIFEST,services:ALEX_SERVICES},
   {manifest:TJR_MANIFEST,services:TJR_SERVICES},
-  {manifest:BASELINE_TREND_MANIFEST,services:BASELINE_TREND_SERVICES}
+  {manifest:BASELINE_TREND_MANIFEST,services:BASELINE_TREND_SERVICES},
+  {manifest:PSYCH_LEVEL_MANIFEST,services:PSYCH_LEVEL_SERVICES}
 ];
 function findStrategyEntry(id){
   return STRATEGY_REGISTRY.find(e=>e.manifest.id===id)||null;
