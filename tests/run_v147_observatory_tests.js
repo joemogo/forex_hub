@@ -61,7 +61,7 @@ const ctx = { console: console, Math: Math, JSON: JSON, isFinite: isFinite, Arra
 vm.createContext(ctx);
 ['const OBS_FORWARD_BASES=', 'const OBS_REPLAY_BASES=', 'const OBS_POWER_CONSTANT=']
   .forEach(function (d) { vm.runInContext(extractConst(d), ctx); });
-['obsPackagePopulation', 'obsPartitionByPopulation', 'obsRowsFromPackages', 'obsSum', 'obsMean',
+['obsPackagePopulation', 'obsPartitionByPopulation', 'obsRowsFromPackages', 'obsCoverageAgainstAccount', 'obsSum', 'obsMean',
   'obsStdDev', 'obsMeanCI95', 'obsTradesNeeded', 'obsBinomialTailAtLeast', 'obsMedian',
   'obsAnalyze', 'obsAdjustedAlpha', 'obsSegment', 'obsFmtR', 'obsFmtPct', 'obsFmtP', 'obsReadUnderstanding']
   .forEach(function (n) { vm.runInContext(extractFunction(n), ctx); });
@@ -410,6 +410,50 @@ t('OBS-26', 'the panel is reachable: the nav points at it, the markup exists, an
 
 t('OBS-27', 'the Analytics nav entry is a real destination now, not a "coming soon" dialog', function () {
   return { pass: !/comingSoonOpen\('Analytics'/.test(SRC), detail: 'placeholder removed' };
+});
+
+t('OBS-28', 'coverage against the account is reported, because the preserved set is a SUBSET of '
+  + 'the account\'s closed positions (CLAUDE.md, backlog B-22). A headline computed over an '
+  + 'unstated subset is the same class of error as mixing populations', function () {
+  const c = O.obsCoverageAgainstAccount(40, 44);
+  return { pass: c.preserved === 40 && c.accountClosed === 44 && c.missingFromStore === 4
+      && c.beyondAccount === 0 && c.complete === false && close(c.fraction, 40 / 44, 1e-12),
+    detail: '40 preserved of 44 closed -> ' + c.missingFromStore + ' unpreserved' };
+});
+
+t('OBS-29', 'a store holding MORE than the account is reported separately, not as missing '
+  + 'evidence -- closes preserved before an account reset survive by design', function () {
+  const c = O.obsCoverageAgainstAccount(50, 42);
+  return { pass: c.beyondAccount === 8 && c.missingFromStore === 0 && c.complete === false,
+    detail: 'beyondAccount=' + c.beyondAccount + ' missing=' + c.missingFromStore };
+});
+
+t('OBS-30', 'an unreadable account yields NULL coverage, which the panel renders as unknown. '
+  + 'Claiming complete coverage on the strength of not having checked is the failure this guards', function () {
+  const nulls = [O.obsCoverageAgainstAccount(40, null), O.obsCoverageAgainstAccount(40, undefined),
+    O.obsCoverageAgainstAccount(null, 44), O.obsCoverageAgainstAccount(40, -1)];
+  const render = extractFunction('obsRenderCoverage');
+  return { pass: nulls.every(function (x) { return x === null; })
+      && /if\(!cov\) return/.test(render) && /unknown/.test(render)
+      && !/complete/.test(render.slice(0, render.indexOf('if(!cov)') + 200)),
+    detail: 'all four unreadable cases return null; renderer says unknown' };
+});
+
+t('OBS-31', 'exact coverage is stated as such, so the caveat is not worn permanently by a store '
+  + 'that is in fact complete', function () {
+  const c = O.obsCoverageAgainstAccount(42, 42);
+  return { pass: c.complete === true && c.missingFromStore === 0 && c.beyondAccount === 0
+      && close(c.fraction, 1, 1e-12),
+    detail: 'complete=' + c.complete };
+});
+
+t('OBS-32', 'the coverage statement is scoped to the strategy whose account was read, not to the '
+  + 'whole corpus -- a JVM row must never be counted against the ALEX account', function () {
+  const body = extractFunction('renderObservatory');
+  return { pass: /r\.strategyId==='alex_g_sr_v1'/.test(body)
+      && /obsReadAccountClosedCount\('alex_g_sr_v1'\)/.test(body)
+      && /'ALEX'/.test(body),
+    detail: 'ALEX rows compared against the ALEX account, and labelled' };
 });
 
 results.forEach(function (r) {
