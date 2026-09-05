@@ -761,6 +761,9 @@ button.danger:hover{background:var(--red-dim)}
 .obs-cov-ok{background:var(--green-dim);border:1px solid var(--green2);color:var(--green)}
 .obs-cov-gap{background:var(--gold-dim);border:1px solid rgba(245,166,35,.35);color:var(--gold)}
 .obs-stress{background:var(--bg1);border:1px solid var(--border);border-radius:10px;padding:16px 18px;margin:14px 0}
+.obs-uncov{background:var(--bg1);border:1px solid rgba(245,166,35,.35);border-radius:10px;padding:16px 18px;margin-bottom:14px}
+.obs-uncov-row{font-size:13px;color:var(--text1);margin-bottom:10px}
+.obs-uncov-why{font-size:11.5px;color:var(--gold);margin-top:3px}
 .obs-seg{margin-bottom:18px}
 .obs-seg-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:5px}
 .obs-seg-head b{font-size:12.5px;color:var(--text1)}
@@ -2202,9 +2205,10 @@ const ALL_PAIRS=[
 // Bump by 1.0 for a major update (new feature/tab), by 0.1 for a small patch/fix.
 // This shows in the header next to the logo and on the Diagnostics tab, so you can
 // glance at the live site and instantly confirm which build actually deployed.
-const APP_VERSION='12.49.0';
+const APP_VERSION='12.50.0';
 const APP_VERSION_DATE='04 Sep 2026';
 const APP_VERSION_LOG=[
+  '12.50.0 — A STRATEGY WAS TRADING AND NOTHING WAS INGESTING IT (zero protected-function and zero protected-constant drift; 64/64 and 4/4 byte-identical). Every evidence capture seam reads alexGAccount -- evidenceCaptureClosedTrades and evidenceBackfillFromLocalStorage both do, and NOTHING anywhere reads paperAccount. JVM has therefore been paper trading with no evidence preserved at all, while the Analytics panel -- which reads the evidence store -- presented itself as what MOGO has learned. That is the same error the coverage caveat addresses one level down: a figure computed over an unstated subset. There the subset was preserved-trades-not-all-closes; here it is one-strategy-not-all-strategies-that-trade. The panel now names every strategy that trades and is never ingested, with its own ledger figures, and states plainly that NO figure above describes them -- not the win rate, not the sample size, not the trades-needed number -- and that those ledger numbers carry none of the provenance the corpus does (no rule attribution, no excursions, no market context). DELIBERATELY NOT INGESTED: JVM positions carry a different shape (`id` not `tradeId`, no setupId, no zone or setup record) and evidencePersistTradePackage already fails closed on an unattributable trade precisely so a JVM position can never be filed as ALEX by accident. Building that path changes every forward figure by adding a second strategy to the population, which is an operator decision rather than one to take by writing it -- so the gap is REPORTED, with the reason, and left for the operator. Test and developer positions are excluded from the reported figures, and the win/P&L values are read as the ledger stored them rather than recomputed, because a second opinion on a booked outcome belongs to the ledger that booked it. 8 fixtures (UNCOV-1..8), including UNCOV-1 which proves the seams read alexGAccount and never paperAccount rather than asserting it.',
   '12.49.0 — REPLAY RECORDED A COST MODEL IT NEVER APPLIED (zero protected-function and zero protected-constant drift; 64/64 and 4/4 byte-identical). alexGConstructTrade accepts spreadMode, fixedSpreadPips and slippagePips, STAMPS ALL THREE onto every trade record, and applies NONE of them: entry is setup.qualificationClose untouched, and alexGWalkOutcome has no cost parameter at all. A run with fixedSpreadPips:2 therefore returns results IDENTICAL to a zero-cost run while every record asserts it accounted for 2 pips. A record that misstates its own basis is worse than a missing feature. Both functions are PROTECTED, so the arithmetic cannot be repaired -- the response is to FAIL CLOSED: runAlexGReplay now refuses any non-zero cost parameter, before any candle is fetched, with a message that says the result would have been mislabelled rather than merely unavailable. The zero-cost run the UI actually performs is unaffected. MEASURED ON THE REAL FORWARD CORPUS (n=40): live fills land a median 9.8% of risk distance in spread, and 85% of them WORSE than the signal price for a median +5.5% adverse slippage -- a mean total entry drag of 22.1% that replay charges at zero. THE COSTS DO NOT EXPLAIN THE REPLAY/LIVE DIVERGENCE: stressed at the full 22.1%, ALEX replay falls from +0.571R to +0.429R per trade against a live record of -0.176R, closing under a fifth of the gap; the baseline falls from -0.092R to -0.205R, confirming the benchmark is clearly negative once costs are real. A COST STRESS ESTIMATOR is added to Analytics for replay populations only (forward trades already paid these costs and charging them twice would understate the live record): a win whose recorded adverse excursion came within the cost of its stop is reclassified as a loss. It is labelled an ESTIMATE, states that it does not model a cost moving which bar an exit lands on and cannot see setups the live path would have refused, excludes trades with no recorded excursion rather than assuming them unaffected, and is monotone in the cost. ALSO FIXED: the replay section of Analytics was reporting ONE combined figure across two different strategies now that the trend baseline exists -- a figure over two strategies describes neither, so replay is segmented by strategyId. MUTATION-VERIFIED: disabling the cost guard fails COST-5. 21 fixtures (COST-1..8, STRESS-1..13).',
   '12.48.0 — MULTI-YEAR ALEX REPLAY, SO THE CONTROL ARM COMPARISON IS ACTUALLY POSSIBLE (zero protected-function and zero protected-constant drift; 64/64 and 4/4 byte-identical). The baseline control arm produced 502 trades over 4 years on DAILY bars; ALEX\'s replay produced 42 over 7 months on H1/H4. Comparing them answered nothing, because the two arms never traded the same thing -- different timeframes, different periods, sample sizes an order of magnitude apart. Making the comparison possible needed exactly ONE change: the lookback dropdown stopped at 365 days. Every layer beneath it already supported more -- fetchAlexGReplayDatasets caps H1 at 40,000 bars (4 years needs 35,100) and fetchCandlesRange paginates at 5,000 per request under a 20-page guard (4 years needs 8). Options for 2, 3 and 4 years added; the 90-day default is unchanged. BOTH protected engine functions (alexGRunSetupEngine, alexGRunSetupReplay) are untouched -- this is a dropdown and the fetch path it feeds, not the strategy. An option in a <select> is not evidence the run works, so the fixtures check the FETCH ARITHMETIC against the real formulas and real limits read out of the source rather than retyped: every offered lookback must fit under its per-timeframe cap AND inside the pagination guard, because a capped fetch returns a SHORTER history than the operator selected while still labelling it with their choice. MYR-6 derives the largest safe lookback from the source itself (~1,655 days) and requires the dropdown to offer nothing beyond it -- MUTATION-VERIFIED: adding a 10-year option fails MYR-3 and MYR-6 rather than producing a quietly truncated 4.5-year history labelled as ten. Multi-year runs need several pages instead of one, which makes ADR-011\'s termination classification and the per-page identity check materially more important; MYR-7/8 pin both. 10 fixtures (MYR-1..MYR-10).',
   '12.47.0 — THE OBSERVATORY: WHAT THE EVIDENCE ACTUALLY SUPPORTS (zero protected-function and zero protected-constant drift; 64/64 and 4/4 byte-identical). MOGO could take trades and file them, but nothing in the app could say what the filed trades MEAN -- every reading so far came from a Node script run by hand, which does not survive anyone being unavailable and cannot be checked against the store it describes. The Analytics nav entry, previously a coming-soon dialog, is now a real panel that reads the evidence store directly. The hard part is not the arithmetic, it is refusing to overstate: at n=43 the honest headline is that nothing is settled, and a screen showing a win rate without saying what that number can support is exactly how the withdrawn +20.97R claim happened. So every figure carries its uncertainty. The 95% interval on mean R is reported beside the point estimate and, on the real corpus, spans zero -- stated on screen as consistent with no edge at all. The trades needed to resolve a strong (+0.15R) and a realistic (+0.05R) edge are computed from the sample\'s OWN spread and shown against what the operator actually has. Populations are partitioned before any arithmetic and an unrecognised capture basis is excluded from BOTH rather than assumed forward. Every segmented view carries a Sidak-adjusted threshold, because reporting the best of several slices of the same trades is how noise becomes a finding. A sample without one uniform planned reward:risk gets NO breakeven rate and NO significance figure rather than an invented threshold. Evidence quality is surfaced from the v12.45.0 attribution metric, so it is watched rather than asserted. The panel makes NO recommendation. THE ANALYSIS IS A SECOND IMPLEMENTATION of scripts/mogo_forward_trade_analysis.js -- a browser file and a Node script cannot share a module here -- so OBS-1..OBS-6 run BOTH over the operator\'s 91 real preserved packages and require identical answers; OBS-1 asserts that set is non-empty so the differential cannot pass vacuously. A DEFECT FOUND BY RENDERING IT AGAINST REAL DATA: excluding developer trades emptied a DEV_TEST slice to n=0, and that empty group was still counted as a comparison, inflating the multiple-comparison correction so every other slice faced a stricter threshold than the real number of comparisons justified (OBS-17b). COVERAGE CAVEAT, required by CLAUDE.md (\'any forward figure carries its coverage caveat: the preserved set is a subset of the account\'s closed positions\', backlog B-22): the panel compares its ALEX rows against alexGAccount.closedPositions and states plainly that the figures describe N PRESERVED trades rather than every trade taken. An unreadable account renders UNKNOWN, never complete -- claiming full coverage on the strength of not having checked is the failure that guards against. A store holding MORE than the account is reported separately rather than as missing evidence, because closes preserved before an account reset survive by design. Read-only throughout: no transaction of its own, no write to any account, position, rule or configuration (OBS-24/25). 28 fixtures (OBS-1..OBS-27).',
@@ -21661,6 +21665,44 @@ function obsCostStress(rows,costFraction){
     stressedPerTrade:usable.length?stressedNetR/usable.length:null
   };
 }
+// ══ v12.50.0 — STRATEGIES THAT TRADE AND ARE NEVER INGESTED ═══════════════════════════════════
+// Every evidence capture seam reads alexGAccount. evidenceCaptureClosedTrades and
+// evidenceBackfillFromLocalStorage both do, and nothing anywhere reads paperAccount. So JVM has
+// been paper trading with NOTHING preserved as evidence, and the analysis above -- which reads the
+// evidence store -- describes ALEX alone while presenting itself as what MOGO has learned.
+//
+// That is the same error the coverage caveat fixes one level down: a figure computed over an
+// unstated subset. There the subset was "preserved trades, not all closes"; here it is "one
+// strategy, not all strategies that trade".
+//
+// This REPORTS the gap. It deliberately does NOT start ingesting JVM: those positions carry a
+// different shape (`id` rather than `tradeId`, no setupId, no zone or setup record), and
+// evidencePersistTradePackage already fails closed on an unattributable trade precisely so a JVM
+// position can never be silently filed as ALEX. Building that capture path is a real piece of work
+// that changes every forward figure by adding a second strategy to the population, and that is an
+// operator decision, not one to take by writing it.
+const OBS_INGESTED_STRATEGY_IDS=Object.freeze(['alex_g_sr_v1','baseline_trend_v1']);
+function obsReadUningestedStrategies(){
+  const out=[];
+  try{
+    if(typeof paperAccount!=='undefined'&&paperAccount&&Array.isArray(paperAccount.closedPositions)){
+      const closed=paperAccount.closedPositions.filter(function(p){ return p&&!p.isTest&&!p.isDeveloperTrade; });
+      const open=Array.isArray(paperAccount.openPositions)?paperAccount.openPositions.length:null;
+      // Result strings are the JVM ledger's own; nothing is recomputed from prices here.
+      const wins=closed.filter(function(p){ return String(p.result||'').toLowerCase()==='win'; }).length;
+      const pnl=closed.reduce(function(s,p){ return s+(typeof p.pnl==='number'?p.pnl:0); },0);
+      out.push({
+        strategyId:'current_strategy',label:'JVM',
+        closed:closed.length,open:open,wins:wins,
+        winRate:closed.length?wins/closed.length:null,
+        pnl:closed.length?pnl:null,
+        // Stated, never inferred: this is why it is absent, in one phrase.
+        reason:'no evidence capture seam reads this account'
+      });
+    }
+  }catch(e){}
+  return out.filter(function(s){ return s.closed>0||s.open>0; });
+}
 function obsSum(a){ return a.reduce(function(x,y){ return x+y; },0); }
 function obsMean(a){ return a.length?obsSum(a)/a.length:null; }
 // Sample standard deviation (n-1). Returns null below two observations rather than 0, because a
@@ -21871,6 +21913,25 @@ function obsRenderSegment(seg){
   });
   return h+'</tbody></table></div>';
 }
+function obsRenderUningested(list){
+  if(!list||!list.length) return'';
+  let h='<div class="obs-uncov"><div class="obs-band-title">Trading, but not in any figure above</div>';
+  list.forEach(function(s){
+    h+='<div class="obs-uncov-row"><b>'+obsEsc(s.label)+'</b> — '
+      +s.closed+' closed'+(s.open?', '+s.open+' open':'')
+      +(s.winRate!=null?' · '+obsFmtPct(s.winRate)+' win rate':'')
+      +(s.pnl!=null?' · '+(s.pnl>=0?'+':'')+'$'+s.pnl.toFixed(2):'')
+      +'<div class="obs-uncov-why">'+obsEsc(s.reason)+'</div></div>';
+  });
+  h+='<div class="obs-band-note">These trades produce <b>no evidence packages</b>, so nothing above describes them — '
+    +'not the win rate, not the sample size, not the trades-needed figure. The numbers here are read straight from the '
+    +'live ledger and carry none of the provenance the evidence corpus does: no rule attribution, no excursions, '
+    +'no captured market context.</div>'
+    +'<div class="obs-band-note">Ingesting them is not a switch. These positions carry a different shape, and the '
+    +'capture path deliberately fails closed on an unattributable trade so one can never be filed as ALEX by accident. '
+    +'Adding a second strategy would also change every forward figure above by changing the population.</div></div>';
+  return h;
+}
 function obsRenderCostStress(rows,label){
   // Two points: the median spread measured on the forward corpus, and the mean total entry drag
   // (spread plus adverse slippage). Both are OBSERVED numbers from real fills, not assumptions --
@@ -21972,6 +22033,9 @@ async function renderObservatory(){
   const alexFwd=fwdRows.filter(function(r){ return r.strategyId==='alex_g_sr_v1'&&!r.isDeveloperTrade; });
   h+=obsRenderCoverage(obsCoverageAgainstAccount(alexFwd.length,obsReadAccountClosedCount('alex_g_sr_v1')),'ALEX');
   h+=obsRenderEvidenceQuality(fwd);
+  // Stated near the forward figures, because that is where a reader would otherwise assume
+  // these numbers cover everything MOGO trades.
+  h+=obsRenderUningested(obsReadUningestedStrategies());
   if(fwd.sampleSize){
     h+=obsRenderSegment(obsSegment(fwdRows,'setupType'));
     h+=obsRenderSegment(obsSegment(fwdRows,'timeframe'));
