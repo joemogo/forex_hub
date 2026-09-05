@@ -760,6 +760,7 @@ button.danger:hover{background:var(--red-dim)}
 .obs-cov b{color:var(--text1)}
 .obs-cov-ok{background:var(--green-dim);border:1px solid var(--green2);color:var(--green)}
 .obs-cov-gap{background:var(--gold-dim);border:1px solid rgba(245,166,35,.35);color:var(--gold)}
+.obs-stress{background:var(--bg1);border:1px solid var(--border);border-radius:10px;padding:16px 18px;margin:14px 0}
 .obs-seg{margin-bottom:18px}
 .obs-seg-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:5px}
 .obs-seg-head b{font-size:12.5px;color:var(--text1)}
@@ -2201,9 +2202,10 @@ const ALL_PAIRS=[
 // Bump by 1.0 for a major update (new feature/tab), by 0.1 for a small patch/fix.
 // This shows in the header next to the logo and on the Diagnostics tab, so you can
 // glance at the live site and instantly confirm which build actually deployed.
-const APP_VERSION='12.48.0';
+const APP_VERSION='12.49.0';
 const APP_VERSION_DATE='04 Sep 2026';
 const APP_VERSION_LOG=[
+  '12.49.0 — REPLAY RECORDED A COST MODEL IT NEVER APPLIED (zero protected-function and zero protected-constant drift; 64/64 and 4/4 byte-identical). alexGConstructTrade accepts spreadMode, fixedSpreadPips and slippagePips, STAMPS ALL THREE onto every trade record, and applies NONE of them: entry is setup.qualificationClose untouched, and alexGWalkOutcome has no cost parameter at all. A run with fixedSpreadPips:2 therefore returns results IDENTICAL to a zero-cost run while every record asserts it accounted for 2 pips. A record that misstates its own basis is worse than a missing feature. Both functions are PROTECTED, so the arithmetic cannot be repaired -- the response is to FAIL CLOSED: runAlexGReplay now refuses any non-zero cost parameter, before any candle is fetched, with a message that says the result would have been mislabelled rather than merely unavailable. The zero-cost run the UI actually performs is unaffected. MEASURED ON THE REAL FORWARD CORPUS (n=40): live fills land a median 9.8% of risk distance in spread, and 85% of them WORSE than the signal price for a median +5.5% adverse slippage -- a mean total entry drag of 22.1% that replay charges at zero. THE COSTS DO NOT EXPLAIN THE REPLAY/LIVE DIVERGENCE: stressed at the full 22.1%, ALEX replay falls from +0.571R to +0.429R per trade against a live record of -0.176R, closing under a fifth of the gap; the baseline falls from -0.092R to -0.205R, confirming the benchmark is clearly negative once costs are real. A COST STRESS ESTIMATOR is added to Analytics for replay populations only (forward trades already paid these costs and charging them twice would understate the live record): a win whose recorded adverse excursion came within the cost of its stop is reclassified as a loss. It is labelled an ESTIMATE, states that it does not model a cost moving which bar an exit lands on and cannot see setups the live path would have refused, excludes trades with no recorded excursion rather than assuming them unaffected, and is monotone in the cost. ALSO FIXED: the replay section of Analytics was reporting ONE combined figure across two different strategies now that the trend baseline exists -- a figure over two strategies describes neither, so replay is segmented by strategyId. MUTATION-VERIFIED: disabling the cost guard fails COST-5. 21 fixtures (COST-1..8, STRESS-1..13).',
   '12.48.0 — MULTI-YEAR ALEX REPLAY, SO THE CONTROL ARM COMPARISON IS ACTUALLY POSSIBLE (zero protected-function and zero protected-constant drift; 64/64 and 4/4 byte-identical). The baseline control arm produced 502 trades over 4 years on DAILY bars; ALEX\'s replay produced 42 over 7 months on H1/H4. Comparing them answered nothing, because the two arms never traded the same thing -- different timeframes, different periods, sample sizes an order of magnitude apart. Making the comparison possible needed exactly ONE change: the lookback dropdown stopped at 365 days. Every layer beneath it already supported more -- fetchAlexGReplayDatasets caps H1 at 40,000 bars (4 years needs 35,100) and fetchCandlesRange paginates at 5,000 per request under a 20-page guard (4 years needs 8). Options for 2, 3 and 4 years added; the 90-day default is unchanged. BOTH protected engine functions (alexGRunSetupEngine, alexGRunSetupReplay) are untouched -- this is a dropdown and the fetch path it feeds, not the strategy. An option in a <select> is not evidence the run works, so the fixtures check the FETCH ARITHMETIC against the real formulas and real limits read out of the source rather than retyped: every offered lookback must fit under its per-timeframe cap AND inside the pagination guard, because a capped fetch returns a SHORTER history than the operator selected while still labelling it with their choice. MYR-6 derives the largest safe lookback from the source itself (~1,655 days) and requires the dropdown to offer nothing beyond it -- MUTATION-VERIFIED: adding a 10-year option fails MYR-3 and MYR-6 rather than producing a quietly truncated 4.5-year history labelled as ten. Multi-year runs need several pages instead of one, which makes ADR-011\'s termination classification and the per-page identity check materially more important; MYR-7/8 pin both. 10 fixtures (MYR-1..MYR-10).',
   '12.47.0 — THE OBSERVATORY: WHAT THE EVIDENCE ACTUALLY SUPPORTS (zero protected-function and zero protected-constant drift; 64/64 and 4/4 byte-identical). MOGO could take trades and file them, but nothing in the app could say what the filed trades MEAN -- every reading so far came from a Node script run by hand, which does not survive anyone being unavailable and cannot be checked against the store it describes. The Analytics nav entry, previously a coming-soon dialog, is now a real panel that reads the evidence store directly. The hard part is not the arithmetic, it is refusing to overstate: at n=43 the honest headline is that nothing is settled, and a screen showing a win rate without saying what that number can support is exactly how the withdrawn +20.97R claim happened. So every figure carries its uncertainty. The 95% interval on mean R is reported beside the point estimate and, on the real corpus, spans zero -- stated on screen as consistent with no edge at all. The trades needed to resolve a strong (+0.15R) and a realistic (+0.05R) edge are computed from the sample\'s OWN spread and shown against what the operator actually has. Populations are partitioned before any arithmetic and an unrecognised capture basis is excluded from BOTH rather than assumed forward. Every segmented view carries a Sidak-adjusted threshold, because reporting the best of several slices of the same trades is how noise becomes a finding. A sample without one uniform planned reward:risk gets NO breakeven rate and NO significance figure rather than an invented threshold. Evidence quality is surfaced from the v12.45.0 attribution metric, so it is watched rather than asserted. The panel makes NO recommendation. THE ANALYSIS IS A SECOND IMPLEMENTATION of scripts/mogo_forward_trade_analysis.js -- a browser file and a Node script cannot share a module here -- so OBS-1..OBS-6 run BOTH over the operator\'s 91 real preserved packages and require identical answers; OBS-1 asserts that set is non-empty so the differential cannot pass vacuously. A DEFECT FOUND BY RENDERING IT AGAINST REAL DATA: excluding developer trades emptied a DEV_TEST slice to n=0, and that empty group was still counted as a comparison, inflating the multiple-comparison correction so every other slice faced a stricter threshold than the real number of comparisons justified (OBS-17b). COVERAGE CAVEAT, required by CLAUDE.md (\'any forward figure carries its coverage caveat: the preserved set is a subset of the account\'s closed positions\', backlog B-22): the panel compares its ALEX rows against alexGAccount.closedPositions and states plainly that the figures describe N PRESERVED trades rather than every trade taken. An unreadable account renders UNKNOWN, never complete -- claiming full coverage on the strength of not having checked is the failure that guards against. A store holding MORE than the account is reported separately rather than as missing evidence, because closes preserved before an account reset survive by design. Read-only throughout: no transaction of its own, no write to any account, position, rule or configuration (OBS-24/25). 28 fixtures (OBS-1..OBS-27).',
   '12.46.0 — THE CONNECT SCREEN (display-only; zero protected-function and zero protected-constant drift, 64/64 and 4/4 byte-identical). The first thing the operator saw was a narrow centred box on flat black that oversold what MOGO does -- and, the operator said, was ugly and unmotivating. A tool you dislike opening is one you check less, and this one needs checking. Rebuilt as a two-column card: what this instrument IS on the left, credentials on the right, stacking to one column below 860px with the screen allowed to scroll (a fixed 100vh clipped the connect button on a phone). Ambient depth is pure CSS gradients -- no font, image, script or stylesheet is fetched, preserving the zero-external-dependency property recorded in docs/SECURITY.md -- and the drift animation stops under prefers-reduced-motion. HONESTY: the landing panel states NO NUMBER (CS-9 pins this by scanning the rendered text for digits). Nothing is connected when this screen is shown, so any figure it quoted could only be stale or invented; the only value on it is the version, read from APP_VERSION rather than typed into the markup, so it cannot misreport which build is deployed. The paper-only guarantee is stated three times, including beside the live-account switch. THREE REAL DEFECTS FIXED, not cosmetics: (1) connect() resolved its button as `event.target`. The screen now supports Enter-to-connect, where event.target is the INPUT -- that line would have written \'Connecting...\' into the field the operator had just pasted their API key into. Now resolved by id, null-guarded, and the button is restored on every failure path. (2) A 503 surfaced as a bare \'Error: HTTP 503\', which reads like a fault in this app; it is OANDA saying its own service is down -- seen 2026-09-04 shortly after the Friday 17:00 ET close, and recorded once before in the v12.6.0 note. Now named as OANDA\'s outage, with the weekend-close window explained. (3) The help text still told the operator to open the file directly rather than use the deployed page. Two full-bleed decorative layers cover the viewport, so CS-11/12 pin pointer-events:none and the card\'s z-index -- verified in a real browser via elementFromPoint at the button and the key field. Every id, handler and field the connect path reads is unchanged (CS-1/2/3). 24 fixtures (CS-1..CS-24).',
@@ -4742,6 +4744,34 @@ function alexGComputeReplayStats(trades){
 // Fetches H1/H4/Daily/Weekly datasets for one pair -- same fetch-once-per-
 // timeframe pattern as the current strategy's own fetchReplayDatasets(), just
 // H1-anchored (Alex G's own master-clock timeframe) instead of M15-anchored.
+// ══ v12.49.0 — COST PARAMETERS THAT WERE ACCEPTED AND SILENTLY IGNORED ═══════════════════════
+// alexGConstructTrade takes spreadMode, fixedSpreadPips and slippagePips, and STAMPS ALL THREE
+// ONTO THE TRADE RECORD -- then computes entry as setup.qualificationClose with no adjustment and
+// hands alexGWalkOutcome a stop and target the cost never touched. alexGWalkOutcome has no cost
+// parameter at all. So a replay run with fixedSpreadPips:2 returns results identical to one run
+// with zero, while every trade record asserts it accounted for 2 pips.
+//
+// A record that misstates its own basis is worse than a missing feature: the figure looks
+// cost-adjusted and is not. Both functions are PROTECTED, so the arithmetic cannot be repaired
+// here. The honest response is to FAIL CLOSED -- refuse to run with parameters that would be
+// ignored, rather than return a result labelled with a cost model it did not apply.
+//
+// Measured on the real forward corpus (n=40): live fills land a median 9.8% of risk distance in
+// spread and, separately, a median +5.5% in adverse entry slippage, with 85% of fills WORSE than
+// the signal price. Replay charges zero for all of it.
+const ALEXG_REPLAY_COST_PARAMS=Object.freeze(['alexGFixedSpreadPips','alexGSlippagePips']);
+function alexGReplayIgnoredCostParams(replayParams){
+  const p=replayParams||{};
+  const ignored=[];
+  // 'none' is the only spread mode the engine's arithmetic actually corresponds to; any other
+  // value describes a model that is recorded and never applied.
+  if(p.alexGSpreadMode!=null&&p.alexGSpreadMode!=='none') ignored.push('alexGSpreadMode');
+  ALEXG_REPLAY_COST_PARAMS.forEach(function(k){
+    const v=p[k];
+    if(typeof v==='number'&&isFinite(v)&&v!==0) ignored.push(k);
+  });
+  return ignored;
+}
 async function fetchAlexGReplayDatasets(oPair,days,onProgress){
   const h1Count=Math.min(days*24+60,40000);
   const h4Count=Math.min(days*6+60,10000);
@@ -4768,6 +4798,18 @@ async function fetchAlexGReplayDatasets(oPair,days,onProgress){
 // major steps only -- alexGRunSetupEngine's own internal per-candle loop is
 // frozen and is not modified to add a cancellation hook.
 async function runAlexGReplay(oPair,days,replayParams,onProgress,shouldCancel){
+  // v12.49.0: refuse rather than mislabel. These parameters are recorded on every trade and
+  // applied to nothing, so a run that accepted them would return a zero-cost result wearing a
+  // cost model it never used. Checked BEFORE any fetch, so the refusal costs nothing.
+  const __ignoredCost=alexGReplayIgnoredCostParams(replayParams);
+  if(__ignoredCost.length){
+    return{error:'Replay cost parameters are not implemented and would be silently ignored: '
+      +__ignoredCost.join(', ')+'. The engine computes entry from the qualification close and walks '
+      +'the outcome with no cost applied, so a run with these set would return the SAME result as a '
+      +'zero-cost run while recording that it accounted for them. Run with no cost model and read '
+      +'the result as what it is -- a frictionless upper bound.',
+      costParamsIgnored:__ignoredCost};
+  }
   if(onProgress) onProgress('Resetting prior Alex G zone/setup state for this pair...');
   delete alexGZoneState[oPair];
   delete alexGLastEvaluatedCloseTime[oPair];
@@ -21527,6 +21569,9 @@ function obsRowsFromPackages(packages){
         direction:p.direction||null,
         session:(setup&&setup.contextRefs)?(setup.contextRefs.session||null):null,
         realizedR:(o&&typeof o.realizedR==='number')?o.realizedR:null,
+        // v12.49.0: the excursions the cost stress reads. Recorded by the engine; never derived here.
+        maeR:(o&&typeof o.maeR==='number')?o.maeR:null,
+        mfeR:(o&&typeof o.mfeR==='number')?o.mfeR:null,
         recordedResultR:(o&&typeof o.recordedResultR==='number')?o.recordedResultR:null,
         plannedR:(o&&typeof o.plannedR==='number')?o.plannedR
           :(typeof p.plannedRR==='number'?p.plannedRR:null),
@@ -21569,6 +21614,52 @@ function obsReadAccountClosedCount(strategyId){
        &&Array.isArray(alexGAccount.closedPositions)) return alexGAccount.closedPositions.length;
   }catch(e){}
   return null;
+}
+// ══ v12.49.0 — COST STRESS: reading a frictionless backtest honestly ══════════════════════════
+// Replay applies no spread and no slippage (see alexGReplayIgnoredCostParams). Its results are a
+// FRICTIONLESS UPPER BOUND, not a forecast. This estimates what the costs actually measured on the
+// forward corpus would have done to them, using the excursions the replay itself recorded.
+//
+// The method, stated so it can be argued with: a winning trade whose adverse excursion came within
+// `cost` of its stop would have been stopped out first once the cost is charged, because the cost
+// moves the effective stop that much closer. Those wins are reclassified as -1R losses. Losses stay
+// losses -- a cost can only ever make an outcome worse, never better.
+//
+// This is an ESTIMATE and is labelled as one everywhere it is shown. It is deliberately
+// CONSERVATIVE in one direction and blind in another: it does not model a cost changing WHICH bar
+// an exit occurs on, and it cannot see trades the live path would have refused to enter at all.
+// It is not a substitute for forward testing and never becomes one.
+const OBS_COST_SOURCE_NOTE='measured on the forward corpus, not assumed';
+function obsCostStress(rows,costFraction){
+  const c=(typeof costFraction==='number'&&isFinite(costFraction)&&costFraction>=0)?costFraction:null;
+  if(c==null) return null;
+  const usable=(rows||[]).filter(function(r){
+    return typeof r.realizedR==='number'&&typeof r.maeR==='number'&&isFinite(r.maeR);
+  });
+  const total=(rows||[]).filter(function(r){ return typeof r.realizedR==='number'; }).length;
+  if(!usable.length) return{costFraction:c,usable:0,total:total,coverage:0,
+    wins:null,winsLost:null,netR:null,stressedNetR:null,stressedWins:null};
+  const wins=usable.filter(function(r){ return r.realizedR>0; });
+  // The effective stop sits (1 - cost) R away once the cost is charged.
+  const threshold=1-c;
+  const fragile=wins.filter(function(r){ return r.maeR>=threshold; });
+  const netR=usable.reduce(function(s,r){ return s+r.realizedR; },0);
+  const stressedNetR=usable.reduce(function(s,r){
+    return s+(fragile.indexOf(r)>=0?-1:r.realizedR);
+  },0);
+  return{
+    costFraction:c,
+    usable:usable.length,total:total,
+    coverage:total?usable.length/total:0,
+    wins:wins.length,
+    winsLost:fragile.length,
+    stressedWins:wins.length-fragile.length,
+    winRate:usable.length?wins.length/usable.length:null,
+    stressedWinRate:usable.length?(wins.length-fragile.length)/usable.length:null,
+    netR:netR,stressedNetR:stressedNetR,
+    perTrade:usable.length?netR/usable.length:null,
+    stressedPerTrade:usable.length?stressedNetR/usable.length:null
+  };
 }
 function obsSum(a){ return a.reduce(function(x,y){ return x+y; },0); }
 function obsMean(a){ return a.length?obsSum(a)/a.length:null; }
@@ -21780,6 +21871,40 @@ function obsRenderSegment(seg){
   });
   return h+'</tbody></table></div>';
 }
+function obsRenderCostStress(rows,label){
+  // Two points: the median spread measured on the forward corpus, and the mean total entry drag
+  // (spread plus adverse slippage). Both are OBSERVED numbers from real fills, not assumptions --
+  // which is the only reason showing them beside a backtest is honest rather than editorial.
+  const points=[{c:0.098,name:'median spread alone'},{c:0.221,name:'mean total entry drag'}];
+  const first=obsCostStress(rows,points[0].c);
+  if(!first||!first.usable) return'';
+  let h='<div class="obs-stress"><div class="obs-band-title">If this backtest had paid what live actually pays</div>'
+    +'<div class="obs-band-note" style="margin-bottom:11px">Replay applies <b>no spread and no slippage</b> — its result is a frictionless upper bound, not a forecast. '
+    +'On the live corpus, fills land a median <b>9.8%</b> of risk distance in spread, and <b>85%</b> of them worse than the signal price, '
+    +'for a mean total drag of <b>22.1%</b> ('+OBS_COST_SOURCE_NOTE+'). '
+    +'A win whose adverse excursion came within that cost of its stop would have been stopped out first.</div>'
+    +'<table class="obs-table"><thead><tr><th>Cost charged</th><th>Wins</th><th>Win rate</th><th>Net</th><th>Per trade</th></tr></thead><tbody>'
+    +'<tr><td>none (as run)</td><td>'+first.wins+'</td><td>'+obsFmtPct(first.winRate)+'</td>'
+    +'<td class="'+(first.netR>0?'obs-pos':'obs-neg')+'">'+obsFmtR(first.netR,1)+'</td>'
+    +'<td>'+obsFmtR(first.perTrade,3)+'</td></tr>';
+  points.forEach(function(pt){
+    const r=obsCostStress(rows,pt.c);
+    if(!r||!r.usable) return;
+    h+='<tr><td>'+(pt.c*100).toFixed(1)+'% of risk — '+pt.name+'</td><td>'+r.stressedWins+'</td>'
+      +'<td>'+obsFmtPct(r.stressedWinRate)+'</td>'
+      +'<td class="'+(r.stressedNetR>0?'obs-pos':'obs-neg')+'">'+obsFmtR(r.stressedNetR,1)+'</td>'
+      +'<td>'+obsFmtR(r.stressedPerTrade,3)+'</td></tr>';
+  });
+  h+='</tbody></table>';
+  if(first.coverage<1)
+    h+='<div class="obs-band-note" style="margin-top:9px">Computed on '+first.usable+' of '+first.total
+      +' trades — the rest carry no recorded adverse excursion and are left out rather than assumed unaffected.</div>';
+  h+='<div class="obs-warn" style="margin-top:10px"><b>This is an estimate, not a re-run.</b> '
+    +'It reclassifies wins that came within the cost of their stop, using excursions the engine already recorded. '
+    +'It does <b>not</b> model a cost moving which bar an exit lands on, and it cannot see setups the live path would have refused to enter at all. '
+    +'It is not a substitute for forward testing.</div></div>';
+  return h;
+}
 function obsRenderCoverage(cov,strategyLabel){
   if(!cov) return'<div class="obs-band-note" style="margin-bottom:14px">Coverage against the live account could not be read, so what fraction of closed trades this describes is <b>unknown</b>. The figures above are arithmetic over the preserved packages only.</div>';
   if(cov.complete&&!cov.beyondAccount)
@@ -21855,6 +21980,11 @@ async function renderObservatory(){
   h+='<h3 class="obs-h obs-h-replay">Replay — backtests over history. Never counted as forward.</h3>';
   h+='<div class="obs-band-note" style="margin-bottom:12px">Replay is how you get sample size cheaply; forward is how you get truth. Use replay to rule ideas out, and only forward-test what survives.</div>';
   h+=obsRenderAnalysis(rep);
+  // v12.49.0: replay now holds MORE THAN ONE strategy (ALEX plus the trend baseline), and one
+  // combined figure over two different strategies describes neither. The forward population is
+  // effectively single-strategy today, so this split is applied where the mixing actually happens.
+  if(rep.sampleSize) h+=obsRenderSegment(obsSegment(repRows,'strategyId'));
+  if(rep.sampleSize) h+=obsRenderCostStress(repRows,'replay');
   h+='<div class="obs-foot">Read '+new Date().toLocaleString()+' — '+packages.length
     +' package'+(packages.length===1?'':'s')+' in the store. Read-only; nothing here changes an account, a position or a rule.</div>';
   el.innerHTML=h;
