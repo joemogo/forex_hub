@@ -368,7 +368,7 @@ async function runChartAoiFidelityFixtures(g){
     const banner8=String(g.elText('recLabel')||'');
     const bannerDetail8=String(g.elText('recDetail')||'');
     assert('CAF-TF.8','a pair the ENGINE suppressed, viewed on a timeframe it has not scanned, renders an explicit not-scanned state naming BOTH timeframes -- not an invented verdict',
-      st8.indexOf('has not been scanned yet')!==-1 && st8.indexOf('M15')!==-1,
+      st8.indexOf('the scanner sweeps')!==-1 && st8.indexOf('M15')!==-1 && st8.indexOf('H1')!==-1,
       st8.slice(0,220));
     assert('CAF-TF.9','and the confluence panel shows NO percentage and NO direction -- the chart does not fill the gap with a figure it computed itself',
       conf8.indexOf('%')===-1 && conf8.indexOf('LONG')===-1 && conf8.indexOf('SHORT')===-1,
@@ -645,10 +645,11 @@ async function runChartAoiFidelityFixtures(g){
     assert('CAF-TF.11 (COMPANION to 11a/11b, not independent evidence): the state line is rendered and does not attribute an H4 verdict to this chart. The forbidden string is structurally unproducible under the shipped guard, so no single behaviour-changing mutation can make this line fail -- 11a and 11b are what actually pin the timeframe axis',
       st11.length>0 && st11.indexOf('scanner’s own H4 verdict')===-1, st11.slice(0,220));
     assert('CAF-TF.11a','POSITIVE, kills the GUARD reading the live activeTf: the chart refuses engine authority and renders the explicit NOT EVALUATED state. If the guard compares the verdict against the live timeframe it matches the H4 verdict and renders a verdict instead of this',
-      st11.indexOf('NOT EVALUATED')!==-1 && st11.indexOf('has not been scanned yet')!==-1,
+      st11.indexOf('NOT EVALUATED')!==-1 && st11.indexOf('the scanner sweeps')!==-1,
       st11.replace(/<[^>]*>/g,' ').slice(0,200));
     assert('CAF-TF.11b','POSITIVE, kills the LABEL reading the live activeTf: the state line names BOTH timeframes the right way round -- the verdict was computed on H4, and it is H1 that has not been scanned. Reading the live global here swaps them and misattributes the gap',
-      st11.indexOf('computed on H4')!==-1 && st11.indexOf('not on H1')!==-1,
+      st11.indexOf('NOT EVALUATED on H1')!==-1 && st11.indexOf('sweeps H4')!==-1 &&
+      st11.indexOf('NOT EVALUATED on H4')===-1,
       st11.replace(/<[^>]*>/g,' ').slice(0,200));
     const tfLog=g.fetchLog().filter(function(f){return f.kind==='candles'&&f.count===500;});
     // §18.32 CORRECTION, and it is a correction to MY OWN CLAIM. This was shipped labelled "kills
@@ -1226,14 +1227,14 @@ async function runChartAoiFidelityFixtures(g){
       notScanned.detail.indexOf('incomplete')===-1&&notScanned.label==='NOT EVALUATED',
       'label='+JSON.stringify(notScanned.label)+' detail='+JSON.stringify(notScanned.detail.slice(0,120)));
     assert('TRKB.2','...it states the real cause, and says explicitly that this is not a market-data problem',
-      notScanned.detail.indexOf('has not been scanned yet')!==-1&&
+      notScanned.detail.indexOf('scanner sweeps')!==-1&&
       notScanned.detail.indexOf('NOT a market-data problem')!==-1,
       notScanned.detail.slice(0,160));
     assert('TRKB.3','...the confluence panel agrees with the banner rather than contradicting it',
       notScanned.items.indexOf('has not been scanned yet')!==-1&&notScanned.items.indexOf('incomplete')===-1,
       notScanned.items.replace(/<[^>]*>/g,' ').slice(0,140));
     assert('TRKB.4','...and the pre-existing chart state line is UNCHANGED and still names both timeframes',
-      notScanned.state.indexOf('has not been scanned yet')!==-1&&notScanned.state.indexOf('H4')!==-1&&
+      notScanned.state.indexOf('the scanner sweeps')!==-1&&notScanned.state.indexOf('H4')!==-1&&
       notScanned.state.indexOf('H1')!==-1,
       notScanned.state.replace(/<[^>]*>/g,' ').slice(0,180));
     assert('TRKB.5','NO CONTRADICTION: banner, panel and chart state line no longer name different causes for one state',
@@ -1244,7 +1245,7 @@ async function runChartAoiFidelityFixtures(g){
       receivedCount:137,evaluationSuppressed:true,conf:{total:0,items:[]},signals:[]},'H1');
     assert('TRKB.6','PRESERVED: genuinely incomplete data on the selected timeframe still reports a market-data fault',
       incomplete.label==='NOT EVALUATED'&&incomplete.detail.indexOf('incomplete')!==-1&&
-      incomplete.detail.indexOf('has not been scanned yet')===-1,
+      incomplete.detail.indexOf('scanner sweeps')===-1,
       'label='+JSON.stringify(incomplete.label)+' detail='+JSON.stringify(incomplete.detail.slice(0,120)));
 
     // CAUSE 3: evaluated on the selected timeframe, nothing qualified. Must be unchanged.

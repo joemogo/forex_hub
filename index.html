@@ -2212,7 +2212,7 @@ const ALL_PAIRS=[
 // Bump by 1.0 for a major update (new feature/tab), by 0.1 for a small patch/fix.
 // This shows in the header next to the logo and on the Diagnostics tab, so you can
 // glance at the live site and instantly confirm which build actually deployed.
-const APP_VERSION='12.57.0';
+const APP_VERSION='12.57.1';
 const APP_VERSION_DATE='04 Sep 2026';
 const APP_VERSION_LOG=[
   '12.57.0 - THE SIDEBAR NOW MEANS ONE THING, AND SAYS WHERE ITS INPUTS CAME FROM (display and sweep control flow only; zero protected-function and zero protected-constant drift; no rule, weight, score, threshold, gate, sizing or execution change). Five defects, none of them scoring. ONE: THE SWEEP FOLLOWED THE CHART. scanPair opened with const sweepTf=activeTf, so the pair list scored whichever timeframe the operator happened to be viewing -- clicking M15 to Daily silently changed what every percentage in the list MEANT, two pairs were not comparable unless swept on the same timeframe, a score could not be compared against itself an hour earlier, and an alert raised from a Daily sweep read exactly like an M15 one. The file already said so at the setTf call site. The sweep is now fixed to a new SWEEP_TIMEFRAME constant set to M15, the SAME timeframe evaluateLiveTrigger fetches, so the number in the sidebar finally refers to the thing that can actually trade. VERIFIED DISPLAY-ONLY BEFORE CHANGING IT, and fixture TF-3 pins it: checkAutoTrades never reads pairData[].conf -- it filters on scanData bucket and then re-evaluates M15 itself -- so this changes what is shown and what alerts, never what trades. setTf no longer calls scanAll: with the sweep decoupled, rescoring all 35 instruments on a VIEWING action was wasted network and, because scanAll has no re-entrancy guard, a reliable way to start a second sweep on top of the running one. renderPairList now compares against SWEEP_TIMEFRAME rather than activeTf, or a chart on H4 would flag all 35 rows as other-timeframe; the mismatch branch is KEPT because a record persisted before this release still carries a timeframe that no longer matches. TWO: THE MSB LABEL STATED THE OPPOSITE OF THE TRUTH. The eligibility row read informational only -- not scored or gated, for a component scoreConfluence adds WEIGHTS.msb points for, into the very total ALERT_THRESHOLD gates on. The scoring was correct and is unchanged; only the claim about it was wrong. It now reports the real weight and threshold read from the protected constants rather than hardcoded, so it cannot drift. THREE: DOJI IS BADGED LIKE A CONFIRMED PATTERN AND IS WORTH ZERO -- detectSignals reports it, WEIGHTS has no entry and scoreConfluence has no branch, so it never moves the number or the alert. Badges for unweighted patterns are now marked not scored, DERIVED from WEIGHTS rather than naming doji, so a pattern that later gains a weight stops being marked automatically. FOUR: TWO DIFFERENT THINGS WERE BOTH CALLED AOI. The 20-point AOI zone touch is a swing cluster on the swept timeframe; the purple band drawn on the chart and the level that sets the stop are D/W structure, fetched only for the pair being viewed or traded -- so a pair can score AOI zone touch where no D/W level exists at all. The badge now names the window and states plainly that it is neither the drawn band nor the stop level; applied at the display layer because detectSignals is protected and its label frozen. FIVE: BIAS PROVENANCE WAS INVISIBLE. The weekly/daily/4H values scoreConfluence reads have two writers -- runAutoTopDownScan, which genuinely fetches and analyses W/D/H4, and three dropdowns the operator fills in by hand -- and Auto Scan DEFAULTS TO OFF, so the common case is hand-typed, scored with no freshness check of any kind. The pair list now marks a score whose bias was not machine-derived, reusing jvmEligibilityIsCurrent, the SAME fail-closed predicate the trade path gates on, rather than inventing a second notion of freshness that could disagree with the one controlling money. The tooltip scopes the warning honestly: the auto-trade path ignores unverified bias entirely, so this affects what is SEEN, not what is traded. TESTING: v157 adds 25 fixtures. Mutation-verified, ten mutations each killed. BIAS-1 SURVIVED ITS FIRST MUTATION: it asserted the variable existed rather than that it was interpolated, so deleting the render site left the declaration behind and the fixture green -- the same hole v12.56.0 CEIL-2 had against a comment. Both it and a new CEIL-R now assert the interpolation that actually reaches the operator.',
@@ -11002,7 +11002,9 @@ function renderRecBanner(conf,sess,suppressed,notScannedYet){
     banner.className='rec-banner rec-wait';
     label.className='rec-label rec-label-wait';
     label.textContent='NOT EVALUATED';
-    detail.textContent='This timeframe has not been scanned yet — the scanner’s most recent verdict for this pair was computed on another timeframe. This is NOT a finding that no setup exists, and it is NOT a market-data problem.';
+    // v12.57.1: matched to the chart banner above. "Has not been scanned yet" implied a scan that,
+    // since the sweep was pinned to one timeframe, is never coming for this one.
+    detail.textContent='The scanner sweeps a different timeframe from the one this chart is showing, so nothing was computed for this one. That is normal, not a fault: the sidebar score and any alerts describe the swept timeframe, which is also the one auto-trading acts on. This is NOT a finding that no setup exists, and it is NOT a market-data problem.';
     score.textContent='—';score.style.color='var(--text2)';return;
   }
   if(suppressed){
@@ -13172,6 +13174,24 @@ async function loadChart(){
   // clicking a new timeframe mid-load could have the guard and the label read a DIFFERENT value
   // than the fetch did -- H1 candles drawn under an H4 verdict labelled H4. The pair is already
   // captured and re-checked this way (`name`); the timeframe never was.
+  // v12.57.1 -- AN ATTEMPTED CHANGE HERE WAS WITHDRAWN, AND THE REASON IS WORTH KEEPING.
+  //
+  // v12.57.0 pinned the sweep to SWEEP_TIMEFRAME, which made the sentence this block rests on --
+  // "scanAll() refreshes the verdict moments later anyway" -- false for every timeframe except the
+  // swept one. The suppression below therefore became PERMANENT on five of six chart timeframes.
+  // The obvious repair was to narrow awaitingScanForTimeframe to `chartTf===SWEEP_TIMEFRAME` and
+  // let the other timeframes fall through to the chart-local path, on the reasoning that that path
+  // labels itself and still refuses incomplete data.
+  //
+  // THAT REPAIR WAS WRONG AND THE FIXTURES CAUGHT IT. CAF-TF.9 and CAF-TF.10 immediately rendered
+  // "SHORT - 63%" and "STRATEGY RECOMMENDS SELL" for a pair the ENGINE HAD REFUSED -- the exact
+  // fabricated verdict v12.31.0 removed. The chart-local completeness gate does not save it,
+  // because the chart's OWN fetch can be complete while the engine's was not. And a recommendation
+  // banner is not a neutral reading: it reads as MOGO recommending a trade, on a timeframe
+  // auto-trading never acts on.
+  //
+  // So the suppression stays exactly as it was. What was actually wrong was never the behaviour --
+  // it was the WORDING, which promised a scan that is no longer coming. Only the message changed.
   const hasRecordedVerdict=!!(engineVerdict&&engineVerdict.conf&&engineVerdict.signals);
   const usingEngineVerdict=hasRecordedVerdict&&engineVerdict.timeframe===chartTf;
   const awaitingScanForTimeframe=hasRecordedVerdict&&!usingEngineVerdict;
@@ -13197,6 +13217,12 @@ async function loadChart(){
     requestedCount:usingEngineVerdict?engineVerdict.requestedCount:(candles?candles.requestedCount:null),
     receivedCount:usingEngineVerdict?engineVerdict.receivedCount:(candles?candles.receivedCount:null),
     timeframe:chartTf,
+    // v12.57.1: the chart-local line used to say "the scanner has not scored this pair yet", which
+    // was true when the only way to reach that path was a genuinely never-scanned pair. Since the
+    // sweep was pinned to SWEEP_TIMEFRAME it is now usually FALSE -- the scanner has scored the
+    // pair, on the sweep timeframe, just not on the one being viewed. These two facts need
+    // different sentences, so the distinction is passed rather than re-derived in the renderer.
+    sweptTimeframe:hasRecordedVerdict&&engineVerdict.timeframe?engineVerdict.timeframe:null,
     awaitingScanForTimeframe,
     verdictTimeframe:engineVerdict?engineVerdict.timeframe:null});
 
@@ -13467,12 +13493,34 @@ function renderChartEvaluationState(state){
   if(st.awaitingScanForTimeframe){
     el.innerHTML='<div style="background:var(--gold-dim);border:1px solid var(--gold);border-radius:6px;'+
       'padding:8px 10px;margin:4px 0;font-size:12px">'+
-      '<strong style="color:var(--gold)">NOT EVALUATED \u2014 this timeframe has not been scanned yet</strong>'+
+      // v12.57.1: the wording, not the behaviour. This said "has not been scanned YET ... until the
+      // NEXT SWEEP scores it", which was true while the sweep followed the chart -- clicking a
+      // timeframe rescanned on it and the notice cleared within a minute. v12.57.0 pinned the sweep
+      // to one timeframe, so on every other one that promise became permanent and false: the notice
+      // described a wait for something that is never coming, and read as a fault in MOGO rather
+      // than as the ordinary consequence of viewing a chart the sweep does not cover. It now says
+      // which timeframe IS scanned and what to do about it. The suppression itself is unchanged and
+      // deliberate -- see the withdrawn-change note in loadChart.
+      // The verdict timeframe may be UNKNOWN -- a record persisted before it was stamped. CAF-TF.4
+      // exists for exactly that case and fails closed: such a state must not be attributed to the
+      // scanner. So the known and unknown cases get different sentences, the switch-to advice is
+      // only offered when there is a timeframe to switch TO, and the phrase that marks scanner
+      // attribution is never used here.
+      '<strong style="color:var(--gold)">NOT EVALUATED on '+escapeHtml(String(st.timeframe||''))+
+      (st.verdictTimeframe?' \u2014 the scanner sweeps '+escapeHtml(String(st.verdictTimeframe)):'')+
+      '</strong>'+
       '<div style="color:var(--text2);margin-top:3px;font-size:11px">'+
-      'The scanner\u2019s most recent verdict for this pair was computed on '+
-      escapeHtml(String(st.verdictTimeframe||'another timeframe'))+', not on '+
-      escapeHtml(String(st.timeframe||''))+'. No signal, confluence or recommendation is shown for '+
-      'this timeframe until the next sweep scores it. Nothing below is a strategy verdict.'+
+      (st.verdictTimeframe
+        ? 'This is normal, not a fault. The scanner sweeps '+escapeHtml(String(st.verdictTimeframe))+
+          ' \u2014 that is what the sidebar score and any alerts describe, and it is the timeframe '+
+          'auto-trading acts on. Nothing was computed for '+escapeHtml(String(st.timeframe||''))+
+          ', so no signal, confluence or recommendation is shown here. Switch the chart to '+
+          escapeHtml(String(st.verdictTimeframe))+' to see what was actually evaluated.'
+        : 'The most recent verdict for this pair carries no recorded timeframe, so it cannot be '+
+          'attributed to any timeframe honestly and is not used here. Nothing was computed for '+
+          escapeHtml(String(st.timeframe||''))+'.')+
+      ' Nothing below is a strategy verdict. This is NOT a finding that no setup exists, and it is '+
+      'NOT a market-data problem.'+
       '</div></div>';
     return;
   }
@@ -13482,7 +13530,16 @@ function renderChartEvaluationState(state){
     el.innerHTML='<div style="font-size:11px;color:var(--text3);padding:2px 0">'+
       (st.source==='engine'
         ? 'Showing the scanner\u2019s own '+escapeHtml(String(st.timeframe||''))+' verdict for this pair.'
-        : 'Computed on this chart\u2019s '+escapeHtml(String(st.timeframe||''))+' data \u2014 the scanner has not scored this pair yet.')+
+        // v12.57.1: two different facts, two different sentences. "Never scored" and "scored, but
+        // on the timeframe the scanner actually sweeps" are not the same thing, and telling the
+        // operator the first when the second is true reads as a fault in MOGO rather than as the
+        // ordinary consequence of looking at a chart the sweep does not cover.
+        : (st.sweptTimeframe
+            ? 'Computed on this chart\u2019s '+escapeHtml(String(st.timeframe||''))+' data. The scanner '
+              +'sweeps '+escapeHtml(String(st.sweptTimeframe))+' \u2014 the sidebar score and any alerts '
+              +'are '+escapeHtml(String(st.sweptTimeframe))+', and this reading is chart-local, not a '
+              +'scanner verdict.'
+            : 'Computed on this chart\u2019s '+escapeHtml(String(st.timeframe||''))+' data \u2014 the scanner has not scored this pair yet.'))+
       chartHistoryHorizonHtml(st)+
       '</div>';
     return;
