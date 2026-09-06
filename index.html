@@ -2006,6 +2006,8 @@ button.danger:hover{background:var(--red-dim)}
           </div>
         </div>
 
+        <div class="card" id="alexgAllPairsCard"></div>
+
         <div class="card" id="alexgDashboardCard" style="display:none">
           <div class="section-label">Replay results</div>
           <div id="alexgSummaryLine" style="font-size:13px;font-weight:700;margin-bottom:10px"></div>
@@ -2219,7 +2221,7 @@ const ALL_PAIRS=[
 // Bump by 1.0 for a major update (new feature/tab), by 0.1 for a small patch/fix.
 // This shows in the header next to the logo and on the Diagnostics tab, so you can
 // glance at the live site and instantly confirm which build actually deployed.
-const APP_VERSION='12.61.0';
+const APP_VERSION='12.62.0';
 const APP_VERSION_DATE='04 Sep 2026';
 const APP_VERSION_LOG=[
   '12.60.0 - TODAY OPPORTUNITIES RANKED INSTRUMENTS MOGO CANNOT TRADE (display only; zero protected-function and zero protected-constant drift; no rule, weight, score, gate, sizing or execution change). The dashboard card ranked ALL_PAIRS, so its top rows were routinely USD/ZAR, USD/SGD and NZD/CAD -- instruments NEITHER strategy can open a position on. The seven exotics are deliberately excluded from ALEXG_LIVE_PAIRS, because entry spread already costs a measured 9.8 percent of risk on majors and is materially worse there, and they were never in SCAN_PAIRS. A card headed Today Opportunities whose best entries are untradeable is not a ranking, it is a distraction placed where the operator looks first. IT WAS WORSE THAN UNTRADEABLE: a pair outside SCAN_PAIRS has no bias data, so its score cannot exceed 100-WEIGHTS.bias3 -- the ceiling v12.56.0 disclosed in the pair list. Ranking those against pairs that CAN reach 100 compared two different scales and systematically buried the tradeable ones; in the operator own dashboard USD/ZAR at 43 outranked every instrument MOGO is allowed to trade. The card now ranks the UNION of what each strategy trades, COMPUTED at render time rather than assumed: ALEX list is a superset of JVM today, and hardcoding that would go silently wrong the moment either list changes -- OPP-3 pins it. The filter is applied BEFORE the sort and the slice, or the top six would be chosen from the wrong set and then trimmed to fewer than six. TESTING: v161 adds 9 fixtures, mutation-verified three ways -- reverting to ALL_PAIRS kills OPP-2, hardcoding the universe to one strategy list kills OPP-3, and filtering after the slice kills OPP-7. OPP-7 ITSELF FAILED FIRST TIME and the reason is recorded: it located .slice(0,6) with a bare indexOf, which found the A-grade card earlier in the same function and compared the wrong positions -- the fixture was wrong, not the code. It now searches from the universe onward. BROWSER VERIFIED with the operator own failure shape: exotics scored at 90 and tradeable pairs at 40, the card correctly shows EUR/USD 40, GBP/USD 39, USD/JPY 38 and no exotic at all.',
@@ -5043,9 +5045,381 @@ async function runAlexGReplay(oPair,days,replayParams,onProgress,shouldCancel){
   };
 }
 
+
+// ══════════════════════════════════════════════════════════════════════════════════════════════
+// ALEX — ALL-PAIRS REPLAY. THE COMPARISON AGAINST baseline_trend_v1.
+// ══════════════════════════════════════════════════════════════════════════════════════════════
+//
+// WHY THIS EXISTS. baseline_trend_v1 was built as ALEX control arm: direction is the sign of the
+// 3-month return and nothing else. It has run over 12 pairs and 4 years and produced 502 trades.
+// ALEX has never been replayed the same way -- runAlexGReplayUI does ONE pair from a dropdown and
+// each run overwrites the last, so there has never been an ALEX figure to put beside the control.
+// Without that figure the question "does ALEX setup detection add anything over a one-line rule"
+// has no answer, and ALEX is the strategy actually paper trading the account.
+//
+// WHAT IS AND IS NOT TOUCHED. This calls the EXISTING, UNPROTECTED runAlexGReplay once per pair
+// and accumulates. alexGRunSetupEngine, alexGRunSetupReplay, alexGConstructTrade, alexGWalkOutcome
+// and alexGComputeReplayStats are PROTECTED and are not read, wrapped or altered here -- the
+// trades are taken exactly as the engine returns them.
+//
+// THE ENTRY-CONVENTION CONFOUND, STATED UP FRONT. ALEX enters at the QUALIFICATION CANDLE CLOSE.
+// baseline_trend_v1, psych_level_v1 and crt_v1 all enter at the NEXT BAR OPEN. Entering at the
+// close of the bar that produced the signal is a fill nobody actually gets, and it is strictly
+// more favourable than the next open. So this comparison is biased IN ALEX FAVOUR before it
+// starts. That direction is the useful one: if ALEX still fails to beat the control, the result
+// is safe. If ALEX wins, the win is confounded and cannot be read as edge until the two arms
+// share an entry convention.
+const ALEXG_ALLPAIRS_ENTRY_CAVEAT='ALEX enters at the QUALIFICATION CANDLE CLOSE; baseline_trend_v1 enters at the NEXT BAR OPEN. That is strictly more favourable to ALEX, so this comparison is biased in ALEX favour. A LOSS for ALEX under this bias is conclusive; a WIN is confounded and must not be read as edge until both arms share an entry convention.';
+let alexGAllPairsRuns=null,alexGAllPairsRunning=false,alexGAllPairsCancel=false;
+
+// Live ALEX paper trading reads alexGSetupState, alexGZoneState and alexGLastEvaluatedCloseTime.
+// runAlexGReplay REBUILDS all three for whichever pair it is given -- fine for one pair from a
+// dropdown, but a 12-pair sweep would leave the live path holding historical setups for every
+// instrument it observes. So the sweep snapshots those three and restores them whatever happens,
+// including on cancel or a thrown error. The running instance is handed back as it was found.
+function alexGAllPairsSnapshotState(){
+  return{
+    zone:Object.assign({},alexGZoneState),
+    lastEval:Object.assign({},alexGLastEvaluatedCloseTime),
+    setups:alexGSetupState.slice()
+  };
+}
+function alexGAllPairsRestoreState(snap){
+  if(!snap) return false;
+  // Rebuilt IN PLACE rather than reassigned, so any closure still holding the original object or
+  // array sees the restored contents.
+  Object.keys(alexGZoneState).forEach(function(k){ delete alexGZoneState[k]; });
+  Object.keys(snap.zone).forEach(function(k){ alexGZoneState[k]=snap.zone[k]; });
+  Object.keys(alexGLastEvaluatedCloseTime).forEach(function(k){ delete alexGLastEvaluatedCloseTime[k]; });
+  Object.keys(snap.lastEval).forEach(function(k){ alexGLastEvaluatedCloseTime[k]=snap.lastEval[k]; });
+  alexGSetupState.length=0;
+  for(let i=0;i<snap.setups.length;i++) alexGSetupState.push(snap.setups[i]);
+  return true;
+}
+// PURE. The distribution summary the CRT run proved was necessary: a MEAN planned R of 10.46 sat
+// beside a MEDIAN of 1.57 and hid that 13.5% of that arm carried a stop under 5 pips, which is
+// what produced its entire apparent edge. Median, the tight-stop share and a spread-charged
+// figure are reported for every arm from here on.
+//
+// Spread cost in R is spread/risk -- it scales INVERSELY with stop size, so it is NOT neutral
+// between two arms whose stops differ. It is therefore charged PER TRADE and then averaged, never
+// applied to the mean.
+function replayDistributionSummary(trades,spreadPips){
+  const t=(trades||[]).filter(function(x){ return x&&!x.stillOpen&&typeof x.resultR==='number'; });
+  const out={n:t.length,wins:0,winRate:null,meanR:null,seR:null,
+    meanPlannedRR:null,medianPlannedRR:null,medianRiskPips:null,
+    tightStopShare:null,spreadPips:(typeof spreadPips==='number'?spreadPips:null),spreadChargedR:null};
+  if(!t.length) return out;
+  const med=function(a){
+    const s=a.slice().sort(function(x,y){ return x-y; });
+    const m=Math.floor(s.length/2);
+    return s.length%2?s[m]:(s[m-1]+s[m])/2;
+  };
+  const R=t.map(function(x){ return x.resultR; });
+  const risk=t.map(function(x){ return x.riskPips; }).filter(function(x){ return typeof x==='number'&&isFinite(x)&&x>0; });
+  const rr=t.map(function(x){ return x.plannedRR; }).filter(function(x){ return typeof x==='number'&&isFinite(x); });
+  out.wins=t.filter(function(x){ return x.resultR>0; }).length;
+  out.winRate=out.wins/t.length;
+  const mean=R.reduce(function(s,x){ return s+x; },0)/R.length;
+  out.meanR=mean;
+  if(R.length>1){
+    const v=R.reduce(function(s,x){ return s+(x-mean)*(x-mean); },0)/(R.length-1);
+    out.seR=Math.sqrt(v/R.length);   // the error bar, so a difference is never read as a fact
+  }
+  if(rr.length){
+    out.meanPlannedRR=rr.reduce(function(s,x){ return s+x; },0)/rr.length;
+    out.medianPlannedRR=med(rr);
+  }
+  if(risk.length){
+    out.medianRiskPips=med(risk);
+    out.tightStopShare=risk.filter(function(x){ return x<5; }).length/risk.length;
+    if(typeof spreadPips==='number'&&spreadPips>0){
+      const withCost=t.filter(function(x){ return typeof x.riskPips==='number'&&x.riskPips>0; })
+        .map(function(x){ return x.resultR-spreadPips/x.riskPips; });
+      if(withCost.length) out.spreadChargedR=withCost.reduce(function(s,x){ return s+x; },0)/withCost.length;
+    }
+  }
+  return out;
+}
+// The trades ALEX protected engine returns, reduced to the fields every arm reports, so one
+// reader compares them. riskDistancePips is ALEX own name for the stop distance; it is RENAMED
+// here, never recomputed -- recomputing it from entry and stop would be a second implementation of
+// a number the protected engine already published, and the two could disagree.
+function alexGAllPairsNormalizeTrades(run){
+  const out=[];
+  ((run&&run.trades)||[]).forEach(function(t){
+    if(!t) return;
+    out.push({
+      pair:t.pair||null,timeframe:t.timeframe||null,setupType:t.setupType||null,
+      direction:t.direction,entry:t.entry,stop:t.stop,target:t.target,
+      plannedRR:t.plannedRR,riskPips:t.riskDistancePips,
+      result:t.result,resultR:t.resultR,stillOpen:t.stillOpen,ambiguous:t.ambiguous,
+      entryTimestamp:t.entryTimestamp||null,exitTimestamp:t.exitTimestamp||null,
+      exitPrice:t.exitPrice,maePips:t.maePips,mfePips:t.mfePips,
+      maeR:t.maeR,mfeR:t.mfeR,atrAtEntry:t.atrAtEntry,
+      zoneId:t.zoneId,zoneStrength:t.zoneStrength,trendContext:t.trendContext,
+      tradeId:t.tradeId,setupId:t.setupId
+    });
+  });
+  return out;
+}
+function alexGAllPairsAggregate(runs,spreadPips){
+  const all=[];
+  (runs||[]).forEach(function(r){ if(r&&Array.isArray(r.normalized)) all.push.apply(all,r.normalized); });
+  return replayDistributionSummary(all,spreadPips);
+}
+// The sweep. One pair at a time through the EXISTING unprotected runAlexGReplay, because the
+// engine resets and rebuilds per pair and running them concurrently would have them overwrite
+// each other in the shared zone/setup state.
+//
+// A pair that errors is RECORDED and the sweep continues. A pair silently dropped would shrink
+// the sample without shrinking the claim made about it.
+async function alexGRunReplayAllPairs(days,ambiguousMode,onProgress,shouldCancel){
+  const pairs=(SCAN_PAIRS||[]).slice();
+  const snap=alexGAllPairsSnapshotState();
+  const runs=[];
+  try{
+    for(let i=0;i<pairs.length;i++){
+      if(shouldCancel&&shouldCancel()){ runs.push({cancelledAt:pairs[i]}); break; }
+      const oPair=pairs[i].replace('/','_');
+      const tag='('+(i+1)+'/'+pairs.length+') '+pairs[i]+' ';
+      if(onProgress) onProgress(tag+'starting...');
+      let r=null;
+      try{
+        r=await runAlexGReplay(oPair,days,
+          // 'none' is the ONLY honest spread mode: alexGReplayIgnoredCostParams REFUSES the run
+          // outright if a cost model is supplied, because the engine records cost parameters and
+          // applies them to nothing. Cost is therefore charged AFTER the fact, from riskPips, and
+          // labelled as the post-hoc estimate it is.
+          {ambiguousMode:ambiguousMode||'conservative',alexGSpreadMode:'none',
+           alexGFixedSpreadPips:0,alexGSlippagePips:0,startBalance:10000},
+          function(m){ if(onProgress) onProgress(tag+m); },shouldCancel);
+      }catch(e){
+        r={error:(e&&e.message)?e.message:String(e)};
+      }
+      if(r&&r.cancelled){ runs.push({pair:oPair,cancelled:true}); break; }
+      if(r&&r.error){ runs.push({pair:oPair,error:r.error}); continue; }
+      runs.push({pair:oPair,setupsConsidered:r.setupsConsidered,
+        zoneCounts:r.zoneCounts,rejected:(r.rejected||[]).length,
+        normalized:alexGAllPairsNormalizeTrades(r)});
+    }
+  } finally {
+    // Restored on EVERY path, including cancel and a thrown error. The live path must not be left
+    // holding this sweep historical state.
+    alexGAllPairsRestoreState(snap);
+  }
+  return runs;
+}
+// PURE. One package, same shape as the other replay arms, so one reader compares all four.
+function alexGAllPairsBuildReplayPackage(runs,opts){
+  const o=opts||{};
+  const positions=[],outcomes=[],setups=[];
+  let seq=0,stillOpen=0;
+  (runs||[]).forEach(function(run){
+    ((run&&run.normalized)||[]).forEach(function(t){
+      // A still-open trade is NOT exported as an outcome. It has no result, and a null realizedR
+      // in a file invites a reader to treat it as a zero.
+      if(t.stillOpen){ stillOpen++; return; }
+      const id='AGA|'+STRATEGY_ALEXG+'|'+(t.pair||run.pair||'?')+'|'+(++seq);
+      setups.push({
+        setupId:id,setupType:t.setupType||'alex_g',setupLabel:'ALEX G S&R',
+        strategyId:STRATEGY_ALEXG,
+        instrument:t.pair||run.pair||null,timeframe:t.timeframe||null,
+        ruleAttribution:{ruleSetId:STRATEGY_ALEXG,
+          unverifiedConditionCount:0,contradictsEngineClassification:false,failedConditionIds:[]},
+        contextRefs:{session:null,trendContext:t.trendContext||null,atrAtEntry:t.atrAtEntry},
+        structureRefs:{zoneId:t.zoneId,zoneStrength:t.zoneStrength,
+          riskPips:t.riskPips,setupType:t.setupType}
+      });
+      positions.push({
+        positionId:id,setupId:id,
+        instrument:t.pair||run.pair||null,timeframe:t.timeframe||null,
+        direction:t.direction,entryPrice:t.entry,
+        entryTimestamp:t.entryTimestamp?new Date(t.entryTimestamp).toISOString():null,
+        // Spread is genuinely NOT MODELLED by the engine, so it is left ABSENT rather than written
+        // as 0. A recorded zero spread and an unmodelled spread are different facts.
+        entrySpreadPips:undefined,
+        originalStop:t.stop,currentStop:t.stop,target:t.target,
+        plannedRR:t.plannedRR,riskPercent:1,
+        isDeveloperTrade:false,tradeSource:'replay',
+        evidenceCompleteness:'PARTIAL'
+      });
+      outcomes.push({
+        outcomeId:id+'|outcome',positionId:id,
+        exitPrice:t.exitPrice,
+        exitTimestamp:t.exitTimestamp?new Date(t.exitTimestamp).toISOString():null,
+        exitReasonCode:t.result,exitDetectionSource:'replay_candle',
+        plannedR:t.plannedRR,recordedResultR:t.resultR,realizedR:t.resultR,
+        realizedRProvenance:'FIXED_R_BY_METHODOLOGY',
+        realizedRBasis:{entryPrice:t.entry,exitPrice:t.exitPrice,direction:t.direction,
+          riskDistance:Math.abs(t.entry-t.stop),riskDistanceSource:'abs(entry-stop)'},
+        pnl:undefined,
+        maeR:t.maeR,mfeR:t.mfeR,maePips:t.maePips,mfePips:t.mfePips,
+        ambiguous:t.ambiguous,evidenceCompleteness:'PARTIAL'
+      });
+    });
+  });
+  const errs=(runs||[]).filter(function(r){ return r&&r.error; })
+    .map(function(r){ return{pair:r.pair,error:r.error}; });
+  return{
+    packageSchemaVersion:'mogo.evidence-package.v1',
+    packageId:'PKG|'+STRATEGY_ALEXG+'|REPLAY|ALLPAIRS|'+(o.stamp||Date.now()),
+    captureBasis:'REPLAY_RUN',
+    identity:{strategyId:STRATEGY_ALEXG,strategyVersion:RULES_ALEXG.ruleVersion,
+      strategyVersionProvenance:'OBSERVED',mode:'REPLAY',engineVersion:APP_VERSION,
+      captureOrigin:(typeof location!=='undefined'&&location&&location.origin)?location.origin:null},
+    configSnapshot:{ruleVersion:RULES_ALEXG.ruleVersion,config:RULES_ALEXG.config,
+      days:o.days||null,ambiguousMode:o.ambiguousMode||'conservative'},
+    configSnapshotProvenance:'OBSERVED',
+    objects:{candidates:[],decisions:[],marketContexts:[],
+      qualifiedSetups:setups,positions:positions,outcomes:outcomes},
+    objectCounts:{candidates:0,decisions:0,marketContexts:0,
+      qualifiedSetups:setups.length,positions:positions.length,outcomes:outcomes.length},
+    replayDisclosures:{
+      frictionModelled:false,
+      frictionNote:'Spread and slippage are NOT charged by the engine. alexGReplayIgnoredCostParams REFUSES a run that supplies a cost model, because the engine records cost parameters and applies them to nothing. Any spread figure reported alongside this package is charged AFTER the fact as spreadPips divided by riskPips per trade, and is an estimate, not an engine result.',
+      frictionIsNotNeutralBetweenArms:'Spread cost in R is spread divided by risk, so it scales INVERSELY with stop size and is NOT neutral between arms whose stops differ. Two arms may only be compared on a raw basis when their stop-size distributions match. Reported per arm: medianRiskPips and the share of trades with a stop under 5 pips.',
+      entryBasis:'QUALIFICATION_CANDLE_CLOSE',
+      entryComparabilityWarning:ALEXG_ALLPAIRS_ENTRY_CAVEAT,
+      ambiguousMode:o.ambiguousMode||'conservative',
+      exitEngine:'alexGRunSetupReplay / alexGConstructTrade / alexGWalkOutcome — PROTECTED and unmodified. This sweep only loops the existing unprotected runAlexGReplay and accumulates what it returns.',
+      liveStateIsolation:'alexGZoneState, alexGLastEvaluatedCloseTime and alexGSetupState are snapshotted before the sweep and restored on every exit path, so a 12-pair sweep cannot leave the live paper-trading path holding historical setups.',
+      populationNote:'REPLAY. Never to be combined with forward/live ALEX closes — the two populations answer different questions, and mixing them has already cost this project a published conclusion once.',
+      pairsAttempted:(runs||[]).length,
+      pairErrors:errs,
+      stillOpenExcluded:stillOpen
+    }
+  };
+}
+
+function alexGAllPairsFmt(x,d){ return (x==null||!isFinite(x))?'—':x.toFixed(d==null?3:d); }
+function alexGAllPairsPct(x,d){ return (x==null||!isFinite(x))?'—':(x*100).toFixed(d==null?1:d)+'%'; }
+// One row per arm, in the columns the CRT failure taught us to print. The order is deliberate:
+// the reader meets the sample size and the GEOMETRY before the win rate, because a win rate read
+// without the planned R and the stop size beside it is exactly how the CRT table misled.
+function alexGAllPairsRow(label,s,tone){
+  return '<tr'+(tone?' style="color:'+tone+'"':'')+'>'
+    +'<td style="padding:7px 9px;font-weight:600">'+label+'</td>'
+    +'<td style="padding:7px 9px">'+s.n+'</td>'
+    +'<td style="padding:7px 9px">'+alexGAllPairsFmt(s.medianPlannedRR,2)+'</td>'
+    +'<td style="padding:7px 9px">'+alexGAllPairsFmt(s.medianRiskPips,1)+'</td>'
+    +'<td style="padding:7px 9px">'+alexGAllPairsPct(s.tightStopShare)+'</td>'
+    +'<td style="padding:7px 9px">'+alexGAllPairsPct(s.winRate)+'</td>'
+    +'<td style="padding:7px 9px">'+(s.meanR==null?'—':(s.meanR>=0?'+':'')+s.meanR.toFixed(3)+'R')+'</td>'
+    +'<td style="padding:7px 9px">'+(s.seR==null?'—':'±'+s.seR.toFixed(3))+'</td>'
+    +'<td style="padding:7px 9px">'+(s.spreadChargedR==null?'—':(s.spreadChargedR>=0?'+':'')+s.spreadChargedR.toFixed(3)+'R')+'</td>'
+    +'</tr>';
+}
+function initAlexGAllPairsCard(){
+  const el=document.getElementById('alexgAllPairsCard');
+  if(!el) return;
+  el.innerHTML='<div class="section-label">All-pairs replay — the comparison against the trend baseline</div>'
+    +'<div class="muted" style="font-size:12px;line-height:1.6;margin-bottom:10px">'
+    +'The single-pair run above answers <i>how did ALEX do on this instrument</i>. This one answers the question that '
+    +'actually matters: <b>does ALEX setup detection add anything over a one-line rule?</b> '
+    +'<b>baseline_trend_v1</b> exists only to be that rule — direction is the sign of the 3-month return, nothing else — '
+    +'and it has already produced 502 trades over these 12 pairs and 4 years.<br>'
+    +'<b>Read this table left to right.</b> Sample size and geometry come before the win rate, because a win rate read '
+    +'without planned R and stop size beside it is exactly how the CRT result misled for an afternoon.<br>'
+    +'<b style="color:var(--yellow)">This comparison is biased in ALEX favour.</b> ALEX enters at the qualification candle '
+    +'CLOSE; every other arm enters at the NEXT BAR OPEN, which nobody can beat in practice. So an ALEX <i>loss</i> here is '
+    +'conclusive, and an ALEX <i>win</i> is confounded until both arms share an entry convention.<br>'
+    +'<b>Replay, not forward performance.</b> Your live ALEX state is snapshotted and restored — this sweep cannot disturb it.</div>'
+    +'<div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">'
+    +'<div><div class="muted" style="font-size:11px;margin-bottom:4px">Days of history</div>'
+    +'<select id="alexgAllDays" style="width:180px">'
+    +'<option value="365">365 days (1 year)</option>'
+    +'<option value="730">730 days (2 years)</option>'
+    +'<option value="1460" selected>1460 days (4 years) — matches the baseline</option>'
+    +'</select></div>'
+    +'<div><div class="muted" style="font-size:11px;margin-bottom:4px">Spread to charge (pips)</div>'
+    +'<input id="alexgAllSpread" type="number" value="1" min="0" max="5" step="0.1" style="width:110px"></div>'
+    +'<button class="btn" id="alexgAllRunBtn" onclick="runAlexGAllPairsUI()">Run ALEX on all '+SCAN_PAIRS.length+' pairs</button>'
+    +'<button class="danger" id="alexgAllCancelBtn" onclick="cancelAlexGAllPairs()" style="display:none">Cancel</button>'
+    +'<button class="btn" onclick="exportAlexGAllPairsReplay()">Export results</button>'
+    +'</div>'
+    +'<div class="muted" style="margin-top:8px;font-size:11px">A 4-year sweep fetches roughly 35,000 H1 bars per pair across four timeframes. Budget 15–25 minutes and leave the tab open.</div>'
+    +'<div id="alexgAllProgress" class="muted" style="margin-top:8px;font-size:12px"></div>'
+    +'<div id="alexgAllResults"></div>';
+}
+function renderAlexGAllPairsResults(){
+  const el=document.getElementById('alexgAllResults');
+  if(!el) return;
+  if(!alexGAllPairsRuns){ el.innerHTML=''; return; }
+  const spEl=document.getElementById('alexgAllSpread');
+  const spread=Math.max(0,parseFloat(spEl&&spEl.value)||0);
+  const s=alexGAllPairsAggregate(alexGAllPairsRuns,spread);
+  const errs=(alexGAllPairsRuns||[]).filter(function(r){ return r&&r.error; })
+    .map(function(r){ return (r.pair||'?')+': '+r.error; });
+  const cancelled=(alexGAllPairsRuns||[]).some(function(r){ return r&&(r.cancelled||r.cancelledAt); });
+  const done=(alexGAllPairsRuns||[]).filter(function(r){ return r&&Array.isArray(r.normalized); }).length;
+  el.innerHTML='<div class="card" style="margin-top:10px">'
+    +'<div style="font-size:14px;font-weight:700;margin-bottom:8px">ALEX all-pairs replay — REPLAY, not forward performance</div>'
+    +(cancelled?'<div style="color:var(--yellow);font-size:12px;margin-bottom:8px"><b>Cancelled part-way.</b> '
+      +done+' of '+SCAN_PAIRS.length+' pairs completed — this is a partial sample, not a result.</div>':'')
+    +'<table style="width:100%;border-collapse:collapse;font-size:12px">'
+    +'<thead><tr style="text-align:left;font-size:10px;letter-spacing:.5px">'
+    +'<th style="padding:6px 9px">Arm</th><th style="padding:6px 9px">Closed</th>'
+    +'<th style="padding:6px 9px">Med planned R</th><th style="padding:6px 9px">Med stop</th>'
+    +'<th style="padding:6px 9px">Stop &lt;5p</th><th style="padding:6px 9px">Win rate</th>'
+    +'<th style="padding:6px 9px">Per trade</th><th style="padding:6px 9px">1 SE</th>'
+    +'<th style="padding:6px 9px">After '+spread+'p spread</th></tr></thead>'
+    +'<tbody>'+alexGAllPairsRow('ALEX (all pairs)',s)+'</tbody></table>'
+    +'<div class="muted" style="margin-top:12px;font-size:12px;line-height:1.6">'
+    +'<b>The error bar is the point.</b> A per-trade figure without it cannot be told apart from zero. '
+    +'Roughly, if the per-trade number is smaller than twice the SE, this run has not distinguished ALEX from a coin.<br>'
+    +'<b>Compare against baseline_trend_v1</b> by exporting both and reading them together — the control ran '
+    +'−0.092R per trade over 502 trades, itself indistinguishable from zero. If ALEX lands in the same place, '
+    +'the setup detection is not adding anything a one-line rule does not already give you.<br>'
+    +'<b>Spread is charged after the fact</b>, as spread ÷ stop size per trade. The engine itself refuses cost '
+    +'parameters rather than record a model it never applies, so this column is an estimate and is labelled as one '
+    +'in the export.</div>'
+    +(errs.length?'<div class="muted" style="margin-top:10px;font-size:12px;color:var(--red)"><b>Pairs that failed:</b> '
+      +escapeHtml(errs.join(' | '))+'</div>':'')
+    +'</div>';
+}
+async function runAlexGAllPairsUI(){
+  if(alexGAllPairsRunning) return;
+  alexGAllPairsRunning=true; alexGAllPairsCancel=false;
+  const btn=document.getElementById('alexgAllRunBtn');
+  const cancelBtn=document.getElementById('alexgAllCancelBtn');
+  const prog=document.getElementById('alexgAllProgress');
+  const daysEl=document.getElementById('alexgAllDays');
+  const ambEl=document.getElementById('alexgAmbiguous');
+  const days=parseInt(daysEl&&daysEl.value,10)||1460;
+  const amb=(ambEl&&ambEl.value)||'conservative';
+  if(btn){ btn.disabled=true; btn.textContent='Running...'; }
+  if(cancelBtn) cancelBtn.style.display='inline-block';
+  try{
+    alexGAllPairsRuns=await alexGRunReplayAllPairs(days,amb,
+      function(m){ if(prog) prog.textContent=m; },
+      function(){ return alexGAllPairsCancel; });
+    if(prog) prog.textContent='Done — '+(alexGAllPairsRuns||[]).length+' pair(s) attempted.';
+    renderAlexGAllPairsResults();
+  }catch(e){
+    if(prog) prog.textContent='Failed: '+((e&&e.message)?e.message:String(e));
+  } finally {
+    alexGAllPairsRunning=false;
+    if(btn){ btn.disabled=false; btn.textContent='Run ALEX on all '+SCAN_PAIRS.length+' pairs'; }
+    if(cancelBtn) cancelBtn.style.display='none';
+  }
+}
+function cancelAlexGAllPairs(){ alexGAllPairsCancel=true; }
+function exportAlexGAllPairsReplay(){
+  if(!alexGAllPairsRuns){ alert('Run the all-pairs replay first.'); return; }
+  const daysEl=document.getElementById('alexgAllDays');
+  const ambEl=document.getElementById('alexgAmbiguous');
+  const pkg=alexGAllPairsBuildReplayPackage(alexGAllPairsRuns,
+    {stamp:Date.now(),days:parseInt(daysEl&&daysEl.value,10)||null,
+     ambiguousMode:(ambEl&&ambEl.value)||'conservative'});
+  downloadTextFile('mogo-evidence-'+STRATEGY_ALEXG+'-REPLAY-ALLPAIRS-'+Date.now()+'.json',
+    'application/json',JSON.stringify(pkg,null,2));
+}
+
 // ── ALEX G S&R UI (Phase 4) — fully separate from every current-strategy UI
 // function and from TRUE MTF Replay's own replayState/UI ──
 function initAlexGPair(){
+  try{ initAlexGAllPairsCard(); }catch(e){}
   const sel=document.getElementById('alexgPair');
   const verEl=document.getElementById('alexgHubVersion');
   if(verEl) verEl.textContent=APP_VERSION;
