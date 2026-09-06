@@ -523,9 +523,19 @@ const wrapped=new Function('g', appCode + '\n' + 'return (async function(){\n' +
   '  let __threw=false;\n' +
   '  try{ await scanAll(); }catch(e){ __threw=/forced scan failure/.test(String(e&&e.message)); }\n' +
   '  renderPairList=__origRender;\n' +
-  '  g.record("JVMOBS-5","a FAILED scan is still recorded, and the original error still propagates",\n' +
-  '    __threw===true&&!!__jvmObs&&__jvmObs.outcome==="ERROR"&&/forced scan failure/.test(String(__jvmObs.errorText)),\n' +
-  '    "threw="+__threw+" outcome="+String(__jvmObs&&__jvmObs.outcome));\n' +
+  // v12.56.0 INVERTED, same pattern MOGO-021 used on JVM-27/28/29: this asserted the DEFECT.
+  // renderPairList is display only and nothing downstream reads its result, yet a throw there
+  // aborted the for-of over chunks, so every remaining chunk went undispatched and checkAutoTrades
+  // and runManualReviewScan never ran -- a cosmetic fault suppressing the entire trade pass, the
+  // very thing MOGO-021's per-pair isolation was added to stop, reintroduced at chunk granularity.
+  // The render is now isolated too, so the error deliberately does NOT propagate. The ledger must
+  // still show it: coverage was genuinely complete so outcome stays OK, and errorText carries the
+  // display fault so no reader is told the sweep was unremarkable.
+  '  g.record("JVMOBS-5","a render fault is RECORDED and does NOT abort the sweep or the trade pass",\n' +
+  '    __threw===false&&!!__jvmObs&&__jvmObs.outcome==="OK"&&\n' +
+  '    /forced scan failure/.test(String(__jvmObs.errorText))&&\n' +
+  '    (__jvmObs.instrumentsEvaluated||[]).length===ALL_PAIRS.length,\n' +
+  '    "threw="+__threw+" outcome="+String(__jvmObs&&__jvmObs.outcome)+" evaluated="+((__jvmObs&&__jvmObs.instrumentsEvaluated)||[]).length+"/"+ALL_PAIRS.length+" errorText carries the fault");\n' +
   // The change that carried real regression risk: evidenceObservationBase is shared with ALEX.
   '  const alexShaped=evidenceBuildPollObservation({tickId:"T",startedAt:new Date().toISOString()});\n' +
   '  g.record("JVMOBS-6","ALEX records are UNCHANGED when strategyId is omitted -- the shared builder did not regress",\n' +
@@ -546,14 +556,20 @@ const wrapped=new Function('g', appCode + '\n' + 'return (async function(){\n' +
   // EXACT numbers. The abort fires on the 2nd renderPairList, i.e. after two 5-pair chunks, so the
   // sweep reached precisely 10 and left 25. A range assertion passed for any partial value and let
   // both an off-by-one and a whole lost chunk through.
-  '  g.record("JVMOBS-7","an ABORTED sweep reports EXACTLY the instruments it reached -- 10, not last scan\u2019s 35",\n' +
-  '    (__jvmObs.instrumentsEvaluated||[]).length===10&&fullCount===ALL_PAIRS.length,\n' +
-  '    "aborted sweep evaluated "+((__jvmObs.instrumentsEvaluated)||[]).length+" (expected exactly 10); a stale check claimed all "+fullCount);\n' +
-  '  g.record("JVMOBS-8","and EXACTLY the other 25 are named NOT_REACHED_THIS_SCAN",\n' +
-  '    (__jvmObs.instrumentsSkipped||[]).length===25&&\n' +
-  '    (__jvmObs.instrumentsSkipped||[]).filter(function(x){return x.reason==="NOT_REACHED_THIS_SCAN";}).length===25&&\n' +
-  '    __jvmObs.instrumentsAttempted===10,\n' +
-  '    "skipped="+((__jvmObs.instrumentsSkipped)||[]).length+" all NOT_REACHED, attempted="+__jvmObs.instrumentsAttempted);\n' +
+  // v12.56.0 INVERTED. The trigger here is the SAME defect: a throw on the 2nd renderPairList used
+  // to truncate the sweep at exactly 10 instruments, and these two fixtures pinned that truncation
+  // precisely. The truncation is the bug, not the contract -- 25 instruments were going unscanned
+  // because a redraw failed. What they were really protecting is that the ledger reports EXACTLY
+  // what the sweep touched and never inherits the previous sweep's numbers, and that property is
+  // asserted here still, now against a sweep that correctly reaches all 35.
+  '  g.record("JVMOBS-7","a mid-sweep render throw NO LONGER truncates the sweep -- all instruments are still reached",\n' +
+  '    (__jvmObs.instrumentsEvaluated||[]).length===ALL_PAIRS.length&&fullCount===ALL_PAIRS.length&&__chunks>=2,\n' +
+  '    "render threw on chunk "+__chunks+"; sweep still evaluated "+((__jvmObs.instrumentsEvaluated)||[]).length+"/"+ALL_PAIRS.length+" (was truncated to 10)");\n' +
+  '  g.record("JVMOBS-8","the ledger still accounts for every instrument exactly once, and names none as NOT_REACHED",\n' +
+  '    (__jvmObs.instrumentsSkipped||[]).filter(function(x){return x.reason==="NOT_REACHED_THIS_SCAN";}).length===0&&\n' +
+  '    __jvmObs.instrumentsAttempted===ALL_PAIRS.length&&\n' +
+  '    (__jvmObs.instrumentsEvaluated||[]).length+(__jvmObs.instrumentsSkipped||[]).length===ALL_PAIRS.length,\n' +
+  '    "attempted="+__jvmObs.instrumentsAttempted+" evaluated+skipped="+(((__jvmObs.instrumentsEvaluated)||[]).length+((__jvmObs.instrumentsSkipped)||[]).length)+"/"+ALL_PAIRS.length+", 0 NOT_REACHED");\n' +
   // tradingEnabled and evaluationAdvanced were asserted only against a fixture that set them true.
   '  __jvmObs=null; pairData={}; autoTrading.enabled=false;\n' +
   '  await scanAll();\n' +

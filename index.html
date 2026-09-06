@@ -2212,9 +2212,10 @@ const ALL_PAIRS=[
 // Bump by 1.0 for a major update (new feature/tab), by 0.1 for a small patch/fix.
 // This shows in the header next to the logo and on the Diagnostics tab, so you can
 // glance at the live site and instantly confirm which build actually deployed.
-const APP_VERSION='12.55.0';
+const APP_VERSION='12.56.0';
 const APP_VERSION_DATE='04 Sep 2026';
 const APP_VERSION_LOG=[
+  '12.56.0 - THE SCANNER SHOWED THREE THINGS THAT WERE NOT TRUE (display and sweep control flow only; zero protected-function and zero protected-constant drift; no rule, threshold, weight, score, gate, sizing or execution change). WEIGHTS, ALERT_THRESHOLD, scoreConfluence, bestConfluence, detectSignals and getBias are protected and byte-identical -- every defect here was the DISPLAY or the SWEEP claiming something the engine did not do. DEFECT 1, STALE SCORES: scanPair stamps a sweepToken on every record it writes and NOTHING READ IT -- it was demoted to a diagnostic. So when scanPair threw for an instrument its per-pair catch swallowed the error, pairData kept the PREVIOUS sweep entry, and pairEvaluationDisplayState -- which tested only whether a confluence existed at all -- returned EVALUATED with an empty tooltip. The sidebar then rendered a stale percentage in the normal colour with the normal LONG/SHORT tag, indistinguishable from one computed seconds earlier. A new STALE state is checked BEFORE the timeframe comparison, deliberately: a stale record carrying the SELECTED timeframe is the dangerous case because every other cue on screen looks correct. Freshness is measured against a new __jvmLastCompletedSweep, distinct from the start-of-sweep counter -- comparing against that would flag every not-yet-rescanned pair as stale for the whole duration of an in-flight sweep, which is normal and not a fault. Records with no sweepToken are never reclassified. DEFECT 2, THE SWEEP COULD ABORT: per-instrument isolation was added in MOGO-021 so one pair could not kill the sweep, and renderPairList was then called bare inside the same chunk loop, outside any try. A throw there aborts the for-of and every REMAINING CHUNK goes undispatched -- a render fault while drawing chunk 2 leaves 25 of 35 instruments unscanned while the sidebar keeps showing whatever it drew last, reintroducing at chunk granularity exactly the failure mode the catch removed at pair granularity. The render and the pre-loop status writes are now isolated the same way, and a render fault is RECORDED via recordPaperEngineError rather than swallowed. DEFECT 3, AN UNREACHABLE CEILING: scoreConfluence reads bias from scanData, which is written only for the 12 SCAN_PAIRS, while scanAll sweeps all 35 of ALL_PAIRS. For the other 23 the bias row is pushed as a zero-point miss on EVERY sweep unconditionally, so their score cannot exceed 100 minus WEIGHTS.bias3 -- yet it was rendered as a bare percentage against a 100-wide bar beside pairs that can reach 100, making a 40 on EUR/CAD read as the same strength as a 40 on EUR/USD. THE NUMBER IS DELIBERATELY NOT RESCALED: ALERT_THRESHOLD gates on the raw total, so a renormalised percentage would make the sidebar disagree with the trading gate -- the figure would look better while behaviour stayed identical, which is worse than the original defect. The ceiling is DISCLOSED beside the figure instead, derived from WEIGHTS rather than hardcoded, and availability is decided by the same input scoreConfluence reads rather than by testing list membership. TESTING: v156 adds 23 fixtures. Mutation-verified, eight mutations each killed: reverting the stale check kills STALE-1 and STALE-6; setting the completed marker before the loop kills SWEEP-5; un-guarding renderPairList kills SWEEP-1 and SWEEP-2; rescaling pct by the ceiling kills CEIL-3; hardcoding the ceiling kills CEIL-2; deriving availability from SCAN_PAIRS membership kills CEIL-5; removing the STALE tag kills CEIL-7. CEIL-2 SURVIVED ITS FIRST MUTATION and was rewritten: the regex matched the string 100-WEIGHTS.bias3 inside this release own explanatory COMMENT, so hardcoding the real assignment left it green -- it was testing prose, not code. Source assertions now run against a comment-stripped copy. That fixture would have shipped as a false positive without the mutation run.',
   '12.55.0 - ALEX NOW TRADES 28 INSTRUMENTS, AND NOTHING ELSE MOVED (zero protected-function and zero protected-constant drift; no strategy rule, gate, threshold, sizing or execution change). WHY: the forward trade rate was measured, not assumed, from the preserved evidence -- 31 LIVE_CLOSE ALEX trades over 41 days across 12 pairs, which is 0.44 trades per pair-week. Sample size, not strategy quality, is what blocks every open question in this project: the roughly 632 trades needed to separate a real edge from noise sit about 2.3 years away at 12 pairs. ALEX has no global concurrency cap -- its only limit is one open trade per pair plus timeframe -- so instrument count scales the forward rate close to linearly, and 28 pairs puts that near 1 year. THE CHANGE: a new ALEXG_LIVE_PAIRS constant, a strict superset of SCAN_PAIRS holding 28 liquid instruments, read by exactly seven sites -- the live poll loop, both poll-ledger instrumentsConfigured counts, the NOT_REACHED_THIS_TICK accounting sweep, the ALEX panel pair selector, the ALEX manifest instrument declaration, and the journal pair filter. WHAT DELIBERATELY DID NOT CHANGE, and why editing SCAN_PAIRS would have been the wrong fix: JVM auto-trades SCAN_PAIRS and is at a 0 percent win rate while losing money, so widening it would multiply a known loss and teach nothing; the manual Scan tab renders one operator-graded row per SCAN_PAIRS entry and more than doubling that table is a hand-entry chore nobody asked for; and every replay-all loop iterates SCAN_PAIRS, where widening buys nothing because replay is not sample-starved -- forward trading is. Fixtures PAIRS-11 through PAIRS-14 are negative controls pinning all three in place. EXCLUSIONS: the seven exotics (SGD, NOK, SEK, DKK, MXN, ZAR, TRY) stay out; entry spread already costs a measured 9.8 percent of risk on majors and is materially worse there, so they would add cost drag rather than information. HONEST LIMITS: the added crosses correlate with instruments ALEX already trades, so EFFECTIVE sample grows more slowly than the raw count and the 1-year figure is an optimistic bound, not a promise. Worst-case tick cost roughly doubles -- when every pair advances on the same H1 boundary the loop runs 28 sequential dataset fetches of 4 requests each, up from 12 -- and the existing 60-second re-entrancy guard fails safe by skipping and RECORDING the overlapping tick rather than trading on stale data. Tick duration is already in the poll ledger as startedAt and finishedAt, so this is measurable after deployment rather than a guess; the loop was left sequential deliberately, because making pair evaluation concurrent would disturb the synchronous claim invariant that prevents duplicate positions. PRICE DATA: no new fetch plumbing was needed -- the market sweep already covers all 35 ALL_PAIRS in chunks of 5, so the added 16 instruments already had pairData populated. TESTING: v155 adds 16 fixtures, all passing. Mutation-verified, five mutations each killed: reverting the poll loop to SCAN_PAIRS kills PAIRS-7; widening JVM eligibility kills PAIRS-11; adding an exotic kills PAIRS-2; a typo in a pair identifier kills PAIRS-3; and a duplicate top-level declaration kills PAIRS-15, which parses the entire page script -- the guard added after v12.54.0 shipped 28 green fixtures over a page that was dead on load.',
   '12.54.0 — ROUND-NUMBER LEVELS, WITH A CONTROL THAT CAN FALSIFY THEM (zero protected-function and zero protected-constant drift; 64/64 and 4/4 byte-identical). The one mechanism in the research with a published empirical basis: Osler, NY Fed Staff Report 125, examined 9,667 REAL orders and found take-profit orders cluster AT round numbers and stop-losses just beyond. psych_level_v1 trades that claim directly -- reach a round level, fail to close through it, fade the approach, stop placed BEYOND the level where the order study locates the stop cluster, 2R target so the R figures compare against every other arm. THE CONTROL IS THE POINT AND IS THE REASON THIS IS WORTH RUNNING: a mean-reversion rule can profit on ANY evenly spaced grid, so the identical rule also runs on a grid shifted half an interval -- levels as regular and as arbitrary as the round ones -- over THE SAME BARS in the same pass. If the round grid does not beat that control there is no round-number effect here, only a mean-reversion rule that would work anywhere. PSY-C3 is the fixture that matters: the two arms must be CAPABLE of differing on the same bars, or the experiment is theatre that always reports no effect. No verdict is computed anywhere -- the comparison returns two records and the gap between them, and whether a gap means anything is a judgement about sample size rather than arithmetic. REPLAY ONLY: seven named live entry points are asserted to reference nothing in it, and results are labelled REPLAY_RUN at the point of production. Look-ahead is structurally impossible -- the signal is handed a PREFIX and entry is the next bar OPEN -- and PSY-L1 proves it by truncation. A DEFECT THIS RELEASE CAUGHT IN ITSELF: 28 fixtures passed while the deployed page was DEAD ON LOAD with a duplicate top-level declaration, because every fixture extracts ONE function into a fresh realm and a per-function test cannot see a collision BETWEEN functions. PSY-P1 now parses the whole page script and is mutation-verified against exactly that failure; PSY-V1/V2 additionally check the arm produces a workable and BALANCED number of trades on a deterministic random walk, since a rule firing three times in two years answers nothing. 34 fixtures (PSY-G1..4, S1..6, L1..4, M1..2, C1..7, X1..5, P1..4, V1..2).',
   '12.53.0 — THE FORWARD HEADLINE WAS POOLING TWO STRATEGIES, IN THE PANEL BUILT TO PREVENT THAT (zero protected-function and zero protected-constant drift; 64/64 and 4/4 byte-identical). CAUGHT ON THE DEPLOYED BUILD, from the operator screenshots. The Analytics forward figures were computed over EVERY forward strategy while the JVM block immediately below asserted those trades were NOT included in them. They were. JVM records carry no setupType and no timeframe, so they surfaced as an (unrecorded) row in both segment tables -- 2 trades, 0W/2L, -2.14R -- and moved the headline. Correcting it changed the numbers materially: 42 closed / 26.2% / -9.17R became 40 closed / 27.5% / -7.04R, because two JVM losses had been dragging ALEX down by 2.13R. This is the exact error the panel exists to prevent, committed inside the panel, and it was invisible until real data with two strategies in it was rendered -- synthetic fixtures had only ever exercised one. THE FIX: the forward headline and every forward slice are restricted to OBS_PRIMARY_FORWARD_STRATEGY; the JVM coverage block continues to read the UNFILTERED rows, or it would count zero JVM packages and report every JVM close as unpreserved; and the population COMPOSITION is now rendered as its own strategy segment, so the restriction is visible rather than silent. The forward heading names ALEX explicitly. 4 fixtures (JVM-8..11), which assert the filtered rows reach the headline AND the slices AND that the JVM block does not receive them.',
@@ -11118,6 +11119,12 @@ function jvmRecordCandidateRejected(oPair,result){
 // an overlapping sweep's writes to the aborted one -- reproducing the exact over-reporting this
 // ledger exists to end. Purely additive: the token is read only by the observation code.
 let __jvmSweepToken=0;
+// v12.56.0: the token of the last sweep that DISPATCHED EVERY CHUNK. Distinct from __jvmSweepToken,
+// which increments the instant a sweep starts -- comparing a record against THAT would flag every
+// not-yet-rescanned pair as stale for the whole duration of an in-flight sweep, which is normal and
+// not a fault. A record older than the last COMPLETED sweep means something different and specific:
+// that sweep reached this instrument's chunk and scanPair threw, so nothing was written.
+let __jvmLastCompletedSweep=0;
 async function scanPair(pair,sweepToken,sweepResults){
   // 🔴 v12.32.0 (§18.24): THE PRODUCER STAMPED THE LIVE activeTf AFTER ITS OWN AWAIT, so the
   // timeframe recorded on the verdict was the one the operator had switched TO, not the one the
@@ -11243,8 +11250,12 @@ async function scanAll(){
   __jvmCurrentScanId=__scanId;   // MOGO-021 DECISION 4: correlate JVM rejections to this sweep
   emitDecisionEvent({eventType:'SCAN_STARTED',strategyId:'current_strategy',scanId:__scanId,correlationId:__scanId,source:'scanAll',evidenceCompleteness:'COMPLETE'});
   try{
-    document.getElementById('scanStatus').textContent='Scanning...';
-    document.getElementById('liveDot').classList.remove('off');
+    // Same exposure, before chunk 1: an unguarded getElementById(...).textContent here threw on a
+    // missing node and skipped ALL 35 instruments, not merely the remainder.
+    try{
+      document.getElementById('scanStatus').textContent='Scanning...';
+      document.getElementById('liveDot').classList.remove('off');
+    }catch(e){ /* status chrome is display only and must never gate the sweep */ }
     const chunks=[];
     for(let i=0;i<ALL_PAIRS.length;i+=5) chunks.push(ALL_PAIRS.slice(i,i+5));
     // MOGO-021 FAILURE ISOLATION. scanPair has no try/catch and was dispatched bare into Promise.all,
@@ -11254,10 +11265,38 @@ async function scanAll(){
     // trade pass. Per-instrument isolation, mirroring what alexGEvaluatePairForLiveSetups already
     // does; the instrument is left out of __jvmResults so the ledger reports it DISPATCHED_NO_RESULT
     // rather than silently absorbing it.
+    // v12.56.0: THE ISOLATION ABOVE WAS DEFEATED ONE LINE LATER. The per-instrument .catch was
+    // added precisely so one pair could not abort the sweep -- and then renderPairList() was called
+    // bare inside the same loop, outside any try. A throw there (a missing #pairList node, a throw
+    // inside cColor/escapeHtml/pairEvaluationDisplayState) aborts the `for...of` and every REMAINING
+    // CHUNK is never dispatched. A render fault while drawing chunk 2 leaves 25 of 35 instruments
+    // unscanned, and the sidebar says nothing -- it just keeps showing whatever it drew last.
+    // Reintroducing chunk-granular the exact failure mode the .catch removed at pair granularity.
+    //
+    // The render is display only; nothing downstream reads its result. So it is isolated the same
+    // way, and a render fault is RECORDED rather than swallowed -- an operator who is looking at a
+    // stale sidebar needs the reason to exist somewhere.
     for(const ch of chunks){await Promise.all(ch.map(function(p){ __jvmDispatched.push(p);
       return Promise.resolve(scanPair(p,__jvmSweep,__jvmResults)).catch(function(e){
         try{ recordPaperEngineError('scanPair('+p+'): '+((e&&e.message)?e.message:String(e))); }catch(e2){}
-      }); }));renderPairList();}
+      }); }));
+      try{ renderPairList(); }
+      catch(e){
+        const __rmsg=(e&&e.message)?e.message:String(e);
+        try{ recordPaperEngineError('renderPairList() during sweep: '+__rmsg); }catch(e2){}
+        // The sweep row must not read as a clean sweep. outcome stays OK because instrument
+        // COVERAGE genuinely was complete -- every chunk still dispatched, which is the whole point
+        // of the guard -- but errorText carries the display fault, so a ledger reader is never told
+        // a sweep was unremarkable when the operator's sidebar was broken throughout it. Recording
+        // nothing here would trade one silent failure for another.
+        if(__jvmError==null) __jvmError='renderPairList() failed during sweep (display only; '+
+          'instrument coverage unaffected): '+__rmsg;
+      }
+    }
+    // Every dispatched chunk completed. Anything still carrying an older sweepToken was NOT written
+    // by this sweep -- scanPair threw for it -- and pairEvaluationDisplayState reports it as STALE
+    // rather than letting the previous sweep's number render as a current one.
+    __jvmLastCompletedSweep=__jvmSweep;
     const high=Object.values(pairData).filter(d=>d.conf&&d.conf.total>=ALERT_THRESHOLD).length;
     document.getElementById('setupCount').textContent=`${high} setups`;
     document.getElementById('scanStatus').textContent=`${new Date().toLocaleTimeString()}`;
@@ -11644,6 +11683,28 @@ function pairEvaluationDisplayState(pair,d,selectedTf){
       title:'NOT EVALUATED \u2014 '+why+'. No signal or confluence was computed, so this is a '+
             'data-availability failure and NOT a statement that there is no setup.'};
   }
+  // v12.56.0: FRESHNESS. scanPair stamps sweepToken onto every record it writes, and until now
+  // NOTHING READ IT -- it was demoted to a diagnostic. So when scanPair threw for an instrument, its
+  // .catch swallowed the error, pairData[pair] kept the PREVIOUS sweep's entry, and this function --
+  // which tested only "is there a conf/completenessState at all" -- returned EVALUATED with an empty
+  // title. The sidebar then rendered a stale percentage in the normal colour, with the normal LONG/
+  // SHORT tag, indistinguishable from one computed seconds ago. That is the same defect class the
+  // evidence layer was repaired for three times: ABSENCE IS NOT SILENCE. A number the engine did not
+  // compute this sweep must not look like one it did.
+  //
+  // Checked BEFORE the timeframe comparison deliberately: a stale record that happens to carry the
+  // SELECTED timeframe is the dangerous case, because every other cue on screen looks correct.
+  //
+  // BACKWARD COMPATIBLE: a record with no sweepToken (written before this version, or by a caller
+  // that does not sweep) is never reclassified -- the same rule the timeframe check already follows.
+  if(e.sweepToken!=null&&__jvmLastCompletedSweep>0&&e.sweepToken<__jvmLastCompletedSweep){
+    return{notEvaluated:false,code:'STALE',staleBySweeps:__jvmLastCompletedSweep-e.sweepToken,
+      evaluatedTimeframe:e.timeframe!=null?e.timeframe:null,
+      title:'STALE — this score is from an earlier sweep and was NOT recomputed by the most '+
+            'recent one, because scanning this instrument failed. It is a real figure that was '+
+            'correctly computed at the time, but it does not describe the current market. Check '+
+            'Diagnostics for the scanPair error.'};
+  }
   // MOGO-024 TRACK C: TIMEFRAME ATTRIBUTION. scanPair evaluates exactly ONE timeframe per sweep --
   // `const sweepTf=activeTf` -- and stamps it onto the record. This function previously had no
   // notion of timeframe at all, so the sidebar rendered an H4 score beside an H1 chart while the
@@ -11692,17 +11753,40 @@ function renderPairList(){
     // rather than silently attributed to the selected one.
     const evalState=pairEvaluationDisplayState(p,d,activeTf);
     const otherTf=evalState.code==='EVALUATED_ON_OTHER_TIMEFRAME';
+    const isStale=evalState.code==='STALE';
+    // v12.56.0: THE CEILING. scoreConfluence reads bias from scanData, which is written ONLY for the
+    // 12 SCAN_PAIRS (initScan, runAutoTopDownScan and the hand-edited Scan table all iterate that
+    // list). scanAll sweeps all 35 of ALL_PAIRS. So for the other 23 the bias row is pushed as a
+    // 0-point miss on EVERY sweep, unconditionally -- their score cannot exceed 100-WEIGHTS.bias3,
+    // yet it was rendered as a bare percentage against a 100-wide bar beside pairs that CAN reach
+    // 100. A 40 on EUR/CAD and a 40 on EUR/USD were being read as the same strength; they are not.
+    //
+    // The NUMBER IS NOT ADJUSTED. Rescaling it would desync the sidebar from ALERT_THRESHOLD, which
+    // gates on the raw total -- the figure would look better while trading behaviour stayed
+    // identical, which is worse than the original defect. WEIGHTS and scoreConfluence are protected
+    // and untouched. The ceiling is DISCLOSED instead, read from WEIGHTS rather than hardcoded.
+    const biasAvailable=!!(sd&&typeof getBias==='function'&&getBias(sd)!=='—');
+    const confCeiling=biasAvailable?100:100-WEIGHTS.bias3;
+    const ceilingHtml=(!biasAvailable&&!evalState.notEvaluated&&pct)
+      ? `<span style="color:var(--text2);font-size:9px;font-weight:600" title="${escapeHtml(
+          'Maximum reachable score for this pair is '+confCeiling+', not 100. The '+WEIGHTS.bias3+
+          '-point weekly/daily/4H bias component needs top-down data, which is only maintained for '+
+          'the '+SCAN_PAIRS.length+' pairs on the Scan tab. This pair is swept for patterns but has '+
+          'no bias data, so that component scores 0 every time regardless of the market.')}">/${confCeiling}</span>`
+      : '';
     const dirTag=evalState.notEvaluated
       ? `<span class="dir-tag tag-watch" style="background:var(--gold-dim);color:var(--gold)" title="${escapeHtml(evalState.title)}">NOT EVAL</span>`
-      : (pct>=40?`<span class="dir-tag ${conf.direction==='long'?'tag-long':'tag-short'}" title="${escapeHtml(evalState.title)}">${conf.direction==='long'?'LONG':'SHORT'}</span>`:'<span class="dir-tag tag-watch">—</span>');
+      : isStale
+        ? `<span class="dir-tag tag-watch" style="background:var(--gold-dim);color:var(--gold)" title="${escapeHtml(evalState.title)}">STALE</span>`
+        : (pct>=40?`<span class="dir-tag ${conf.direction==='long'?'tag-long':'tag-short'}" title="${escapeHtml(evalState.title)}">${conf.direction==='long'?'LONG':'SHORT'}</span>`:'<span class="dir-tag tag-watch">—</span>');
     el.innerHTML=`
       <div class="pair-row-left">
         <div class="pair-row-name">${sk} ${gradeHtml}</div>
         <div class="pair-row-sub">${dirTag}<span style="color:var(--text2)">${price}</span></div>
       </div>
       <div class="pair-row-right">
-        <span class="conf-pct" style="color:${cColor(pct)}" title="${escapeHtml(evalState.title)}">${pct?pct+'%':'—'}${otherTf?`<span style="color:var(--gold);font-size:9px;font-weight:600"> ${escapeHtml(String(evalState.evaluatedTimeframe))}</span>`:''}</span>
-        <div class="conf-bar-wrap"><div class="conf-bar" style="width:${pct}%;background:${cColor(pct)}"></div></div>
+        <span class="conf-pct" style="color:${isStale?'var(--gold)':cColor(pct)}" title="${escapeHtml(evalState.title)}">${pct?pct+'%':'—'}${ceilingHtml}${otherTf?`<span style="color:var(--gold);font-size:9px;font-weight:600"> ${escapeHtml(String(evalState.evaluatedTimeframe))}</span>`:''}</span>
+        <div class="conf-bar-wrap"><div class="conf-bar" style="width:${pct}%;background:${isStale?'var(--gold)':cColor(pct)}"></div></div>
       </div>`;
     el.onclick=()=>{activePair=p;renderPairList();loadChart();};
     list.appendChild(el);
