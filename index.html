@@ -1462,6 +1462,16 @@ button.danger:hover{background:var(--red-dim)}
           </div>
         </div>
         <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+            <div>
+              <div class="section-label" style="margin-bottom:2px">Storage</div>
+              <div style="font-size:11px;color:var(--text2);max-width:700px">Measures what is actually using space and what is safe to reclaim. The quota banner says storage is full; nothing until now said which tier, how much, or what could be freed. Deletes nothing.</div>
+            </div>
+            <button class="primary" onclick="runStorageDiagnostic()">Measure storage</button>
+          </div>
+          <div id="storageDiagResults" style="margin-top:12px"></div>
+        </div>
+        <div class="card">
           <div id="diag-results"><div class="empty-state">Click "Run Diagnostics" to check everything.</div></div>
         </div>
 
@@ -2221,7 +2231,7 @@ const ALL_PAIRS=[
 // Bump by 1.0 for a major update (new feature/tab), by 0.1 for a small patch/fix.
 // This shows in the header next to the logo and on the Diagnostics tab, so you can
 // glance at the live site and instantly confirm which build actually deployed.
-const APP_VERSION='12.62.0';
+const APP_VERSION='12.63.0';
 const APP_VERSION_DATE='04 Sep 2026';
 const APP_VERSION_LOG=[
   '12.60.0 - TODAY OPPORTUNITIES RANKED INSTRUMENTS MOGO CANNOT TRADE (display only; zero protected-function and zero protected-constant drift; no rule, weight, score, gate, sizing or execution change). The dashboard card ranked ALL_PAIRS, so its top rows were routinely USD/ZAR, USD/SGD and NZD/CAD -- instruments NEITHER strategy can open a position on. The seven exotics are deliberately excluded from ALEXG_LIVE_PAIRS, because entry spread already costs a measured 9.8 percent of risk on majors and is materially worse there, and they were never in SCAN_PAIRS. A card headed Today Opportunities whose best entries are untradeable is not a ranking, it is a distraction placed where the operator looks first. IT WAS WORSE THAN UNTRADEABLE: a pair outside SCAN_PAIRS has no bias data, so its score cannot exceed 100-WEIGHTS.bias3 -- the ceiling v12.56.0 disclosed in the pair list. Ranking those against pairs that CAN reach 100 compared two different scales and systematically buried the tradeable ones; in the operator own dashboard USD/ZAR at 43 outranked every instrument MOGO is allowed to trade. The card now ranks the UNION of what each strategy trades, COMPUTED at render time rather than assumed: ALEX list is a superset of JVM today, and hardcoding that would go silently wrong the moment either list changes -- OPP-3 pins it. The filter is applied BEFORE the sort and the slice, or the top six would be chosen from the wrong set and then trimmed to fewer than six. TESTING: v161 adds 9 fixtures, mutation-verified three ways -- reverting to ALL_PAIRS kills OPP-2, hardcoding the universe to one strategy list kills OPP-3, and filtering after the slice kills OPP-7. OPP-7 ITSELF FAILED FIRST TIME and the reason is recorded: it located .slice(0,6) with a bare indexOf, which found the A-grade card earlier in the same function and compared the wrong positions -- the fixture was wrong, not the code. It now searches from the universe onward. BROWSER VERIFIED with the operator own failure shape: exotics scored at 90 and tradeable pairs at 40, the card correctly shows EUR/USD 40, GBP/USD 39, USD/JPY 38 and no exotic at all.',
@@ -19385,6 +19395,230 @@ function evidenceEvictBuffers(persistedTradeIds){
     try{ saveAlexGRest(); }catch(e){ evidenceRecordWriteFailure('eviction-persist',e); }
   }
   return{evictedSetups,evictedZones,skipped};
+}
+
+
+// ══════════════════════════════════════════════════════════════════════════════════════════════
+// STORAGE DIAGNOSTIC — WHAT IS ACTUALLY FULL, AND WHAT IS SAFE TO RECLAIM
+// ══════════════════════════════════════════════════════════════════════════════════════════════
+//
+// The v12.8.0 evidence platform raises a QUOTA_EXCEEDED banner that says storage is full and to
+// export now. That banner was the ONLY signal: nothing anywhere measured how much space is used,
+// which tier is exhausted, or what could be freed. An operator reading it could only guess, and
+// the natural guess -- clear site data -- destroys the very evidence the banner is protecting.
+//
+// THE DEADLOCK THIS EXISTS TO EXPOSE. Buffer eviction is deliberately gated on tier (b): a setup
+// or zone belonging to a closed trade whose package is NOT yet in IndexedDB is skipped, and when
+// tier (b) is unavailable eviction does not run at all. That is correct -- an over-full buffer is
+// recoverable and a deleted record is not. But it means a tier-(b) failure STOPS the mechanism
+// that would otherwise shrink localStorage, so one full store quietly holds the other full. Left
+// unmeasured, that reads as "storage keeps filling up no matter what I do".
+//
+// THIS FUNCTION DELETES NOTHING. Evidence destruction is an operator governance boundary. It
+// reports sizes, classifies each key by whether losing it costs evidence, and names the reclaim
+// actions -- the operator decides. A diagnostic that quietly freed space by dropping records
+// would be the single worst thing in this file.
+
+// Losing a CACHE key costs nothing that cannot be regenerated from the broker or recomputed.
+// Losing an EVIDENCE key destroys a record of something that happened and cannot be recovered.
+// Anything not listed is treated as EVIDENCE -- the safe default, because a key added later and
+// forgotten here must not be reported as disposable.
+const STORAGE_CACHE_KEYS=Object.freeze(['fxhub_scan','fxhub_chart_views','fxhub_chart_drawings',
+  'fxhub_ai_messages','fxhub_diag_test','fxhub_env','fxhub_checklist']);
+// Config, not evidence, but losing it costs settings rather than history.
+const STORAGE_CONFIG_KEYS=Object.freeze(['fxhub_ai_key','fxhub_ai_model','fxhub_auto',
+  'fxhub_autoscan','fxhub_alexg_auto','fxhub_alerts','fxhub_lock','fxhub_baseline_registry']);
+function storageClassifyKey(k){
+  if(STORAGE_CACHE_KEYS.indexOf(k)!==-1) return'CACHE';
+  if(STORAGE_CONFIG_KEYS.indexOf(k)!==-1) return'CONFIG';
+  return'EVIDENCE';
+}
+// PURE. Bytes as UTF-16 code units would understate a key holding non-ASCII, and localStorage is
+// billed in UTF-16 by most engines but the number that matters to the operator is what the quota
+// counts. Both the key and its value occupy space, so both are counted.
+function storageEntryBytes(k,v){
+  const key=String(k==null?'':k),val=String(v==null?'':v);
+  return (key.length+val.length)*2;
+}
+// Reads localStorage and reports every key with its size and class, largest first. A read that
+// throws is REPORTED, not skipped -- a key too large or corrupt to read is exactly the kind of
+// thing this diagnostic exists to surface.
+function storageInventoryLocal(){
+  const rows=[];let total=0,unreadable=0;
+  let n=0;
+  try{ n=localStorage.length; }catch(e){ return{rows:rows,total:0,unreadable:0,error:(e&&e.message)||String(e)}; }
+  for(let i=0;i<n;i++){
+    let k=null;
+    try{ k=localStorage.key(i); }catch(e){ unreadable++; continue; }
+    if(k==null) continue;
+    let v=null;
+    try{ v=localStorage.getItem(k); }
+    catch(e){ rows.push({key:k,bytes:null,cls:storageClassifyKey(k),unreadable:true}); unreadable++; continue; }
+    const b=storageEntryBytes(k,v);
+    total+=b;
+    rows.push({key:k,bytes:b,cls:storageClassifyKey(k),unreadable:false});
+  }
+  rows.sort(function(a,b){ return (b.bytes||0)-(a.bytes||0); });
+  return{rows:rows,total:total,unreadable:unreadable,error:null};
+}
+// PURE. Are the two capped buffers over their caps, and how much of the overflow is BLOCKED from
+// eviction because its evidence is not yet safely in tier (b)? A large blocked count is the
+// deadlock: the buffer cannot shrink until capture succeeds, and capture cannot succeed while
+// storage is full.
+function storageEvictionPressure(setups,zoneState,persistedTradeIds,closedPositions,openPositions){
+  const persisted=persistedTradeIds||{};
+  const blocked={};
+  (openPositions||[]).forEach(function(p){ if(p&&p.setupId!=null) blocked[String(p.setupId)]=true; });
+  (closedPositions||[]).forEach(function(p){
+    if(!p||p.tradeId==null) return;
+    if(persisted[String(p.tradeId)]) return;
+    if(p.setupId!=null) blocked[String(p.setupId)]=true;
+  });
+  const list=Array.isArray(setups)?setups:[];
+  const overflow=Math.max(0,list.length-EVIDENCE_SETUPS_MAX);
+  let blockedOverflow=0;
+  if(overflow>0){
+    const sorted=list.slice().sort(function(a,b){
+      return (b&&b.qualificationTimestamp||0)-(a&&a.qualificationTimestamp||0);
+    });
+    sorted.slice(EVIDENCE_SETUPS_MAX).forEach(function(s){
+      if(s&&s.setupId!=null&&blocked[String(s.setupId)]) blockedOverflow++;
+    });
+  }
+  let zonePairsOverCap=0,zoneTotal=0;
+  const zs=zoneState||{};
+  Object.keys(zs).forEach(function(pair){
+    let c=0;const tfs=zs[pair]||{};
+    Object.keys(tfs).forEach(function(tf){
+      const l=tfs[tf]&&Array.isArray(tfs[tf].validatedZones)?tfs[tf].validatedZones.length:0;
+      c+=l;
+    });
+    zoneTotal+=c;
+    if(c>EVIDENCE_ZONES_MAX_PER_PAIR) zonePairsOverCap++;
+  });
+  return{setupCount:list.length,setupCap:EVIDENCE_SETUPS_MAX,setupOverflow:overflow,
+    setupOverflowBlocked:blockedOverflow,
+    setupEvictable:Math.max(0,overflow-blockedOverflow),
+    zoneTotal:zoneTotal,zonePairsOverCap:zonePairsOverCap,zoneCapPerPair:EVIDENCE_ZONES_MAX_PER_PAIR};
+}
+// PURE. The verdict, in the order an operator needs it. Never says "safe to clear site data" --
+// that destroys tier (b), which is the whole point of the banner.
+function storageDiagnose(estimate,local,pressure,pkgCounts){
+  const out={quotaBytes:null,usageBytes:null,usedPct:null,localBytes:local?local.total:null,
+    reclaimableCacheBytes:0,findings:[],actions:[]};
+  if(estimate&&typeof estimate.quota==='number'&&typeof estimate.usage==='number'&&estimate.quota>0){
+    out.quotaBytes=estimate.quota; out.usageBytes=estimate.usage;
+    out.usedPct=estimate.usage/estimate.quota;
+  }
+  (local&&local.rows||[]).forEach(function(r){
+    if(r.cls==='CACHE'&&typeof r.bytes==='number') out.reclaimableCacheBytes+=r.bytes;
+  });
+  const unexported=pkgCounts&&typeof pkgCounts.unexported==='number'?pkgCounts.unexported:null;
+  if(unexported!=null&&unexported>0){
+    out.findings.push(unexported+' evidence package(s) exist ONLY in this browser profile. '
+      +'Losing this profile or this device destroys them.');
+    out.actions.push('Export them, then re-import the downloaded file to confirm it reached disk.');
+  }
+  // The deadlock, named explicitly when its fingerprints are present.
+  if(pressure&&pressure.setupOverflow>0&&pressure.setupOverflowBlocked>0){
+    out.findings.push('The setup buffer is '+pressure.setupOverflow+' over its cap of '
+      +pressure.setupCap+', and '+pressure.setupOverflowBlocked+' of those CANNOT be evicted '
+      +'because their evidence is not yet committed to the browser evidence store. '
+      +'This is the deadlock: the buffer cannot shrink until capture succeeds, and capture '
+      +'cannot succeed while storage is full.');
+    out.actions.push('Export the unexported packages first — that is what releases the eviction block.');
+  } else if(pressure&&pressure.setupEvictable>0){
+    out.findings.push(pressure.setupEvictable+' buffered setup(s) are over the cap and ARE '
+      +'evictable — their evidence is already committed. Eviction runs on the next successful capture.');
+  }
+  if(pressure&&pressure.zonePairsOverCap>0){
+    out.findings.push(pressure.zonePairsOverCap+' instrument(s) hold more than '
+      +pressure.zoneCapPerPair+' zones and are over the per-pair cap.');
+  }
+  if(out.reclaimableCacheBytes>0){
+    out.actions.push('Regenerable caches (scan results, chart views, AI chat history) hold '
+      +storageFormatBytes(out.reclaimableCacheBytes)+'. Clearing those costs no evidence.');
+  }
+  if(out.usedPct!=null&&out.usedPct>=0.9){
+    out.findings.push('The origin is at '+(out.usedPct*100).toFixed(1)+'% of its storage quota.');
+  }
+  if(!out.findings.length) out.findings.push('No storage pressure detected.');
+  // Stated every time, because the obvious remedy is the destructive one.
+  out.actions.push('Do NOT clear site data to free space — that destroys the browser evidence store, '
+    +'which is exactly what the quota banner is warning you about.');
+  return out;
+}
+function storageFormatBytes(b){
+  if(b==null||!isFinite(b)) return'—';
+  if(b<1024) return b+' B';
+  if(b<1024*1024) return (b/1024).toFixed(1)+' KB';
+  return (b/(1024*1024)).toFixed(2)+' MB';
+}
+async function runStorageDiagnostic(){
+  const el=document.getElementById('storageDiagResults');
+  if(el) el.innerHTML='<div class="muted" style="font-size:12px">Measuring…</div>';
+  let estimate=null;
+  try{
+    if(typeof navigator!=='undefined'&&navigator.storage&&navigator.storage.estimate){
+      estimate=await navigator.storage.estimate();
+    }
+  }catch(e){ estimate=null; }
+  const local=storageInventoryLocal();
+  let persistedIds={},pkgCounts={total:null,unexported:null};
+  try{
+    const all=await evidenceListPackages();
+    pkgCounts.total=all.length;
+    pkgCounts.unexported=all.filter(function(p){ return !(p&&p.exported&&p.exported.exportedAt); }).length;
+    all.forEach(function(p){
+      const id=p&&p.identity&&p.identity.sourceTradeId!=null?String(p.identity.sourceTradeId):null;
+      if(id) persistedIds[id]=true;
+    });
+  }catch(e){
+    pkgCounts.error=(e&&e.message)||String(e);
+  }
+  const pressure=storageEvictionPressure(
+    typeof alexGSetupState!=='undefined'?alexGSetupState:[],
+    typeof alexGZoneState!=='undefined'?alexGZoneState:{},
+    persistedIds,
+    (typeof alexGAccount!=='undefined'&&alexGAccount)?alexGAccount.closedPositions:[],
+    (typeof alexGAccount!=='undefined'&&alexGAccount)?alexGAccount.openPositions:[]);
+  const d=storageDiagnose(estimate,local,pressure,pkgCounts);
+  if(!el) return d;
+  const row=function(r){
+    return '<tr><td style="padding:5px 9px;font-family:monospace;font-size:11px">'+escapeHtml(r.key)+'</td>'
+      +'<td style="padding:5px 9px">'+(r.unreadable?'<span style="color:var(--red)">UNREADABLE</span>':storageFormatBytes(r.bytes))+'</td>'
+      +'<td style="padding:5px 9px">'+(r.cls==='EVIDENCE'
+        ?'<span style="color:var(--yellow)">EVIDENCE</span>'
+        :(r.cls==='CONFIG'?'CONFIG':'<span style="color:var(--muted)">cache</span>'))+'</td></tr>';
+  };
+  el.innerHTML='<div style="font-size:13px;font-weight:700;margin-bottom:8px">Storage — measured, not estimated</div>'
+    +'<div style="font-size:12px;line-height:1.7;margin-bottom:10px">'
+    +'<b>Origin quota:</b> '+(d.quotaBytes==null?'unavailable in this browser'
+      :storageFormatBytes(d.usageBytes)+' used of '+storageFormatBytes(d.quotaBytes)
+      +' ('+(d.usedPct*100).toFixed(1)+'%)')+'<br>'
+    +'<b>localStorage buffer:</b> '+storageFormatBytes(d.localBytes)
+    +(local.unreadable?' — <span style="color:var(--red)">'+local.unreadable+' key(s) unreadable</span>':'')+'<br>'
+    +'<b>Evidence store:</b> '+(pkgCounts.total==null?'unavailable'
+      :pkgCounts.total+' package(s), '+pkgCounts.unexported+' never exported')+'<br>'
+    +'<b>Setup buffer:</b> '+pressure.setupCount+' / '+pressure.setupCap
+    +(pressure.setupOverflow>0?' — '+pressure.setupOverflow+' over cap, '
+      +pressure.setupOverflowBlocked+' blocked from eviction':'')+'<br>'
+    +'<b>Zones:</b> '+pressure.zoneTotal+' total, '+pressure.zonePairsOverCap+' instrument(s) over the per-pair cap'
+    +'</div>'
+    +'<div style="font-size:12px;font-weight:700;margin:12px 0 4px">What this means</div>'
+    +'<ul style="font-size:12px;line-height:1.7;margin:0 0 10px 18px">'
+    +d.findings.map(function(f){ return '<li>'+escapeHtml(f)+'</li>'; }).join('')+'</ul>'
+    +'<div style="font-size:12px;font-weight:700;margin:12px 0 4px">What to do</div>'
+    +'<ul style="font-size:12px;line-height:1.7;margin:0 0 10px 18px">'
+    +d.actions.map(function(a){ return '<li>'+escapeHtml(a)+'</li>'; }).join('')+'</ul>'
+    +'<div class="muted" style="font-size:11px;margin-bottom:8px">This diagnostic deletes nothing. '
+    +'Every figure above is read from the browser; nothing is inferred from a dashboard.</div>'
+    +'<table style="width:100%;border-collapse:collapse;font-size:12px">'
+    +'<thead><tr style="text-align:left;font-size:10px;letter-spacing:.5px">'
+    +'<th style="padding:5px 9px">Key</th><th style="padding:5px 9px">Size</th>'
+    +'<th style="padding:5px 9px">Losing it costs</th></tr></thead><tbody>'
+    +local.rows.map(row).join('')+'</tbody></table>';
+  return d;
 }
 
 // ══ Export -- tier (c) (spec 8) ══════════════════════════════════════════════════════════════
