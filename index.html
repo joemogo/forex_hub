@@ -2077,6 +2077,13 @@ button.danger:hover{background:var(--red-dim)}
     <div id="psyWsResultsContainer"></div>
   </div>
 </div>
+<div id="panel-crt" class="panel">
+  <div style="padding:20px 24px;max-width:1100px;margin:0 auto;overflow-y:auto;height:100%">
+    <div class="card" id="crtWsHeaderCard"></div>
+    <div class="card" id="crtWsControlsCard" style="margin-top:10px"></div>
+    <div id="crtWsResultsContainer"></div>
+  </div>
+</div>
 <div id="panel-comingsoon" class="panel">
         <div class="coming-soon-panel">
           <div class="coming-soon-badge">Coming Soon</div>
@@ -2212,7 +2219,7 @@ const ALL_PAIRS=[
 // Bump by 1.0 for a major update (new feature/tab), by 0.1 for a small patch/fix.
 // This shows in the header next to the logo and on the Diagnostics tab, so you can
 // glance at the live site and instantly confirm which build actually deployed.
-const APP_VERSION='12.60.0';
+const APP_VERSION='12.61.0';
 const APP_VERSION_DATE='04 Sep 2026';
 const APP_VERSION_LOG=[
   '12.60.0 - TODAY OPPORTUNITIES RANKED INSTRUMENTS MOGO CANNOT TRADE (display only; zero protected-function and zero protected-constant drift; no rule, weight, score, gate, sizing or execution change). The dashboard card ranked ALL_PAIRS, so its top rows were routinely USD/ZAR, USD/SGD and NZD/CAD -- instruments NEITHER strategy can open a position on. The seven exotics are deliberately excluded from ALEXG_LIVE_PAIRS, because entry spread already costs a measured 9.8 percent of risk on majors and is materially worse there, and they were never in SCAN_PAIRS. A card headed Today Opportunities whose best entries are untradeable is not a ranking, it is a distraction placed where the operator looks first. IT WAS WORSE THAN UNTRADEABLE: a pair outside SCAN_PAIRS has no bias data, so its score cannot exceed 100-WEIGHTS.bias3 -- the ceiling v12.56.0 disclosed in the pair list. Ranking those against pairs that CAN reach 100 compared two different scales and systematically buried the tradeable ones; in the operator own dashboard USD/ZAR at 43 outranked every instrument MOGO is allowed to trade. The card now ranks the UNION of what each strategy trades, COMPUTED at render time rather than assumed: ALEX list is a superset of JVM today, and hardcoding that would go silently wrong the moment either list changes -- OPP-3 pins it. The filter is applied BEFORE the sort and the slice, or the top six would be chosen from the wrong set and then trimmed to fewer than six. TESTING: v161 adds 9 fixtures, mutation-verified three ways -- reverting to ALL_PAIRS kills OPP-2, hardcoding the universe to one strategy list kills OPP-3, and filtering after the slice kills OPP-7. OPP-7 ITSELF FAILED FIRST TIME and the reason is recorded: it located .slice(0,6) with a bare indexOf, which found the A-grade card earlier in the same function and compared the wrong positions -- the fixture was wrong, not the code. It now searches from the universe onward. BROWSER VERIFIED with the operator own failure shape: exotics scored at 90 and tradeable pairs at 40, the card correctly shows EUR/USD 40, GBP/USD 39, USD/JPY 38 and no exotic at all.',
@@ -22905,6 +22912,353 @@ async function runPsychLevelReplay(oPair,days,onProgress,shouldCancel){
     comparison:psychLevelCompareArms(both)},both);
 }
 
+
+// ══════════════════════════════════════════════════════════════════════════════════════════════
+// CRT — CANDLE RANGE THEORY. REPLAY ONLY. NOT AUTHORIZED TO PAPER TRADE.
+// ══════════════════════════════════════════════════════════════════════════════════════════════
+//
+// WHAT THE SOURCES ACTUALLY STATE, AND WHAT THEY DO NOT.
+//
+// SOURCE_STATED, and therefore implemented here:
+//   candle 1 defines a range (its own high and low);
+//   candle 2 takes out ONE of those extremes -- the sweep;
+//   candle 3 closes back INSIDE the range -- the confirmation;
+//   the stop goes beyond the swept extreme;
+//   the target is the OPPOSITE extreme of candle 1.
+//
+// UNKNOWN, and therefore NOT implemented and NOT invented:
+//   which candle is allowed to be candle 1. Every source qualifies it -- "at or near a liquidity
+//   zone", "at an order block" -- and none defines those mechanically. This arm applies the
+//   pattern to EVERY 3-bar window instead, which is a strictly weaker test than a CRT trader
+//   would run. That matters for what a null result means, and it is stated again in the manifest
+//   and on the panel rather than buried here.
+//   Whether the sweep must close beyond the extreme or may merely wick it. Wick is used, because
+//   it is the reading every source is consistent with; the body-close variant is a different
+//   experiment, not a refinement of this one.
+//   Any risk-to-reward floor, position sizing, session filter or trade-count cap. None exist here.
+//
+// WHY THERE IS A CONTROL. The pattern is three bars and a reclaim. Mean reversion after a probe
+// at a recent extreme is not a claim unique to CRT, and an arm that only tests the swept case
+// cannot tell the two apart. So the SAME rule runs on windows where candle 2 stayed INSIDE the
+// range -- it approached an extreme and did not take it. Same 3-bar shape, same reclaim
+// requirement, same stop and target construction, same bars. The single thing that varies is the
+// breach, which is the mechanism CRT actually claims. If the swept arm does not beat it, the
+// sweep is not doing the work.
+//
+// An inverted-direction control was considered and REJECTED: with these two arms sharing one
+// geometry, an inverted arm is close to a mirror by construction and would answer a question
+// nobody asked.
+const CRT_STRATEGY_ID='crt_v1';
+const CRT_VERSION='crt_v1';
+const RULES_CRT={
+  ruleVersion:'crt_v1',
+  config:{
+    atrPeriod:14,
+    // NOT source-stated. "Beyond the swept extreme" fixes the SIDE but not the distance, and a
+    // stop resting exactly on the wick tip is taken out by its own bar. Small, fixed, applied
+    // IDENTICALLY to both arms, and never tuned against a result.
+    stopBufferATRMultiple:0.1,
+    // The arm switch, and the only field crtRunBothArms changes. true = the swept setup CRT
+    // describes; false = the unswept control.
+    requireSweep:true,
+    // A degeneracy guard, not a quality filter: when candle 1 is a near-doji both the stop
+    // distance and the target distance collapse toward zero and the resulting R is arithmetic
+    // noise. Deliberately low, and applied to both arms.
+    minRangeATRMultiple:0.25,
+    riskPercent:1
+  }
+};
+// PREFIX-ONLY. `candles` is the entire world this decision may see, and its LAST element is
+// candle 3 -- the bar being decided on. Nothing after it is read, which is what makes the
+// look-ahead truncation fixture meaningful rather than decorative.
+function crtSignal(candles,cfg,pip){
+  const c=(cfg&&cfg.config)?cfg.config:(cfg||RULES_CRT.config);
+  if(!Array.isArray(candles)||candles.length<3) return null;
+  const i=candles.length-1;
+  const c3=candles[i],c2=candles[i-1],c1=candles[i-2];
+  if(!c1||!c2||!c3) return null;
+  const num=function(x){ return typeof x==='number'&&isFinite(x); };
+  if(!num(c1.h)||!num(c1.l)||!num(c2.h)||!num(c2.l)||!num(c3.c)) return null;
+  const rangeHigh=c1.h,rangeLow=c1.l;
+  if(!(rangeHigh>rangeLow)) return null;
+  const atr=calcATR(candles,c.atrPeriod);
+  if(atr==null||!isFinite(atr)||atr<=0) return null;
+  if((rangeHigh-rangeLow)<c.minRangeATRMultiple*atr) return null;
+  const sweptHigh=c2.h>rangeHigh,sweptLow=c2.l<rangeLow;
+  let direction=null,anchorExtreme=null,swept=null;
+  if(c.requireSweep){
+    // Candle 2 takes ONE extreme. Taking both is not the pattern, and the direction it implies is
+    // genuinely ambiguous, so it is skipped rather than resolved by a tie-break nobody stated.
+    if(sweptHigh===sweptLow) return null;
+    swept=true;
+    direction=sweptHigh?'sell':'buy';
+    anchorExtreme=sweptHigh?c2.h:c2.l;
+  }else{
+    // THE CONTROL. Candle 2 stayed INSIDE candle 1 -- it approached an extreme and did not take
+    // it. Direction comes from the extreme it came NEAREST to, which is the closest analogue of
+    // "which side was probed" available without a breach.
+    if(sweptHigh||sweptLow) return null;
+    const distHigh=rangeHigh-c2.h,distLow=c2.l-rangeLow;
+    // No nearer side means no direction, and none is invented. The comparison is made with a
+    // relative epsilon rather than ===, because these are differences of floating-point prices:
+    // a candle 2 sitting exactly mid-range gives distHigh and distLow that are equal in decimal
+    // and unequal in binary, and a strict === there silently picks a side on rounding error.
+    // 1e-9 of the range is a numerical-equality guard, not a rule about how near counts as near.
+    if(Math.abs(distHigh-distLow)<=1e-9*(rangeHigh-rangeLow)) return null;
+    swept=false;
+    direction=distHigh<distLow?'sell':'buy';
+    anchorExtreme=distHigh<distLow?c2.h:c2.l;
+  }
+  // Candle 3 closes back INSIDE the range. In the swept arm this is the reclaim; the SAME
+  // condition is applied to the control, so the arms are not separated by a second difference.
+  if(!(c3.c>rangeLow&&c3.c<rangeHigh)) return null;
+  return{
+    direction:direction,swept:swept,
+    rangeHigh:rangeHigh,rangeLow:rangeLow,
+    anchorExtreme:anchorExtreme,
+    // The opposite extreme of candle 1 is the source-stated target.
+    targetLevel:direction==='sell'?rangeLow:rangeHigh,
+    atr:atr
+  };
+}
+// Stop beyond the anchor extreme, target at the opposite range edge. Fails CLOSED: a next-bar
+// open that has already run past its own stop, or through its own target, is not this trade with
+// a poor R -- it is not this trade at all, and inventing geometry for it would put a fabricated
+// result into the comparison.
+function crtGeometry(sig,entry,cfg){
+  const c=(cfg&&cfg.config)?cfg.config:(cfg||RULES_CRT.config);
+  if(!sig||(sig.direction!=='buy'&&sig.direction!=='sell')) return null;
+  if(typeof entry!=='number'||!isFinite(entry)) return null;
+  if(typeof sig.atr!=='number'||!isFinite(sig.atr)||sig.atr<=0) return null;
+  if(typeof sig.anchorExtreme!=='number'||!isFinite(sig.anchorExtreme)) return null;
+  if(typeof sig.targetLevel!=='number'||!isFinite(sig.targetLevel)) return null;
+  const buffer=c.stopBufferATRMultiple*sig.atr;
+  const stop=sig.direction==='buy'?sig.anchorExtreme-buffer:sig.anchorExtreme+buffer;
+  const target=sig.targetLevel;
+  const risk=sig.direction==='buy'?entry-stop:stop-entry;
+  const reward=sig.direction==='buy'?target-entry:entry-target;
+  if(!isFinite(risk)||risk<=0) return null;
+  if(!isFinite(reward)||reward<=0) return null;
+  return{direction:sig.direction,stop:stop,target:target,
+    // NOT fixed at 2R. CRT states the target as the opposite range extreme, so planned R is
+    // whatever that geometry yields. Every other arm in MOGO uses a fixed 2R, so this figure is
+    // reported per arm and has to be read BEFORE the two arms are compared.
+    plannedRR:reward/risk,
+    atrAtEntry:sig.atr,
+    stopBasis:'BEYOND_ANCHOR_EXTREME_PLUS_ATR_BUFFER',
+    stopBufferATRMultiple:c.stopBufferATRMultiple};
+}
+// The walker. Deliberately the same shape as psychLevelReplayTrades: prefix-only signal, entry at
+// the NEXT bar open, exits resolved by the same PROTECTED alexGWalkOutcome, one position at a
+// time. The arms must differ only where they are meant to differ.
+//
+// ENTRY IS THE BAR AFTER CANDLE 3, NOT INSIDE IT. CRT traders describe entering during candle 3
+// once the reclaim is visible. That requires intrabar data this replay does not have, and
+// approximating it from candle 3 closing price would be reading the bar that produced the signal.
+// Entering at candle 4 open is the conservative reading and gives up part of the move; it is
+// recorded in the disclosures rather than presented as equivalent.
+function crtReplayTrades(candles,cfg,opts){
+  const c=(cfg&&cfg.config)?cfg.config:(cfg||RULES_CRT.config);
+  const o=opts||{};
+  const pair=o.pair||null;
+  const pip=pipSize(pair||'EUR_USD');
+  const timeframe=o.timeframe||'H4';
+  const out={trades:[],skipped:[],barsScanned:0,
+    frictionModelled:false,entryBasis:'NEXT_BAR_OPEN',ambiguousMode:'conservative',
+    requireSweep:!!c.requireSweep,
+    arm:c.requireSweep?'SWEPT':'UNSWEPT_CONTROL'};
+  if(!Array.isArray(candles)||candles.length<c.atrPeriod+4) return out;
+  let i=c.atrPeriod+2,guard=0;
+  while(i<candles.length-1){
+    if(++guard>candles.length+2) break;
+    out.barsScanned++;
+    const window=candles.slice(0,i+1);          // the prefix IS the world
+    const sig=crtSignal(window,c,pip);
+    if(!sig){ i++; continue; }
+    const entryBarIndex=i+1;
+    const entryBar=candles[entryBarIndex];
+    const entry=(entryBar&&typeof entryBar.o==='number')?entryBar.o:null;
+    const g=(entry==null)?null:crtGeometry(sig,entry,c);
+    if(!g){
+      out.skipped.push({barIndex:i,reason:entry==null?'NO_ENTRY_PRICE':'NO_GEOMETRY',
+        direction:sig.direction,swept:sig.swept});
+      i++; continue;
+    }
+    const w=alexGWalkOutcome(candles,entryBarIndex,g.direction,g.stop,g.target,'conservative',timeframe);
+    const ex=alexGComputeMAEMFE(candles,entryBarIndex,w.exitBarIndex,g.direction,entry,pip);
+    const riskPips=Math.abs(entry-g.stop)/pip;
+    out.trades.push({
+      strategyId:CRT_STRATEGY_ID,arm:out.arm,swept:sig.swept,
+      pair:pair,timeframe:timeframe,
+      direction:g.direction,entry:entry,stop:g.stop,target:g.target,
+      plannedRR:g.plannedRR,atrAtEntry:g.atrAtEntry,
+      stopBasis:g.stopBasis,stopBufferATRMultiple:g.stopBufferATRMultiple,
+      rangeHigh:sig.rangeHigh,rangeLow:sig.rangeLow,anchorExtreme:sig.anchorExtreme,
+      signalBarIndex:i,entryBarIndex:entryBarIndex,exitBarIndex:w.exitBarIndex,
+      entryTimestamp:entryBar.t||null,exitTimestamp:w.exitTimestamp,
+      result:w.result,ambiguous:w.ambiguous,stillOpen:w.stillOpen,exitPrice:w.exitPrice,
+      resultR:w.stillOpen?null:(w.result==='Win'?g.plannedRR:-1),
+      riskPips:riskPips,maePips:ex.maePips,mfePips:ex.mfePips,
+      maeR:riskPips>0?ex.maePips/riskPips:null,
+      mfeR:riskPips>0?ex.mfePips/riskPips:null
+    });
+    i=w.stillOpen?candles.length:Math.max(w.exitBarIndex,i+1);
+  }
+  return out;
+}
+// Runs BOTH arms over the SAME candles in one pass, because a control compared against a
+// different dataset is not a control. The only difference between the two calls is requireSweep.
+function crtRunBothArms(candles,cfg,opts){
+  const base=(cfg&&cfg.config)?cfg.config:(cfg||RULES_CRT.config);
+  const swept=Object.assign({},base,{requireSweep:true});
+  const control=Object.assign({},base,{requireSweep:false});
+  return{
+    swept:crtReplayTrades(candles,swept,opts),
+    control:crtReplayTrades(candles,control,opts),
+    sameCandles:true,candlesUsed:Array.isArray(candles)?candles.length:0
+  };
+}
+// The comparison, stated as a comparison. NO verdict is returned -- only the two records and the
+// differences between them.
+function crtCompareArms(both){
+  if(!both||!both.swept||!both.control) return null;
+  const summarise=function(r){
+    const decided=r.trades.filter(function(t){ return typeof t.resultR==='number'; });
+    const wins=decided.filter(function(t){ return t.resultR>0; }).length;
+    const net=decided.reduce(function(s,t){ return s+t.resultR; },0);
+    const rr=decided.map(function(t){ return t.plannedRR; })
+      .filter(function(x){ return typeof x==='number'&&isFinite(x); });
+    return{n:decided.length,wins:wins,losses:decided.length-wins,
+      winRate:decided.length?wins/decided.length:null,
+      netR:decided.length?net:null,
+      perTrade:decided.length?net/decided.length:null,
+      // REPORTED, NOT ASSUMED EQUAL. A sweep pushes the anchor extreme further from the target,
+      // which mechanically raises risk and LOWERS planned R. If the arms differ here, part of any
+      // win-rate difference between them is geometry rather than edge, and a reader has to see
+      // that before reading anything else in the table.
+      meanPlannedRR:rr.length?rr.reduce(function(s,x){ return s+x; },0)/rr.length:null,
+      signals:r.trades.length,skipped:r.skipped.length,barsScanned:r.barsScanned};
+  };
+  const a=summarise(both.swept),b=summarise(both.control);
+  return{
+    swept:a,control:b,
+    // The whole experiment in one number. Positive means the sweep earned its keep on these bars.
+    perTradeDifference:(a.perTrade!=null&&b.perTrade!=null)?a.perTrade-b.perTrade:null,
+    winRateDifference:(a.winRate!=null&&b.winRate!=null)?a.winRate-b.winRate:null,
+    plannedRRDifference:(a.meanPlannedRR!=null&&b.meanPlannedRR!=null)?a.meanPlannedRR-b.meanPlannedRR:null,
+    comparable:!!(a.n&&b.n)
+  };
+}
+async function runCrtReplay(oPair,days,onProgress,shouldCancel){
+  const cfg=RULES_CRT.config;
+  const tf='H4';
+  const count=Math.min(Math.ceil((days||0)*6)+cfg.atrPeriod+60,10000);
+  if(onProgress) onProgress('Fetching H4 candles for '+oPair.replace('_','/')+'...');
+  const H4=await fetchCandlesRange(oPair,tf,count);
+  if(shouldCancel&&shouldCancel()) return{cancelled:true};
+  if(!H4||H4.length<cfg.atrPeriod+4){
+    return{error:'Not enough H4 history for '+oPair+' (need at least '+(cfg.atrPeriod+4)+' bars, got '+((H4&&H4.length)||0)+').'};
+  }
+  if(onProgress) onProgress('Walking swept and unswept arms over the same bars...');
+  const both=crtRunBothArms(H4,cfg,{pair:oPair,timeframe:tf});
+  return Object.assign({pair:oPair,candlesUsed:H4.length,
+    captureBasis:'REPLAY_RUN',population:'REPLAY',
+    comparison:crtCompareArms(both)},both);
+}
+// PURE. Builds ONE evidence package holding every replayed trade from BOTH arms, each carrying
+// its own arm, so the swept and control results can never drift into separate files that get
+// compared across runs. captureBasis is REPLAY_RUN and mode is REPLAY, stated at the top, so
+// scripts/mogo_forward_trade_analysis.js buckets it correctly without being told.
+function crtBuildReplayPackage(runs,cfg,opts){
+  const c=(cfg&&cfg.config)?cfg.config:(cfg||RULES_CRT.config);
+  const o=opts||{};
+  const positions=[],outcomes=[],setups=[];
+  let seq=0,stillOpen=0;
+  (runs||[]).forEach(function(run){
+    const all=[].concat((run&&run.swept&&run.swept.trades)||[],(run&&run.control&&run.control.trades)||[]);
+    if(!all.length) return;
+    all.forEach(function(t){
+      // A still-open trade is NOT exported as an outcome. It has no result, and writing one with
+      // a null realizedR invites a reader to treat it as a zero.
+      if(t.stillOpen){ stillOpen++; return; }
+      const id='CRT|'+CRT_STRATEGY_ID+'|'+(t.pair||run.pair||'?')+'|'+(++seq);
+      setups.push({
+        setupId:id,
+        setupType:(t.arm==='SWEPT'?'crt_swept':'crt_unswept_control'),
+        setupLabel:(t.arm==='SWEPT'?'CRT SWEEP AND RECLAIM':'UNSWEPT CONTROL'),
+        strategyId:CRT_STRATEGY_ID,
+        instrument:t.pair||run.pair||null,timeframe:t.timeframe||'H4',
+        ruleAttribution:{ruleSetId:CRT_STRATEGY_ID,
+          // Nothing is unverified in the GEOMETRY: every input to it is on the record. What is
+          // unverified is the reference-candle selection, which this arm does not attempt at all
+          // -- recorded in replayDisclosures, not silently dropped.
+          unverifiedConditionCount:0,contradictsEngineClassification:false,failedConditionIds:[]},
+        contextRefs:{session:null,trendContext:null,atrAtEntry:t.atrAtEntry},
+        structureRefs:{arm:t.arm,swept:t.swept,rangeHigh:t.rangeHigh,rangeLow:t.rangeLow,
+          anchorExtreme:t.anchorExtreme,stopBasis:t.stopBasis,
+          stopBufferATRMultiple:t.stopBufferATRMultiple}
+      });
+      positions.push({
+        positionId:id,setupId:id,
+        instrument:t.pair||run.pair||null,timeframe:t.timeframe||'H4',
+        direction:t.direction,entryPrice:t.entry,
+        entryTimestamp:t.entryTimestamp?new Date(t.entryTimestamp).toISOString():null,
+        // Spread is genuinely NOT MODELLED, so it is left absent rather than written as 0. A
+        // recorded zero spread and an unmodelled spread are different facts.
+        entrySpreadPips:undefined,
+        originalStop:t.stop,currentStop:t.stop,target:t.target,
+        plannedRR:t.plannedRR,riskPercent:c.riskPercent,
+        isDeveloperTrade:false,tradeSource:'replay',
+        evidenceCompleteness:'PARTIAL'
+      });
+      outcomes.push({
+        outcomeId:id+'|outcome',positionId:id,
+        exitPrice:t.exitPrice,
+        exitTimestamp:t.exitTimestamp?new Date(t.exitTimestamp).toISOString():null,
+        exitReasonCode:t.result,exitDetectionSource:'replay_candle',
+        plannedR:t.plannedRR,recordedResultR:t.resultR,realizedR:t.resultR,
+        realizedRProvenance:'FIXED_R_BY_METHODOLOGY',
+        realizedRBasis:{entryPrice:t.entry,exitPrice:t.exitPrice,direction:t.direction,
+          riskDistance:Math.abs(t.entry-t.stop),riskDistanceSource:'abs(entry-stop)'},
+        // pnl is deliberately absent: no account, no position size, no friction.
+        pnl:undefined,
+        maeR:t.maeR,mfeR:t.mfeR,maePips:t.maePips,mfePips:t.mfePips,
+        ambiguous:t.ambiguous,evidenceCompleteness:'PARTIAL'
+      });
+    });
+  });
+  return{
+    packageSchemaVersion:'mogo.evidence-package.v1',
+    packageId:'PKG|'+CRT_STRATEGY_ID+'|REPLAY|'+(o.stamp||Date.now()),
+    captureBasis:'REPLAY_RUN',
+    identity:{strategyId:CRT_STRATEGY_ID,strategyVersion:CRT_VERSION,
+      strategyVersionProvenance:'OBSERVED',mode:'REPLAY',engineVersion:APP_VERSION,
+      captureOrigin:(typeof location!=='undefined'&&location&&location.origin)?location.origin:null},
+    configSnapshot:{ruleVersion:RULES_CRT.ruleVersion,config:c},
+    configSnapshotProvenance:'OBSERVED',
+    objects:{candidates:[],decisions:[],marketContexts:[],
+      qualifiedSetups:setups,positions:positions,outcomes:outcomes},
+    objectCounts:{candidates:0,decisions:0,marketContexts:0,
+      qualifiedSetups:setups.length,positions:positions.length,outcomes:outcomes.length},
+    // Every caveat that must travel with these numbers, in the file rather than in someone's memory.
+    replayDisclosures:{
+      frictionModelled:false,
+      frictionNote:'Spread and slippage are NOT charged. Both arms are equally optimistic, so the comparison BETWEEN them is valid; neither figure is an achievable return.',
+      entryBasis:'NEXT_BAR_OPEN',
+      entryNote:'CRT traders describe entering DURING candle 3. That needs intrabar data this replay does not have, so entry is candle 4 open. This is the conservative reading and gives up part of the move.',
+      ambiguousMode:'conservative',
+      lookAheadControl:'The signal and the ATR see only candles[0..i]; entry is bar i+1 open. Verified by truncation (fixture CRT-1).',
+      exitEngine:'alexGWalkOutcome / alexGComputeMAEMFE — the same protected exit functions ALEX uses, unmodified, so the arms differ only at entry.',
+      plannedRRVaries:true,
+      plannedRRNote:'Planned R is NOT fixed at 2. The target is the opposite range extreme, so R follows the geometry. A sweep widens the stop and lowers planned R, so the two arms can differ in R before they differ in edge. meanPlannedRR is reported per arm for exactly this reason.',
+      referenceCandleSelection:'NOT IMPLEMENTED. Every source qualifies candle 1 as sitting at a liquidity zone or order block and none defines that mechanically. This arm applies the pattern to EVERY 3-bar window, which is a strictly weaker test than a CRT trader would run. A null result here therefore does NOT falsify CRT as practised — it establishes that the geometry alone carries no edge, which places any remaining edge in the part that cannot be specified.',
+      controlArm:'Same 3-bar window, same reclaim requirement, same stop and target construction, same bars — candle 2 stays INSIDE candle 1 instead of breaching it. The only variable is the sweep.',
+      paperTradingAuthorized:false,
+      stillOpenExcluded:stillOpen
+    }
+  };
+}
+
 const BASELINE_TREND_STRATEGY_ID='baseline_trend_v1';
 const BASELINE_TREND_VERSION='baseline_trend_v1';
 const RULES_BASELINE_TREND={
@@ -23051,7 +23405,7 @@ function psychLevelBuildReplayPackage(runs,cfg,opts){
     packageSchemaVersion:'mogo.evidence-package.v1',
     packageId:'PKG|'+PSYCH_LEVEL_STRATEGY_ID+'|REPLAY|'+(o.stamp||Date.now()),
     captureBasis:'REPLAY_RUN',
-    identity:{strategyId:PSYCH_LEVEL_STRATEGY_ID,strategyVersion:BASELINE_TREND_VERSION,
+    identity:{strategyId:PSYCH_LEVEL_STRATEGY_ID,strategyVersion:PSYCH_LEVEL_VERSION,
       strategyVersionProvenance:'OBSERVED',mode:'REPLAY',engineVersion:APP_VERSION,
       captureOrigin:(typeof location!=='undefined'&&location&&location.origin)?location.origin:null},
     configSnapshot:{ruleVersion:RULES_PSYCH_LEVEL.ruleVersion,config:c},
@@ -23477,6 +23831,150 @@ function exportPsychLevelReplay(){
   downloadTextFile('mogo-evidence-'+PSYCH_LEVEL_STRATEGY_ID+'-REPLAY-'+Date.now()+'.json',
     'application/json',JSON.stringify(pkg,null,2));
 }
+let crtLastRuns=null,crtRunning=false;
+const CRT_MANIFEST={
+  id:CRT_STRATEGY_ID,
+  family:'research_arm',
+  version:CRT_VERSION,
+  label:'Candle Range Theory',
+  navLabel:'CRT',
+  panelId:'crt',
+  workspaceTitle:'Candle Range Theory — the sweep, tested against no sweep',
+  currentPhase:'Replay only. Not authorized to paper trade.',
+  fullName:'Candle Range Theory (sweep and reclaim, controlled)',
+  description:'Tests the mechanical core of CRT: candle 1 sets a range, candle 2 takes out one extreme, candle 3 closes back inside, stop beyond the swept extreme, target the opposite extreme. The identical rule ALSO runs on windows where candle 2 stayed INSIDE the range -- approached an extreme and did not take it. If the swept arm does not beat that control, the sweep is not what carries CRT. What this does NOT test is which candle qualifies as candle 1, because no source defines that mechanically. NOT authorized to paper trade.',
+  author:'External (CRT is widely published; no single attributable author)',
+  ownership:'external_reconstruction',
+  status:'development',
+  trustLevel:'unverified',
+  badgeColor:'var(--muted)',
+  capabilities:{
+    scanning:false,paperTrading:false,automation:false,journal:false,
+    statistics:false,alerts:false,replay:true,backtesting:false,
+    aiReview:false,aiCoaching:false,reports:false,academyContent:false,
+    diagnostics:false,settings:false,strategyCenterContent:false
+  },
+  dependencies:['candleData'],
+  dna:{
+    style:'Fade a liquidity sweep back into the range it came from. Three bars, no discretion, and an unswept control run on the same bars.',
+    difficulty:'Simple by design',
+    marketType:'Forex, the same 12 instruments ALEX observes',
+    preferredSessions:[],idealConditions:[],avoidConditions:[],strengths:[],weaknesses:[]
+  }
+};
+const CRT_SERVICES={
+  getAccount:()=>null,
+  getJournal:()=>[],
+  onOpen:()=>{ try{ initCrtWorkspace(); }catch(e){} }
+};
+function initCrtWorkspace(){
+  const h=document.getElementById('crtWsHeaderCard');
+  if(h) h.innerHTML='<div style="font-size:15px;font-weight:700">Candle Range Theory — with its own control</div>'
+    +'<div class="muted" style="margin-top:6px;line-height:1.5">Candle 1 sets a range. Candle 2 takes out one of its extremes. Candle 3 closes back inside. '
+    +'Stop goes beyond the swept extreme, target is the opposite edge of candle 1.<br>'
+    +'<b>The control is the point.</b> The same rule runs on windows where candle 2 stayed <b>inside</b> the range — it approached an extreme and '
+    +'did not take it. Same shape, same reclaim, same stop and target, same bars. If the swept arm does not beat it, the sweep is not what carries CRT.<br>'
+    +'<b>What this cannot test:</b> which candle counts as candle 1. Every source qualifies it — at a liquidity zone, at an order block — and none says '
+    +'mechanically what that means. This runs on <b>every</b> three-bar window, which is a weaker test than a CRT trader would run. So a flat result here '
+    +'does not disprove CRT; it says the geometry alone carries nothing, and any edge lives in the part that cannot be written down.<br>'
+    +'<b>Replay only — this cannot open a position.</b> Spread is not charged, so neither arm is a return you could have earned. The difference between them is the result.</div>';
+  renderCrtControls();
+  renderCrtResults();
+}
+function renderCrtControls(){
+  const el=document.getElementById('crtWsControlsCard');
+  if(!el) return;
+  el.innerHTML='<div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">'
+    +'<div><div class="muted" style="font-size:11px;margin-bottom:4px">Days of history</div>'
+    +'<input id="crtWsDays" type="number" value="720" min="60" max="1460" style="width:110px"></div>'
+    +'<button class="btn" id="crtWsRunBtn" onclick="runCrtReplayAll()">Run both arms on all '+SCAN_PAIRS.length+' pairs</button>'
+    +'<button class="btn" id="crtWsExportBtn" onclick="exportCrtReplay()">Export results</button>'
+    +'</div><div id="crtWsProgress" class="muted" style="margin-top:8px;font-size:12px"></div>';
+}
+function crtAggregate(runs,arm){
+  let n=0,w=0,net=0,open=0,rrSum=0,rrN=0;
+  (runs||[]).forEach(function(r){
+    const a=r&&r[arm];
+    ((a&&a.trades)||[]).forEach(function(t){
+      if(t.stillOpen){ open++; return; }
+      n++; if(t.result==='Win') w++; net+=(t.resultR||0);
+      if(typeof t.plannedRR==='number'&&isFinite(t.plannedRR)){ rrSum+=t.plannedRR; rrN++; }
+    });
+  });
+  return{n:n,wins:w,netR:net,open:open,winRate:n?w/n:null,perTrade:n?net/n:null,
+    meanPlannedRR:rrN?rrSum/rrN:null};
+}
+function renderCrtResults(){
+  const el=document.getElementById('crtWsResultsContainer');
+  if(!el) return;
+  if(!crtLastRuns){ el.innerHTML=''; return; }
+  const errs=(crtLastRuns||[]).filter(function(r){ return r&&r.error; })
+    .map(function(r){ return (r.pair||'?')+': '+r.error; });
+  const S=crtAggregate(crtLastRuns,'swept');
+  const C=crtAggregate(crtLastRuns,'control');
+  const fmt=function(x,d){ return x==null?'—':x.toFixed(d==null?2:d); };
+  const row=function(label,a){
+    return '<tr><td style="padding:7px 9px;font-weight:600">'+label+'</td>'
+      +'<td style="padding:7px 9px">'+a.n+'</td>'
+      +'<td style="padding:7px 9px">'+(a.winRate==null?'—':(a.winRate*100).toFixed(1)+'%')+'</td>'
+      +'<td style="padding:7px 9px">'+fmt(a.meanPlannedRR,2)+'</td>'
+      +'<td style="padding:7px 9px">'+fmt(a.netR,1)+'R</td>'
+      +'<td style="padding:7px 9px">'+fmt(a.perTrade,3)+'R</td>'
+      +'<td style="padding:7px 9px">'+a.open+'</td></tr>';
+  };
+  const diff=(S.perTrade!=null&&C.perTrade!=null)?S.perTrade-C.perTrade:null;
+  const rrDiff=(S.meanPlannedRR!=null&&C.meanPlannedRR!=null)?S.meanPlannedRR-C.meanPlannedRR:null;
+  el.innerHTML='<div class="card" style="margin-top:10px">'
+    +'<div style="font-size:14px;font-weight:700;margin-bottom:8px">Replay result — REPLAY, not forward performance</div>'
+    +'<table style="width:100%;border-collapse:collapse;font-size:12px">'
+    +'<thead><tr style="text-align:left;font-size:10px;letter-spacing:.5px">'
+    +'<th style="padding:6px 9px">Arm</th><th style="padding:6px 9px">Closed</th><th style="padding:6px 9px">Win rate</th>'
+    +'<th style="padding:6px 9px">Planned R</th><th style="padding:6px 9px">Net</th>'
+    +'<th style="padding:6px 9px">Per trade</th><th style="padding:6px 9px">Open</th></tr></thead>'
+    +'<tbody>'+row('Swept (CRT)',S)+row('Unswept control',C)+'</tbody></table>'
+    +'<div style="margin-top:12px;font-size:13px">'
+    +(diff==null
+      ? '<b>Not comparable yet</b> — one or both arms produced no closed trades.'
+      : '<b>Difference: '+(diff>=0?'+':'')+diff.toFixed(3)+'R per trade</b> in favour of '
+        +(diff>=0?'the swept arm':'the unswept control')+'.')
+    +'</div>'
+    +'<div class="muted" style="margin-top:8px;font-size:12px;line-height:1.6">'
+    +'<b>Read the Planned R column first.</b> The target is the opposite range edge, so R is not fixed at 2 the way it is elsewhere in MOGO. '
+    +'A sweep pushes the stop further out and lowers planned R by itself'
+    +(rrDiff==null?'' : ' — here the two arms differ by '+(rrDiff>=0?'+':'')+rrDiff.toFixed(2)+' R')
+    +'. Part of any win-rate gap between the arms is that geometry, not edge.<br>'
+    +'A per-trade difference near zero means the sweep is not doing the work — the same three-bar reversion would have paid on windows with no sweep at all. '
+    +'Whether a difference is large enough to believe depends on the sample size, which this table does not judge. '
+    +'Export and read it in Analytics, where the population is separated and the threshold is adjusted for the number of slices looked at.</div>'
+    +(errs.length?'<div class="muted" style="margin-top:10px;font-size:12px;color:var(--red)">'+escapeHtml(errs.join(' | '))+'</div>':'')
+    +'</div>';
+}
+async function runCrtReplayAll(){
+  if(crtRunning) return;
+  crtRunning=true;
+  const prog=document.getElementById('crtWsProgress');
+  const daysEl=document.getElementById('crtWsDays');
+  const days=Math.max(60,Math.min(1460,parseInt(daysEl&&daysEl.value,10)||720));
+  const runs=[];
+  try{
+    for(let i=0;i<SCAN_PAIRS.length;i++){
+      const oPair=SCAN_PAIRS[i].replace('/','_');
+      if(prog) prog.textContent='('+(i+1)+'/'+SCAN_PAIRS.length+') '+oPair+' ...';
+      try{ runs.push(await runCrtReplay(oPair,days,function(m){ if(prog) prog.textContent='('+(i+1)+'/'+SCAN_PAIRS.length+') '+m; })); }
+      catch(e){ runs.push({pair:oPair,error:(e&&e.message)?e.message:String(e)}); }
+    }
+    crtLastRuns=runs;
+    if(prog) prog.textContent='Done — '+runs.length+' pair(s), both arms.';
+    renderCrtResults();
+  } finally { crtRunning=false; }
+}
+function exportCrtReplay(){
+  if(!crtLastRuns){ alert('Run the replay first.'); return; }
+  const pkg=crtBuildReplayPackage(crtLastRuns,RULES_CRT.config,{stamp:Date.now()});
+  downloadTextFile('mogo-evidence-'+CRT_STRATEGY_ID+'-REPLAY-'+Date.now()+'.json',
+    'application/json',JSON.stringify(pkg,null,2));
+}
+
 const BASELINE_TREND_MANIFEST={
   id:BASELINE_TREND_STRATEGY_ID,
   family:'baseline_control',
@@ -23522,7 +24020,8 @@ const STRATEGY_REGISTRY=[
   {manifest:ALEX_MANIFEST,services:ALEX_SERVICES},
   {manifest:TJR_MANIFEST,services:TJR_SERVICES},
   {manifest:BASELINE_TREND_MANIFEST,services:BASELINE_TREND_SERVICES},
-  {manifest:PSYCH_LEVEL_MANIFEST,services:PSYCH_LEVEL_SERVICES}
+  {manifest:PSYCH_LEVEL_MANIFEST,services:PSYCH_LEVEL_SERVICES},
+  {manifest:CRT_MANIFEST,services:CRT_SERVICES}
 ];
 function findStrategyEntry(id){
   return STRATEGY_REGISTRY.find(e=>e.manifest.id===id)||null;
