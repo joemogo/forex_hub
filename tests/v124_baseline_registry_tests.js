@@ -34,8 +34,21 @@ function runBaselineRegistryFixtures(g){
     const alexHasAll=requiredKeys.every(k=>Object.prototype.hasOwnProperty.call(reg.alex,k));
     assert('BaselineRegistry.1b: both entries carry every required schema field (Deliverable 1)',
       jvmHasAll&&alexHasAll,'missing on jvm: '+requiredKeys.filter(k=>!Object.prototype.hasOwnProperty.call(reg.jvm,k)).join(',')+' | missing on alex: '+requiredKeys.filter(k=>!Object.prototype.hasOwnProperty.call(reg.alex,k)).join(','));
-    assert('BaselineRegistry.25: instruments field is the real SCAN_PAIRS live-trading universe, not a separately fabricated list',
-      Array.isArray(reg.jvm.instruments)&&reg.jvm.instruments.length>0&&JSON.stringify(reg.jvm.instruments)===JSON.stringify(reg.alex.instruments),'jvm='+JSON.stringify(reg.jvm.instruments));
+    // Until v12.55.0 both strategies read SCAN_PAIRS, so identity between the two entries was a
+    // sufficient proxy for 'not fabricated'. ALEX now trades its own wider ALEXG_LIVE_PAIRS, so
+    // that proxy would force the two universes to stay equal -- pinning a coincidence rather than
+    // the property. Each entry is now checked against the real constant it must mirror, which is
+    // strictly stronger: a fabricated list fails even if both entries fabricate identically.
+    assert('BaselineRegistry.25: each instruments field is that strategy\'s REAL live-trading universe, not a separately fabricated list',
+      Array.isArray(reg.jvm.instruments)&&reg.jvm.instruments.length>0&&
+      JSON.stringify(reg.jvm.instruments)===JSON.stringify(g.SCAN_PAIRS)&&
+      Array.isArray(reg.alex.instruments)&&reg.alex.instruments.length>0&&
+      JSON.stringify(reg.alex.instruments)===JSON.stringify(g.ALEXG_LIVE_PAIRS),
+      'jvm='+reg.jvm.instruments.length+' alex='+reg.alex.instruments.length);
+    assert('BaselineRegistry.25b: ALEX trades a strict superset of JVM -- the widened live set never drops an instrument JVM still trades',
+      reg.alex.instruments.length>reg.jvm.instruments.length&&
+      reg.jvm.instruments.every(function(p){ return reg.alex.instruments.indexOf(p)!==-1; }),
+      'jvm='+reg.jvm.instruments.length+' alex='+reg.alex.instruments.length);
   }
 
   // ── Unknown-field handling: never fabricate ──

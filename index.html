@@ -2212,9 +2212,10 @@ const ALL_PAIRS=[
 // Bump by 1.0 for a major update (new feature/tab), by 0.1 for a small patch/fix.
 // This shows in the header next to the logo and on the Diagnostics tab, so you can
 // glance at the live site and instantly confirm which build actually deployed.
-const APP_VERSION='12.54.0';
+const APP_VERSION='12.55.0';
 const APP_VERSION_DATE='04 Sep 2026';
 const APP_VERSION_LOG=[
+  '12.55.0 - ALEX NOW TRADES 28 INSTRUMENTS, AND NOTHING ELSE MOVED (zero protected-function and zero protected-constant drift; no strategy rule, gate, threshold, sizing or execution change). WHY: the forward trade rate was measured, not assumed, from the preserved evidence -- 31 LIVE_CLOSE ALEX trades over 41 days across 12 pairs, which is 0.44 trades per pair-week. Sample size, not strategy quality, is what blocks every open question in this project: the roughly 632 trades needed to separate a real edge from noise sit about 2.3 years away at 12 pairs. ALEX has no global concurrency cap -- its only limit is one open trade per pair plus timeframe -- so instrument count scales the forward rate close to linearly, and 28 pairs puts that near 1 year. THE CHANGE: a new ALEXG_LIVE_PAIRS constant, a strict superset of SCAN_PAIRS holding 28 liquid instruments, read by exactly seven sites -- the live poll loop, both poll-ledger instrumentsConfigured counts, the NOT_REACHED_THIS_TICK accounting sweep, the ALEX panel pair selector, the ALEX manifest instrument declaration, and the journal pair filter. WHAT DELIBERATELY DID NOT CHANGE, and why editing SCAN_PAIRS would have been the wrong fix: JVM auto-trades SCAN_PAIRS and is at a 0 percent win rate while losing money, so widening it would multiply a known loss and teach nothing; the manual Scan tab renders one operator-graded row per SCAN_PAIRS entry and more than doubling that table is a hand-entry chore nobody asked for; and every replay-all loop iterates SCAN_PAIRS, where widening buys nothing because replay is not sample-starved -- forward trading is. Fixtures PAIRS-11 through PAIRS-14 are negative controls pinning all three in place. EXCLUSIONS: the seven exotics (SGD, NOK, SEK, DKK, MXN, ZAR, TRY) stay out; entry spread already costs a measured 9.8 percent of risk on majors and is materially worse there, so they would add cost drag rather than information. HONEST LIMITS: the added crosses correlate with instruments ALEX already trades, so EFFECTIVE sample grows more slowly than the raw count and the 1-year figure is an optimistic bound, not a promise. Worst-case tick cost roughly doubles -- when every pair advances on the same H1 boundary the loop runs 28 sequential dataset fetches of 4 requests each, up from 12 -- and the existing 60-second re-entrancy guard fails safe by skipping and RECORDING the overlapping tick rather than trading on stale data. Tick duration is already in the poll ledger as startedAt and finishedAt, so this is measurable after deployment rather than a guess; the loop was left sequential deliberately, because making pair evaluation concurrent would disturb the synchronous claim invariant that prevents duplicate positions. PRICE DATA: no new fetch plumbing was needed -- the market sweep already covers all 35 ALL_PAIRS in chunks of 5, so the added 16 instruments already had pairData populated. TESTING: v155 adds 16 fixtures, all passing. Mutation-verified, five mutations each killed: reverting the poll loop to SCAN_PAIRS kills PAIRS-7; widening JVM eligibility kills PAIRS-11; adding an exotic kills PAIRS-2; a typo in a pair identifier kills PAIRS-3; and a duplicate top-level declaration kills PAIRS-15, which parses the entire page script -- the guard added after v12.54.0 shipped 28 green fixtures over a page that was dead on load.',
   '12.54.0 — ROUND-NUMBER LEVELS, WITH A CONTROL THAT CAN FALSIFY THEM (zero protected-function and zero protected-constant drift; 64/64 and 4/4 byte-identical). The one mechanism in the research with a published empirical basis: Osler, NY Fed Staff Report 125, examined 9,667 REAL orders and found take-profit orders cluster AT round numbers and stop-losses just beyond. psych_level_v1 trades that claim directly -- reach a round level, fail to close through it, fade the approach, stop placed BEYOND the level where the order study locates the stop cluster, 2R target so the R figures compare against every other arm. THE CONTROL IS THE POINT AND IS THE REASON THIS IS WORTH RUNNING: a mean-reversion rule can profit on ANY evenly spaced grid, so the identical rule also runs on a grid shifted half an interval -- levels as regular and as arbitrary as the round ones -- over THE SAME BARS in the same pass. If the round grid does not beat that control there is no round-number effect here, only a mean-reversion rule that would work anywhere. PSY-C3 is the fixture that matters: the two arms must be CAPABLE of differing on the same bars, or the experiment is theatre that always reports no effect. No verdict is computed anywhere -- the comparison returns two records and the gap between them, and whether a gap means anything is a judgement about sample size rather than arithmetic. REPLAY ONLY: seven named live entry points are asserted to reference nothing in it, and results are labelled REPLAY_RUN at the point of production. Look-ahead is structurally impossible -- the signal is handed a PREFIX and entry is the next bar OPEN -- and PSY-L1 proves it by truncation. A DEFECT THIS RELEASE CAUGHT IN ITSELF: 28 fixtures passed while the deployed page was DEAD ON LOAD with a duplicate top-level declaration, because every fixture extracts ONE function into a fresh realm and a per-function test cannot see a collision BETWEEN functions. PSY-P1 now parses the whole page script and is mutation-verified against exactly that failure; PSY-V1/V2 additionally check the arm produces a workable and BALANCED number of trades on a deterministic random walk, since a rule firing three times in two years answers nothing. 34 fixtures (PSY-G1..4, S1..6, L1..4, M1..2, C1..7, X1..5, P1..4, V1..2).',
   '12.53.0 — THE FORWARD HEADLINE WAS POOLING TWO STRATEGIES, IN THE PANEL BUILT TO PREVENT THAT (zero protected-function and zero protected-constant drift; 64/64 and 4/4 byte-identical). CAUGHT ON THE DEPLOYED BUILD, from the operator screenshots. The Analytics forward figures were computed over EVERY forward strategy while the JVM block immediately below asserted those trades were NOT included in them. They were. JVM records carry no setupType and no timeframe, so they surfaced as an (unrecorded) row in both segment tables -- 2 trades, 0W/2L, -2.14R -- and moved the headline. Correcting it changed the numbers materially: 42 closed / 26.2% / -9.17R became 40 closed / 27.5% / -7.04R, because two JVM losses had been dragging ALEX down by 2.13R. This is the exact error the panel exists to prevent, committed inside the panel, and it was invisible until real data with two strategies in it was rendered -- synthetic fixtures had only ever exercised one. THE FIX: the forward headline and every forward slice are restricted to OBS_PRIMARY_FORWARD_STRATEGY; the JVM coverage block continues to read the UNFILTERED rows, or it would count zero JVM packages and report every JVM close as unpreserved; and the population COMPOSITION is now rendered as its own strategy segment, so the restriction is visible rather than silent. The forward heading names ALEX explicitly. 4 fixtures (JVM-8..11), which assert the filtered rows reach the headline AND the slices AND that the JVM block does not receive them.',
   '12.52.0 — CORRECTION: v12.50.0 ASSERTED SOMETHING FALSE ABOUT JVM (zero protected-function and zero protected-constant drift; 64/64 and 4/4 byte-identical). v12.50.0 claimed no evidence capture seam reads paperAccount and that JVM produced no evidence at all, shipped that claim in a release note and in the Analytics panel, and had a fixture asserting it. IT WAS WRONG. evidenceCaptureClosedPaperTrades exists, has its own field normalizer evidenceNormalizeJvmTrade, and is wired into the successful-commit path of commitPaperLedger, so it is reached by every JVM close route -- automatic, manual and developer-test. Real current_strategy packages exist in the corpus and were sitting in the operator export directory the whole time. THE ERROR: the two ALEX seams were grepped for paperAccount, nothing was found, and absence in those two functions was taken as absence in the file. The fixture repeated the same mistake and therefore confirmed it. Both are corrected, and the false claim is recorded in the source rather than quietly deleted. WHAT REPLACES IT: JVM now gets the same measure ALEX gets -- COVERAGE. Preserved current_strategy packages are counted against closed trades in the JVM ledger, developer and test positions excluded from both sides, and an unreadable ledger renders UNKNOWN rather than implying complete coverage. Evidence is perishable, so an unpreserved close is silently absent from every figure and cannot be recovered later; that gap, not a nonexistent capture path, is the thing worth watching. The panel also states what JVM records LACK -- no timeframe, no setup record, no zone structure, no excursions -- so its packages are not read as equivalent to ALEX ones, and that the two populations are never pooled because one figure over two strategies would describe neither. 7 fixtures (JVM-1..7), replacing UNCOV-1..8; JVM-1 checks the WHOLE FILE for the seam, which is what the original claim was actually about.',
@@ -2330,6 +2331,40 @@ const APP_VERSION_LOG=[
   '1.0 — Paper Trading, Auto Paper Trading, AI Assistant, Diagnostics, Automatic Top-Down Scan, bias-filtered chart markers, version badge'
 ];
 const SCAN_PAIRS=['GBP/USD','EUR/USD','GBP/JPY','AUD/USD','USD/JPY','GBP/CHF','GBP/CAD','NZD/USD','AUD/JPY','EUR/JPY','USD/CAD','USD/CHF'];
+// ── ALEX LIVE INSTRUMENT SET (v12.55.0) ──────────────────────────────────────────────────────
+// ALEX's forward trade rate was measured at 0.44 trades per pair-week (31 LIVE_CLOSE trades /
+// 41 days / 12 pairs). Sample size -- not strategy quality -- is what blocks every open question
+// in this project: at 12 pairs, the ~632 trades needed to separate a real edge from noise are
+// roughly 2.3 years away. ALEX's only concurrency limit is one open trade per pair+timeframe,
+// so instrument count scales the rate close to linearly. 28 pairs puts that near 1 year.
+//
+// This is deliberately NOT a change to SCAN_PAIRS, which would have three unwanted effects:
+//   1. JVM auto-trades SCAN_PAIRS (see jvmAutoTradeTick) -- it is at a 0% win rate and losing,
+//      and widening its instrument set would multiply that rather than measure anything.
+//   2. The manual Scan tab renders one operator-graded row per SCAN_PAIRS entry. Going to 28
+//      would more than double a weekly hand-entry task the operator did not ask to grow.
+//   3. Every "replay all pairs" loop iterates SCAN_PAIRS. Widening it makes each replay run
+//      2.3x longer for no gain -- replay is not sample-starved, forward trading is.
+//
+// Strict superset of SCAN_PAIRS, so anything reading this list also covers the scanned 12.
+// Exotics (SGD, NOK, SEK, DKK, MXN, ZAR, TRY) are excluded: entry spread already costs a
+// measured 9.8% of risk on majors and is materially worse there, which would add cost drag
+// rather than information. Correlation among the added crosses means EFFECTIVE sample grows
+// more slowly than the raw count -- the 1-year figure is the optimistic bound, not a promise.
+const ALEXG_LIVE_PAIRS=[
+  // majors (7)
+  'EUR/USD','GBP/USD','USD/JPY','USD/CHF','AUD/USD','USD/CAD','NZD/USD',
+  // EUR crosses (6)
+  'EUR/GBP','EUR/JPY','EUR/CHF','EUR/AUD','EUR/CAD','EUR/NZD',
+  // GBP crosses (5)
+  'GBP/JPY','GBP/CHF','GBP/AUD','GBP/CAD','GBP/NZD',
+  // AUD crosses (4)
+  'AUD/JPY','AUD/CHF','AUD/CAD','AUD/NZD',
+  // NZD crosses (3)
+  'NZD/JPY','NZD/CHF','NZD/CAD',
+  // CAD / CHF crosses (3)
+  'CAD/JPY','CAD/CHF','CHF/JPY'
+];
 const TF_OPTS=['—','Bullish','Bearish','Ranging'];
 const BUCKET_OPTS=['—','Ranging / no break','Active watch','Triggered / missed'];
 const GRADE_OPTS=['—','A','B','C'];
@@ -4957,7 +4992,7 @@ function initAlexGPair(){
   if(verEl) verEl.textContent=APP_VERSION;
   renderAlexGLivePanel(); // refresh live status/tables every time this tab is opened
   if(sel.options.length) return;
-  SCAN_PAIRS.forEach(p=>{
+  ALEXG_LIVE_PAIRS.forEach(p=>{
     const opt=document.createElement('option');
     opt.value=p.replace('/','_');opt.textContent=p;
     sel.appendChild(opt);
@@ -6424,7 +6459,7 @@ async function alexGLivePollTickGuarded(){
         finishedAt:__ovAt,outcome:'SKIPPED_POLL_IN_FLIGHT',
         tradingEnabled:!!alexGAutoTrading.enabled,evaluationAdvanced:false,
         instrumentsAttempted:0,instrumentsEvaluated:[],
-        instrumentsConfigured:SCAN_PAIRS.length,instrumentsSkipped:[],
+        instrumentsConfigured:ALEXG_LIVE_PAIRS.length,instrumentsSkipped:[],
         errorText:'previous poll still running after 60s; this tick was skipped, not missed'}});
     }catch(e){ /* observation must never affect the trading path */ }
     return;
@@ -6477,7 +6512,7 @@ async function alexGLivePollTick(){
     // computed from wall-clock time (H1 candles close on the UTC hour), not by
     // fetching candles just to check, so a poll with nothing new is essentially free.
     const currentH1Boundary=Math.floor(Date.now()/3600000)*3600000;
-    for(const pair of SCAN_PAIRS){
+    for(const pair of ALEXG_LIVE_PAIRS){
       const oPair=pair.replace('/','_');
       const lastEval=(alexGLastEvaluatedCloseTime[oPair]&&alexGLastEvaluatedCloseTime[oPair].H1)||0;
       // MOGO-021 cursor sanity -- DETECTION ONLY, deliberately fail-CLOSED.
@@ -6565,7 +6600,7 @@ async function alexGLivePollTick(){
       const __obsAccounted={};
       __obsEvaluated.forEach(function(p){ __obsAccounted[p]=1; });
       __obsSkipped.forEach(function(x){ if(x&&x.pair) __obsAccounted[x.pair]=1; });
-      SCAN_PAIRS.forEach(function(pair){
+      ALEXG_LIVE_PAIRS.forEach(function(pair){
         const oPair=pair.replace('/','_');
         if(!__obsAccounted[oPair]) __obsSkipped.push({pair:oPair,reason:'NOT_REACHED_THIS_TICK',
           lastEvaluatedH1:null,currentH1Boundary:null,cursorAheadOfClock:false,incompleteTimeframes:null});
@@ -6576,7 +6611,7 @@ async function alexGLivePollTick(){
         poll:{tickId:__scanId,startedAt:__obsStartedAt,finishedAt:new Date().toISOString(),
           outcome:__obsOutcome,tradingEnabled:!!alexGAutoTrading.enabled,evaluationAdvanced:__obsAdvanced,
           instrumentsAttempted:__obsAttempted.length,instrumentsEvaluated:__obsEvaluated,
-          instrumentsConfigured:SCAN_PAIRS.length,instrumentsSkipped:__obsSkipped,
+          instrumentsConfigured:ALEXG_LIVE_PAIRS.length,instrumentsSkipped:__obsSkipped,
           errorText:__obsError},
         // The status ledger the protected recorder already produced, recorded verbatim. Duplicate
         // protection means only genuinely new observations are written; the hourly re-creation
@@ -14452,7 +14487,7 @@ function computeBaselineRegistry(){
     riskFingerprint:sharedRisk.hash,
     configurationFingerprint:alexConfigHash,
     dataContractVersion:null,
-    instruments:SCAN_PAIRS.slice(),
+    instruments:ALEXG_LIVE_PAIRS.slice(),
     timeframes:['H1','H4','D','W'],
     sessionRules:'Session recorded per trade as metadata only (alexGComputeSessionMetadata) -- does not currently gate live-trade eligibility',
     riskModel:'Configured percent-of-balance risk per trade (RULES_ALEXG.config.riskPercent='+RULES_ALEXG.config.riskPercent+'%)',
@@ -19575,7 +19610,7 @@ function renderJournal(){
   if(!list) return;
   const pairSel=document.getElementById('jf-pair');
   if(pairSel&&pairSel.options.length<=1){
-    pairSel.innerHTML='<option value="All">All pairs</option>'+SCAN_PAIRS.map(p=>`<option>${p.replace('/','_')}</option>`).join('');
+    pairSel.innerHTML='<option value="All">All pairs</option>'+ALEXG_LIVE_PAIRS.map(p=>`<option>${p.replace('/','_')}</option>`).join('');
   }
   const records=getFilteredJournalRecords(journalFilters);
   // v12.15.0 TRADE INTEGRITY: the SUMMARY excludes quarantined records; the LIST below still

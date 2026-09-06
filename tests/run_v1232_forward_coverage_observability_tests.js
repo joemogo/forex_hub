@@ -171,6 +171,7 @@ const wrapped = new Function('g',
   'g.emitDecisionEvent=emitDecisionEvent;' +
   'g.decisionEventLog=function(){return decisionEventLog;};' +
   'g.SCAN_PAIRS=SCAN_PAIRS;' +
+  'g.ALEXG_LIVE_PAIRS=ALEXG_LIVE_PAIRS;' +
   'g.setCursor=function(p,v){ if(!alexGLastEvaluatedCloseTime[p]) alexGLastEvaluatedCloseTime[p]={}; alexGLastEvaluatedCloseTime[p].H1=v; };' +
   'g.clearCursors=function(){ alexGLastEvaluatedCloseTime={}; };' +
   'g.buildPoll=function(o){ return evidenceBuildPollObservation(o); };' +
@@ -203,37 +204,37 @@ const wrapped = new Function('g',
   '  const cfg=RULES_ALEXG.config.maxLiveSignalAgeMinutes;\n' +
   '  g.record("COVERAGE-10","staleness thresholds unchanged by this fix",\n' +
   '    cfg.H1===60&&cfg.H4===240&&cfg.D===1440&&cfg.W===10080,JSON.stringify(cfg));\n' +
-  '  g.record("COVERAGE-11","all 12 instruments still configured",SCAN_PAIRS.length===12,"len="+SCAN_PAIRS.length);\n' +
+  '  g.record("COVERAGE-11","the live instrument set is non-empty and is what the loop iterates",ALEXG_LIVE_PAIRS.length>0&&ALEXG_LIVE_PAIRS.length>=SCAN_PAIRS.length,"live="+ALEXG_LIVE_PAIRS.length+" scanned="+SCAN_PAIRS.length);\n' +
   '  g.setFetchScript([]);\n' +
   '  cfg.key="fixture"; cfg.accountId="acct"; cfg.env="practice";\n' +
   '  alexGAutoTrading.enabled=true; alexGAutoTrading.activatedAt=g.now()-86400000;\n' +
   '  alexGLastEvaluatedCloseTime={}; alexGZoneState={}; alexGSetupState=[]; alexGResetLiveDecisionState(); alexGLiveSetupStatuses=[];\n' +
   '  await alexGLivePollTick();\n' +
-  '  const covered=SCAN_PAIRS.map(function(p){return p.replace("/","_");})\n' +
+  '  const covered=ALEXG_LIVE_PAIRS.map(function(p){return p.replace("/","_");})\n' +
   '    .filter(function(op){ return alexGLastEvaluatedCloseTime[op]&&alexGLastEvaluatedCloseTime[op].H1!=null; });\n' +
-  '  g.record("LOOP-1","one tick evaluates ALL 12 configured instruments",covered.length===12,"covered="+covered.length+"/12 missing="+SCAN_PAIRS.map(function(p){return p.replace("/","_");}).filter(function(op){return covered.indexOf(op)<0;}).join(","));\n' +
+  '  g.record("LOOP-1","one tick evaluates EVERY configured instrument",covered.length===ALEXG_LIVE_PAIRS.length,"covered="+covered.length+"/"+ALEXG_LIVE_PAIRS.length+" missing="+ALEXG_LIVE_PAIRS.map(function(p){return p.replace("/","_");}).filter(function(op){return covered.indexOf(op)<0;}).join(","));\n' +
   '  const bnd=Math.floor(g.now()/3600000)*3600000;\n' +
   '  const ahead=covered.filter(function(op){ return alexGLastEvaluatedCloseTime[op].H1>bnd; });\n' +
   '  g.record("LOOP-2","no instrument cursor lands AHEAD of the current H1 boundary (starvation condition)",ahead.length===0,"ahead="+ahead.join(","));\n' +
   '  const atBnd=covered.filter(function(op){ return alexGLastEvaluatedCloseTime[op].H1===bnd; });\n' +
-  '  g.record("LOOP-3","cursors land exactly ON the boundary (evaluate once per H1, as designed)",atBnd.length===12,"atBoundary="+atBnd.length+"/12");\n' +
+  '  g.record("LOOP-3","cursors land exactly ON the boundary (evaluate once per H1, as designed)",atBnd.length===ALEXG_LIVE_PAIRS.length,"atBoundary="+atBnd.length+"/"+ALEXG_LIVE_PAIRS.length);\n' +
   '  g.advanceHour();\n' +
   '  const before2=JSON.stringify(alexGLastEvaluatedCloseTime);\n' +
   '  await alexGLivePollTick();\n' +
   '  const bnd2=Math.floor(g.now()/3600000)*3600000;\n' +
-  '  const covered2=SCAN_PAIRS.map(function(p){return p.replace("/","_");})\n' +
+  '  const covered2=ALEXG_LIVE_PAIRS.map(function(p){return p.replace("/","_");})\n' +
   '    .filter(function(op){ return alexGLastEvaluatedCloseTime[op]&&alexGLastEvaluatedCloseTime[op].H1===bnd2; });\n' +
-  '  g.record("LOOP-4","after one hour ALL 12 re-evaluate (no permanent starvation)",covered2.length===12,"reEvaluated="+covered2.length+"/12");\n' +
+  '  g.record("LOOP-4","after one hour EVERY instrument re-evaluates (no permanent starvation)",covered2.length===ALEXG_LIVE_PAIRS.length,"reEvaluated="+covered2.length+"/"+ALEXG_LIVE_PAIRS.length);\n' +
   '  await alexGLivePollTick();\n' +
-  '  const covered3=SCAN_PAIRS.map(function(p){return p.replace("/","_");})\n' +
+  '  const covered3=ALEXG_LIVE_PAIRS.map(function(p){return p.replace("/","_");})\n' +
   '    .filter(function(op){ return alexGLastEvaluatedCloseTime[op]&&alexGLastEvaluatedCloseTime[op].H1===bnd2; });\n' +
-  '  g.record("LOOP-5","a second tick in the SAME hour re-evaluates nothing (cadence gate holds)",covered3.length===12,"stable="+covered3.length+"/12");\n' +
+  '  g.record("LOOP-5","a second tick in the SAME hour re-evaluates nothing (cadence gate holds)",covered3.length===ALEXG_LIVE_PAIRS.length,"stable="+covered3.length+"/"+ALEXG_LIVE_PAIRS.length);\n' +
   '  g.advanceHour(); g.setBadPair("EUR_USD"); alexGLastEvaluatedCloseTime={};\n' +
   '  await alexGLivePollTick();\n' +
   '  const bnd3=Math.floor(g.now()/3600000)*3600000;\n' +
-  '  const ok3=SCAN_PAIRS.map(function(p){return p.replace("/","_");})\n' +
+  '  const ok3=ALEXG_LIVE_PAIRS.map(function(p){return p.replace("/","_");})\n' +
   '    .filter(function(op){ return alexGLastEvaluatedCloseTime[op]&&alexGLastEvaluatedCloseTime[op].H1===bnd3; });\n' +
-  '  g.record("RESIL-1","one instrument with short data does NOT poison the other 11",ok3.length===11,"healthy="+ok3.length+"/11");\n' +
+  '  g.record("RESIL-1","one instrument with short data does NOT poison the others",ok3.length===ALEXG_LIVE_PAIRS.length-1,"healthy="+ok3.length+"/"+(ALEXG_LIVE_PAIRS.length-1));\n' +
   '  g.record("RESIL-2","the failing instrument sets no cursor (so it is retried, never permanently starved)",!alexGLastEvaluatedCloseTime["EUR_USD"],"cursor unset");\n' +
   '  const errs=decisionEventLog.filter(function(e){return e&&e.reasonCode==="DATA_INSUFFICIENT_HISTORY"&&e.pair==="EUR_USD";});\n' +
   '  g.record("RESIL-3","the failure is recorded with the instrument named",errs.length>0,"events="+errs.length);\n' +
@@ -262,9 +263,9 @@ const wrapped = new Function('g',
   '    if(rec) skips++; if(rec&&rec.cursorAheadOfClock===true) flagged++; }\n' +
   '  g.record("STARVE-1","an impossible cursor holds the instrument OUT of live evaluation (fail-closed)",\n' +
   '    seen===0&&skips===8,"evaluated "+seen+"/8, skipped "+skips+"/8 -- untrusted timestamps are not traded on");\n' +
-  '  const others=SCAN_PAIRS.map(function(p){return p.replace("/","_");}).filter(function(op){return op!=="EUR_USD";})\n' +
+  '  const others=ALEXG_LIVE_PAIRS.map(function(p){return p.replace("/","_");}).filter(function(op){return op!=="EUR_USD";})\n' +
   '    .filter(function(op){ return alexGLastEvaluatedCloseTime[op]&&alexGLastEvaluatedCloseTime[op].H1===Math.floor(g.now()/3600000)*3600000; });\n' +
-  '  g.record("STARVE-2","the other 11 remain healthy throughout -- the condition is per-instrument",others.length===11,"healthy="+others.length+"/11");\n' +
+  '  g.record("STARVE-2","the others remain healthy throughout -- the condition is per-instrument",others.length===ALEXG_LIVE_PAIRS.length-1,"healthy="+others.length+"/"+(ALEXG_LIVE_PAIRS.length-1));\n' +
   '  g.record("STARVE-3","the flag SURVIVES the durable builder -- the ledger separates a normal skip from an impossible cursor",\n' +
   '    flagged===8,"flagged "+flagged+"/8 records built by evidenceBuildPollObservation");\n' +
   '  const cur=decisionEventLog.filter(function(e){return e&&e.reasonCode==="STATE_CURSOR_AHEAD_OF_CLOCK";});\n' +
@@ -316,30 +317,41 @@ const wrapped = new Function('g',
   // analysis built on it therefore under-reports the pairs at the front of scan order, which is
   // exactly what produced the (false) "EUR_USD is starved" conclusion in MOGO-020.
   '  alexGResetLiveDecisionState();\n' +
-  '  const ORDER=SCAN_PAIRS.map(function(p){return p.replace("/","_");});\n' +
+  '  const ORDER=ALEXG_LIVE_PAIRS.map(function(p){return p.replace("/","_");});\n' +
   '  let sid=0;\n' +
   '  for(const op of ORDER){ for(let k=0;k<32;k++){ sid++;\n' +
   '    alexGRecordLiveSetupStatus({signalId:"S|"+sid,pair:op,timeframe:"H1",status:"IGNORED"}); } }\n' +
   '  const ringPairs=alexGLiveSetupStatuses.map(function(e){return e.pair;});\n' +
-  '  g.record("BIAS-1","one cycle of setups OVERFLOWS the 300-entry status ring",\n' +
-  '    sid===384&&alexGLiveSetupStatuses.length===300,"recorded "+sid+" statuses, ring holds "+alexGLiveSetupStatuses.length);\n' +
+  // The cap is OBSERVED from the ring itself rather than restated as 300, and the eviction
+  // arithmetic is derived from it. v12.55.0 widened ALEX from 12 to 28 live instruments, which
+  // turned every literal here (384 statuses, ORDER[11], 2 invisible pairs) into a stale snapshot
+  // of a 12-pair world -- exactly the count-pinning this repo has been bitten by repeatedly. The
+  // BIAS these fixtures exist to prove is unchanged and, at 28 pairs, strictly worse.
+  '  const CAP=alexGLiveSetupStatuses.length, PER=32, TOTAL=ORDER.length*PER;\n' +
+  '  const survivingPairs=Math.ceil(CAP/PER), expectInvisible=ORDER.length-survivingPairs;\n' +
+  '  g.record("BIAS-1","one cycle of setups OVERFLOWS the status ring",\n' +
+  '    sid===TOTAL&&CAP<TOTAL&&expectInvisible>0,\n' +
+  '    "recorded "+sid+" statuses across "+ORDER.length+" pairs, ring holds "+CAP);\n' +
   '  g.record("BIAS-2","the ring evicts the pairs evaluated FIRST -- scan order decides who disappears",\n' +
-  '    ringPairs.indexOf(ORDER[0])===-1&&ringPairs.indexOf(ORDER[1])===-1&&ringPairs.indexOf(ORDER[11])!==-1,\n' +
-  '    ORDER[0]+" and "+ORDER[1]+" absent; "+ORDER[11]+" present -- entries="+ringPairs.length);\n' +
+  '    ringPairs.indexOf(ORDER[0])===-1&&ringPairs.indexOf(ORDER[1])===-1&&\n' +
+  '    ringPairs.indexOf(ORDER[ORDER.length-1])!==-1,\n' +
+  '    ORDER[0]+" and "+ORDER[1]+" absent; "+ORDER[ORDER.length-1]+" present -- entries="+ringPairs.length);\n' +
   // Names the EXPECTED pairs. An earlier version asserted only "some pair is missing", which is
   // tautologically true whenever 384 entries overflow a 300 cap in ANY eviction direction -- it
   // survived an unshift->push mutation unchanged and therefore proved nothing.
   '  const invisible=ORDER.filter(function(op){return ringPairs.indexOf(op)===-1;});\n' +
   '  g.record("BIAS-3","and the pairs it hides are exactly the FRONT of scan order, not an arbitrary pair",\n' +
-  '    invisible.length===2&&invisible[0]===ORDER[0]&&invisible[1]===ORDER[1],\n' +
-  '    "invisible in the ring: "+invisible.join(",")+" (expected "+ORDER[0]+","+ORDER[1]+")");\n' +
+  '    invisible.length===expectInvisible&&\n' +
+  '    invisible.every(function(op,i){ return op===ORDER[i]; }),\n' +
+  '    "invisible in the ring: "+invisible.length+" pairs, front-of-order="+\n' +
+  '    invisible.every(function(op,i){ return op===ORDER[i]; })+" (expected "+expectInvisible+" from the front)");\n' +
   // The remediation: instrumentsEvaluated/instrumentsConfigured are built from the poll loop
   // itself, not from the status ring, so they are immune to this truncation.
   '  alexGLastEvaluatedCloseTime={}; g.advanceHour();\n' +
   '  await alexGLivePollTick();\n' +
   '  const obs=g.lastObs();\n' +
   '  g.record("BIAS-4","the DURABLE coverage record coming from the poll loop is NOT subject to that bias",\n' +
-  '    (obs.instrumentsEvaluated||[]).length===SCAN_PAIRS.length&&obs.instrumentsConfigured===SCAN_PAIRS.length,\n' +
+  '    (obs.instrumentsEvaluated||[]).length===ALEXG_LIVE_PAIRS.length&&obs.instrumentsConfigured===ALEXG_LIVE_PAIRS.length,\n' +
   '    "instrumentsEvaluated="+((obs.instrumentsEvaluated||[]).length)+"/"+obs.instrumentsConfigured);\n' +
   '  g.record("BIAS-5","and it names EVERY configured instrument, including the ones the ring evicted",\n' +
   '    ORDER.every(function(op){ return (obs.instrumentsEvaluated||[]).indexOf(op)!==-1; }),\n' +
@@ -361,7 +373,7 @@ const wrapped = new Function('g',
   '  const survived=cycle("second");\n' +
   '  const anySurvivor=ORDER.filter(function(op){ return survived[op]===32; });\n' +
   '  g.record("REDEC-1","NO instrument keeps a full cycle of decisions to its next turn -- the ring is too small",\n' +
-  '    anySurvivor.length===0,"pairs retaining all 32 prior decisions: "+anySurvivor.length+"/12");\n' +
+  '    anySurvivor.length===0,"pairs retaining all 32 prior decisions: "+anySurvivor.length+"/"+ALEXG_LIVE_PAIRS.length);\n' +
   '  g.record("REDEC-2","the DISPLAY ring alone could never uphold the PERMANENT contract for any pair -- which is why the decided-authority exists (DECIDED-*)",\n' +
   '    ORDER.every(function(op){ return survived[op]<32; }),\n' +
   '    "retained per pair: "+ORDER.map(function(op){return survived[op];}).join(","));\n' +
@@ -726,11 +738,11 @@ const wrapped = new Function('g',
   '    insSkip.reason==="DATA_INSUFFICIENT_HISTORY",\n' +
   '    "skip reason="+String(insSkip&&insSkip.reason)+"; EUR_USD absent from instrumentsEvaluated");\n' +
   '  g.record("INSUF-2","and the ledger still accounts for every configured instrument exactly once",\n' +
-  '    (insObs.instrumentsEvaluated||[]).length===SCAN_PAIRS.length-1&&\n' +
-  '    insObs.instrumentsAttempted===SCAN_PAIRS.length&&\n' +
-  '    (insObs.instrumentsEvaluated||[]).length+(insObs.instrumentsSkipped||[]).length===SCAN_PAIRS.length,\n' +
+  '    (insObs.instrumentsEvaluated||[]).length===ALEXG_LIVE_PAIRS.length-1&&\n' +
+  '    insObs.instrumentsAttempted===ALEXG_LIVE_PAIRS.length&&\n' +
+  '    (insObs.instrumentsEvaluated||[]).length+(insObs.instrumentsSkipped||[]).length===ALEXG_LIVE_PAIRS.length,\n' +
   '    "attempted="+insObs.instrumentsAttempted+" evaluated="+((insObs.instrumentsEvaluated)||[]).length+\n' +
-  '    " skipped="+((insObs.instrumentsSkipped)||[]).length+" configured="+SCAN_PAIRS.length);\n' +
+  '    " skipped="+((insObs.instrumentsSkipped)||[]).length+" configured="+ALEXG_LIVE_PAIRS.length);\n' +
   '  g.setBadPair(null);\n' +
   // ══ MOGO-021 -- ALEX PIPELINE OBSERVATION ATTRIBUTION UNDER OVERLAPPING TICKS ══
   // alexGLivePollTick has no re-entrancy guard and is driven by setInterval, so two ticks can

@@ -4,7 +4,7 @@
 // tests/v126_phase2c_wave1_tests.js already proves ALEX's full candidate lifecycle end-to-end and
 // opens a REAL paper position -- but it enters at alexGEvaluatePairForLiveSetups(). Nothing drove
 // alexGLivePollTick(), the actual production entry point, all the way to an opened position. That
-// is where the cursor gate, the 12-instrument loop, position monitoring and the durable
+// is where the cursor gate, the live-instrument loop, position monitoring and the durable
 // observation ledger all interact with trade opening, and it was untested as a whole.
 //
 // Two further MOGO-021 areas had no coverage at all:
@@ -295,8 +295,8 @@ const wrapped=new Function('g', appCode + '\n' + 'return (async function(){\n' +
   '    /SUSPENDED/.test(String((alexGLiveSetupStatuses[0]||{}).status)),\n' +
   '    String((alexGLiveSetupStatuses[0]||{}).status));\n' +
   '  g.record("E2E-4","every configured instrument is still covered on that tick",\n' +
-  '    (g.lastObs().instrumentsEvaluated||[]).length===SCAN_PAIRS.length,\n' +
-  '    "instrumentsEvaluated="+((g.lastObs().instrumentsEvaluated)||[]).length+"/"+SCAN_PAIRS.length);\n' +
+  '    (g.lastObs().instrumentsEvaluated||[]).length===ALEXG_LIVE_PAIRS.length,\n' +
+  '    "instrumentsEvaluated="+((g.lastObs().instrumentsEvaluated)||[]).length+"/"+ALEXG_LIVE_PAIRS.length);\n' +
   '  g.record("E2E-5","the other eleven instruments honestly produced no setup of their own",\n' +
   '    alexGSetupState.filter(function(s){return s.pair!=="EUR_USD";}).length===0,\n' +
   '    "non-target setups="+alexGSetupState.filter(function(s){return s.pair!=="EUR_USD";}).length);\n' +
@@ -583,8 +583,8 @@ const wrapped=new Function('g', appCode + '\n' + 'return (async function(){\n' +
   '    "TRADE_OPEN_REQUESTED="+decisionEventLog.filter(function(e){return e.eventType==="TRADE_OPEN_REQUESTED";}).length+\n' +
   '    ", open=0, journal=0, scan still completed");\n' +
   '  g.record("E2E-16","and coverage is still recorded for every instrument on the failing tick",\n' +
-  '    (g.lastObs().instrumentsEvaluated||[]).length===SCAN_PAIRS.length,\n' +
-  '    "instrumentsEvaluated="+((g.lastObs().instrumentsEvaluated)||[]).length+"/"+SCAN_PAIRS.length);\n' +
+  '    (g.lastObs().instrumentsEvaluated||[]).length===ALEXG_LIVE_PAIRS.length,\n' +
+  '    "instrumentsEvaluated="+((g.lastObs().instrumentsEvaluated)||[]).length+"/"+ALEXG_LIVE_PAIRS.length);\n' +
   // ══ SIGNAL-IDENTITY DRIFT DETECTOR ══
   // Reproduces the production condition from report section 2.16: a setup already traded is
   // re-derived later under a DIFFERENT signalId because its zone re-anchored, at which point every
@@ -610,8 +610,8 @@ const wrapped=new Function('g', appCode + '\n' + 'return (async function(){\n' +
   '  await alexGLivePollTick();\n' +
   '  g.record("DRIFT-1b","NO false positive: re-evaluating a normally-traded setup reports no drift",\n' +
   '    decisionEventLog.filter(function(e){return e.reasonCode==="STATE_SIGNAL_IDENTITY_DRIFTED";}).length===0&&\n' +
-  '    (g.lastObs().instrumentsEvaluated||[]).length===SCAN_PAIRS.length&&alexGJournalEntries.length===1,\n' +
-  '    "0 drift events across "+((g.lastObs().instrumentsEvaluated)||[]).length+"/12 re-evaluated instruments, journal present");\n' +
+  '    (g.lastObs().instrumentsEvaluated||[]).length===ALEXG_LIVE_PAIRS.length&&alexGJournalEntries.length===1,\n' +
+  '    "0 drift events across "+((g.lastObs().instrumentsEvaluated)||[]).length+"/"+ALEXG_LIVE_PAIRS.length+" re-evaluated instruments, journal present");\n' +
   '  g.record("DRIFT-1","precondition: a real position exists to drift away from",!!traded,"tradeId="+(traded||{}).tradeId);\n' +
   // Close it, then re-anchor its stored identity exactly as a candle-window roll does: the zone
   // components change while pair/timeframe/setupType/reactionId/qualificationTimestamp do not.
@@ -645,15 +645,15 @@ const wrapped=new Function('g', appCode + '\n' + 'return (async function(){\n' +
   '    dpipe.length===1&&dpipe[0].stage==="IDENTITY_DRIFT"&&\n' +
   '    dpipe[0].sourceTradeId===alexGAccount.closedPositions[0].tradeId,\n' +
   '    "stage="+String(dpipe[0]&&dpipe[0].stage)+" sourceTradeId set="+!!(dpipe[0]&&dpipe[0].sourceTradeId));\n' +
-  // The cursor and status ring must be re-armed, or the second poll skips all 12 pairs at the
+  // The cursor and status ring must be re-armed, or the second poll skips all configured pairs at the
   // cadence gate and the detector never runs -- which made an earlier version of this fixture pass
   // even with the latch permanently disabled.
   '  alexGLastEvaluatedCloseTime={EUR_USD:{H1:t0+40*3600000}}; alexGResetLiveDecisionState();\n' +
   '  await alexGLivePollTick();\n' +
   '  g.record("DRIFT-5","it is reported ONCE per drifted identity, even though the setup is re-evaluated",\n' +
-  '    (g.lastObs().instrumentsEvaluated||[]).length===SCAN_PAIRS.length&&\n' +
+  '    (g.lastObs().instrumentsEvaluated||[]).length===ALEXG_LIVE_PAIRS.length&&\n' +
   '    decisionEventLog.filter(function(e){return e.reasonCode==="STATE_SIGNAL_IDENTITY_DRIFTED";}).length===1,\n' +
-  '    "re-evaluated "+((g.lastObs().instrumentsEvaluated)||[]).length+"/12 instruments, still 1 drift event");\n' +
+  '    "re-evaluated "+((g.lastObs().instrumentsEvaluated)||[]).length+"/"+ALEXG_LIVE_PAIRS.length+" instruments, still 1 drift event");\n' +
   // INVERTED BY MOGO-021 DECISIONS 2+3, exactly as this fixture always said it would be. It
   // previously asserted the guard MISS -- a second position on one economic setup, report section
   // 2.16 -- and was documented as "expected to invert when the governed fix lands, at which point
@@ -916,10 +916,10 @@ const wrapped=new Function('g', appCode + '\n' + 'return (async function(){\n' +
   '    "open="+alexGAccount.openPositions.length+" journal="+alexGJournalEntries.length);\n' +
   // The anti-over-blocking control, and it matters as much as the suppression fixtures: a gate that
   // blocks healthy data is a trading defect in the other direction.
-  '  g.record("MDC-2","ANTI-OVER-BLOCKING: healthy data suppresses NOTHING, on any of the twelve instruments",\n' +
-  '    suppressions().length===0&&(g.lastObs().instrumentsEvaluated||[]).length===SCAN_PAIRS.length&&\n' +
+  '  g.record("MDC-2","ANTI-OVER-BLOCKING: healthy data suppresses NOTHING, on any configured instrument",\n' +
+  '    suppressions().length===0&&(g.lastObs().instrumentsEvaluated||[]).length===ALEXG_LIVE_PAIRS.length&&\n' +
   '    alexGSetupState.filter(function(x){return x.pair==="EUR_USD";}).length===1,\n' +
-  '    "0 suppressions across "+((g.lastObs().instrumentsEvaluated)||[]).length+"/12 instruments, setup still derived");\n' +
+  '    "0 suppressions across "+((g.lastObs().instrumentsEvaluated)||[]).length+"/"+ALEXG_LIVE_PAIRS.length+" instruments, setup still derived");\n' +
   // ── A HEALTHY FULL-COUNT FETCH. 73 is fetchAlexGReplayDatasets' own W count for days=90, so this
   // is the real request being fully satisfied -- REACHED_COUNT rather than exhaustion -- reached
   // only BECAUSE the walk continued past a short first page.
@@ -1015,22 +1015,22 @@ const wrapped=new Function('g', appCode + '\n' + 'return (async function(){\n' +
   '  g.record("MDC-13","SCOPE: one incomplete instrument does not suppress the others -- EUR_USD still trades on that tick",\n' +
   '    iSup.length===1&&iSup[0].pair==="GBP_USD"&&alexGAccount.openPositions.length===1&&\n' +
   '    alexGAccount.openPositions[0].pair==="EUR_USD"&&\n' +
-  // MOGO-021: this asserted 12/12 EVALUATED while one instrument was suppressed -- which was only
+  // MOGO-021: this asserted all-evaluated while one instrument was suppressed -- which was only
   // ever true because the poll ledger counted an ATTEMPT as an evaluation. The ledger is now honest,
   // so the correct assertion is 11 evaluated + the suppressed one named in instrumentsSkipped, and
   // every configured instrument still accounted for. Scope is what this fixture is about, and scope
   // is still proved: the other eleven were unaffected and EUR_USD traded on the same tick.
-  '    (g.lastObs().instrumentsEvaluated||[]).length===SCAN_PAIRS.length-1&&\n' +
+  '    (g.lastObs().instrumentsEvaluated||[]).length===ALEXG_LIVE_PAIRS.length-1&&\n' +
   '    (g.lastObs().instrumentsEvaluated||[]).indexOf("GBP_USD")===-1&&\n' +
   '    (g.lastObs().instrumentsSkipped||[]).some(function(x){return x.pair==="GBP_USD";})&&\n' +
-  '    (g.lastObs().instrumentsEvaluated||[]).length+(g.lastObs().instrumentsSkipped||[]).length===SCAN_PAIRS.length,\n' +
+  '    (g.lastObs().instrumentsEvaluated||[]).length+(g.lastObs().instrumentsSkipped||[]).length===ALEXG_LIVE_PAIRS.length,\n' +
   '    "suppressed="+(iSup[0]||{}).pair+" while EUR_USD opened a position; "+\n' +
   '    ((g.lastObs().instrumentsEvaluated)||[]).length+" evaluated + "+\n' +
-  '    ((g.lastObs().instrumentsSkipped)||[]).length+" skipped = "+SCAN_PAIRS.length+" configured");\n' +
+  '    ((g.lastObs().instrumentsSkipped)||[]).length+" skipped = "+ALEXG_LIVE_PAIRS.length+" configured");\n' +
   // instrumentsAttempted is the DISPATCH list. It used to be derived from instrumentsEvaluated, so
   // the two were identical by construction and neither could ever reveal a suppressed instrument.
   '  g.record("MDC-13b","instrumentsAttempted counts the DISPATCH, so a suppressed instrument is visible rather than absorbed",\n' +
-  '    g.lastObs().instrumentsAttempted===SCAN_PAIRS.length&&\n' +
+  '    g.lastObs().instrumentsAttempted===ALEXG_LIVE_PAIRS.length&&\n' +
   '    g.lastObs().instrumentsAttempted>(g.lastObs().instrumentsEvaluated||[]).length,\n' +
   '    "attempted="+g.lastObs().instrumentsAttempted+" evaluated="+((g.lastObs().instrumentsEvaluated)||[]).length+\n' +
   '    " (a count derived from the evaluated list would have reported "+((g.lastObs().instrumentsEvaluated)||[]).length+")");\n' +
@@ -1234,11 +1234,11 @@ const wrapped=new Function('g', appCode + '\n' + 'return (async function(){\n' +
   '  g.record("THROW-2","the ledger reports that pair as EVALUATED, not skipped -- coverage must not contradict a trade record",\n' +
   '    (thrObs.instrumentsEvaluated||[]).indexOf("EUR_USD")!==-1&&\n' +
   '    !(thrObs.instrumentsSkipped||[]).some(function(x){return x.pair==="EUR_USD";})&&\n' +
-  '    (thrObs.instrumentsEvaluated||[]).length===SCAN_PAIRS.length,\n' +
-  '    "instrumentsEvaluated="+((thrObs.instrumentsEvaluated)||[]).length+"/"+SCAN_PAIRS.length+\n' +
+  '    (thrObs.instrumentsEvaluated||[]).length===ALEXG_LIVE_PAIRS.length,\n' +
+  '    "instrumentsEvaluated="+((thrObs.instrumentsEvaluated)||[]).length+"/"+ALEXG_LIVE_PAIRS.length+\n' +
   '    ", EUR_USD present and absent from instrumentsSkipped despite the throw");\n' +
-  '  g.record("THROW-3","and the scan itself is unaffected: the other eleven are still covered on that tick",\n' +
-  '    (thrObs.instrumentsSkipped||[]).length===0&&thrObs.instrumentsAttempted===SCAN_PAIRS.length&&\n' +
+  '  g.record("THROW-3","and the scan itself is unaffected: the others are still covered on that tick",\n' +
+  '    (thrObs.instrumentsSkipped||[]).length===0&&thrObs.instrumentsAttempted===ALEXG_LIVE_PAIRS.length&&\n' +
   '    decisionEventLog.some(function(e){return e.eventType==="SCAN_COMPLETED";}),\n' +
   '    "attempted="+thrObs.instrumentsAttempted+" skipped="+((thrObs.instrumentsSkipped)||[]).length+\n' +
   '    " -- the swallow-and-continue behaviour is unchanged, only the attribution is honest");\n' +
@@ -1335,10 +1335,10 @@ const wrapped=new Function('g', appCode + '\n' + 'return (async function(){\n' +
   '    __isoThrows===1&&isoErr.length===1&&__isoTickThrew===false,\n' +
   '    "throws="+__isoThrows+" recorded engine errors="+isoErr.length+" ["+String((isoErr[0]||{}).message).slice(0,46)+\n' +
   '    "], tick threw="+__isoTickThrew);\n' +
-  '  g.record("TICKISO-2","the tick still evaluates ALL TWELVE instruments and still reports outcome OK -- a repaint cannot cost a whole poll",\n' +
-  '    (isoObs.instrumentsEvaluated||[]).length===SCAN_PAIRS.length&&isoObs.outcome==="OK"&&\n' +
-  '    isoObs.instrumentsAttempted===SCAN_PAIRS.length,\n' +
-  '    "instrumentsEvaluated="+((isoObs.instrumentsEvaluated)||[]).length+"/"+SCAN_PAIRS.length+\n' +
+  '  g.record("TICKISO-2","the tick still evaluates EVERY configured instrument and still reports outcome OK -- a repaint cannot cost a whole poll",\n' +
+  '    (isoObs.instrumentsEvaluated||[]).length===ALEXG_LIVE_PAIRS.length&&isoObs.outcome==="OK"&&\n' +
+  '    isoObs.instrumentsAttempted===ALEXG_LIVE_PAIRS.length,\n' +
+  '    "instrumentsEvaluated="+((isoObs.instrumentsEvaluated)||[]).length+"/"+ALEXG_LIVE_PAIRS.length+\n' +
   '    " attempted="+isoObs.instrumentsAttempted+" outcome="+String(isoObs.outcome)+\n' +
   '    " (unwrapped, this tick aborted with 0 evaluated and outcome ERROR)");\n' +
   // ══ MOGO-022 -- A FAILING EXIT MONITOR MUST NOT BE INVISIBLE ═════════════════════════════
@@ -1365,11 +1365,11 @@ const wrapped=new Function('g', appCode + '\n' + 'return (async function(){\n' +
   '  const xmErr=alexGEngineErrors.filter(function(e){\n' +
   '    return /fixture exit-monitor fetch fault/.test(String(e&&e.message))\n' +
   '      &&e.stage==="alexGCheckLivePositions"; });\n' +
-  '  g.record("EXITERR-1","PRECONDITION: the exit monitor really threw for the open position, the tick did NOT abort, and all twelve instruments still evaluated",\n' +
+  '  g.record("EXITERR-1","PRECONDITION: the exit monitor really threw for the open position, the tick did NOT abort, and all configured instruments still evaluated",\n' +
   '    __xmCalls===1&&__xmTickThrew===false&&xmObs.outcome==="OK"&&\n' +
-  '    (xmObs.instrumentsEvaluated||[]).length===SCAN_PAIRS.length,\n' +
+  '    (xmObs.instrumentsEvaluated||[]).length===ALEXG_LIVE_PAIRS.length,\n' +
   '    "armed calls="+__xmCalls+" tick threw="+__xmTickThrew+" outcome="+String(xmObs.outcome)+\n' +
-  '    " evaluated="+((xmObs.instrumentsEvaluated)||[]).length+"/"+SCAN_PAIRS.length);\n' +
+  '    " evaluated="+((xmObs.instrumentsEvaluated)||[]).length+"/"+ALEXG_LIVE_PAIRS.length);\n' +
   '  g.record("EXITERR-2","the swallowed exit-monitor failure is RECORDED against the position that failed -- with the bare catch this was ZERO and the failure left no trace in any durable channel",\n' +
   '    xmErr.length===1&&xmErr[0].tradeId==="ISO-FIXTURE-1"&&xmErr[0].pair==="EUR_USD",\n' +
   '    "recorded="+xmErr.length+" tradeId="+String((xmErr[0]||{}).tradeId)+\n' +
@@ -1438,7 +1438,7 @@ const wrapped=new Function('g', appCode + '\n' + 'return (async function(){\n' +
 
   // ══ MOGO-021 -- EVERY CONFIGURED INSTRUMENT ACCOUNTED FOR ON EVERY OUTCOME PATH ═══════════
   // __obsSkipped is only pushed from inside the pair loop, so anything throwing BEFORE or DURING it
-  // left instrumentsSkipped EMPTY beside instrumentsConfigured:12 -- 0 of 12 accounted for, the same
+  // left instrumentsSkipped EMPTY beside instrumentsConfigured -- none accounted for, the same
   // unanswerable-coverage asymmetry that left the EUR_USD question open for four investigations.
   // The fault is injected at saveAlexG, which alexGCheckLivePositions calls OUTSIDE every try and
   // BEFORE the pair loop is ever reached: a persistence failure aborting the tick outward, which is
@@ -1457,11 +1457,11 @@ const wrapped=new Function('g', appCode + '\n' + 'return (async function(){\n' +
   '    " errorText=["+String(ledObs.errorText).slice(0,46)+"]");\n' +
   '  const ledSk=ledObs.instrumentsSkipped||[];\n' +
   '  g.record("LEDGER-2","EVERY configured instrument is still accounted for -- evaluated + skipped equals instrumentsConfigured, and the unreached ones are NAMED",\n' +
-  '    ledObs.instrumentsConfigured===SCAN_PAIRS.length&&\n' +
+  '    ledObs.instrumentsConfigured===ALEXG_LIVE_PAIRS.length&&\n' +
   '    (ledObs.instrumentsEvaluated||[]).length+ledSk.length===ledObs.instrumentsConfigured&&\n' +
-  '    ledSk.length===SCAN_PAIRS.length&&\n' +
-  '    ledSk.filter(function(x){return x.reason==="NOT_REACHED_THIS_TICK";}).length===SCAN_PAIRS.length&&\n' +
-  '    SCAN_PAIRS.every(function(p){ return ledSk.some(function(x){ return x.pair===p.replace("/","_"); }); }),\n' +
+  '    ledSk.length===ALEXG_LIVE_PAIRS.length&&\n' +
+  '    ledSk.filter(function(x){return x.reason==="NOT_REACHED_THIS_TICK";}).length===ALEXG_LIVE_PAIRS.length&&\n' +
+  '    ALEXG_LIVE_PAIRS.every(function(p){ return ledSk.some(function(x){ return x.pair===p.replace("/","_"); }); }),\n' +
   '    "configured="+ledObs.instrumentsConfigured+" evaluated="+((ledObs.instrumentsEvaluated)||[]).length+\n' +
   '    " skipped="+ledSk.length+" all NOT_REACHED_THIS_TICK, one row per configured instrument"+\n' +
   '    " (without the accounting block this read 0 of "+ledObs.instrumentsConfigured+")");\n' +
@@ -1506,18 +1506,18 @@ const wrapped=new Function('g', appCode + '\n' + 'return (async function(){\n' +
   '    __driftInjected===__driftControl,\n' +
   '    "control="+__driftControl+" injected="+__driftInjected);\n' +
   // (2) The instrument-accounting block in the tick's finally. Injected by overriding
-  // SCAN_PAIRS.forEach -- which the accounting block calls and nothing else between the injection
+  // ALEXG_LIVE_PAIRS.forEach -- which the accounting block calls and nothing else between the injection
   // and the finally does -- from INSIDE the saveAlexG fault, so the override window is the abort
   // itself. If this catch rethrew, the accounting failure would both replace the real error on its
   // way out and prevent the ledger call that follows it from ever running.
   '  fullReset(); isoOpenPosition();\n' +
-  '  const __isoForEach=SCAN_PAIRS.forEach, __isoSave2=saveAlexG; let __accHits=0;\n' +
+  '  const __isoForEach=ALEXG_LIVE_PAIRS.forEach, __isoSave2=saveAlexG; let __accHits=0;\n' +
   '  saveAlexG=function(){\n' +
-  '    SCAN_PAIRS.forEach=function(){ __accHits++; throw new Error("fixture accounting fault"); };\n' +
+  '    ALEXG_LIVE_PAIRS.forEach=function(){ __accHits++; throw new Error("fixture accounting fault"); };\n' +
   '    throw new Error("fixture persistence fault before the pair loop"); };\n' +
   '  let __accErr=null;\n' +
   '  try{ await alexGLivePollTick(); }catch(e){ __accErr=String(e&&e.message); }\n' +
-  '  SCAN_PAIRS.forEach=__isoForEach; saveAlexG=__isoSave2;\n' +
+  '  ALEXG_LIVE_PAIRS.forEach=__isoForEach; saveAlexG=__isoSave2;\n' +
   '  const accObs=g.lastObs();\n' +
   '  g.record("OBSISO-3","a throwing ACCOUNTING block neither replaces the real error nor costs the poll record it precedes",\n' +
   '    __accHits===1&&/fixture persistence fault/.test(String(__accErr))&&\n' +

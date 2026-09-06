@@ -76,6 +76,7 @@ const wrapped = new Function('g',
   appCode + '\n' + testCode + '\n' +
   // -- Baseline Registry functions under test (real, unmodified) --
   'g.computeBaselineRegistry=computeBaselineRegistry;' +
+  'g.SCAN_PAIRS=SCAN_PAIRS;g.ALEXG_LIVE_PAIRS=ALEXG_LIVE_PAIRS;' +
   'g.getPersistedBaselineRegistry=getPersistedBaselineRegistry;' +
   'g.lockBaselineRegistry=lockBaselineRegistry;' +
   'g.compareBaselineEntry=compareBaselineEntry;' +
