@@ -2212,9 +2212,10 @@ const ALL_PAIRS=[
 // Bump by 1.0 for a major update (new feature/tab), by 0.1 for a small patch/fix.
 // This shows in the header next to the logo and on the Diagnostics tab, so you can
 // glance at the live site and instantly confirm which build actually deployed.
-const APP_VERSION='12.56.0';
+const APP_VERSION='12.57.0';
 const APP_VERSION_DATE='04 Sep 2026';
 const APP_VERSION_LOG=[
+  '12.57.0 - THE SIDEBAR NOW MEANS ONE THING, AND SAYS WHERE ITS INPUTS CAME FROM (display and sweep control flow only; zero protected-function and zero protected-constant drift; no rule, weight, score, threshold, gate, sizing or execution change). Five defects, none of them scoring. ONE: THE SWEEP FOLLOWED THE CHART. scanPair opened with const sweepTf=activeTf, so the pair list scored whichever timeframe the operator happened to be viewing -- clicking M15 to Daily silently changed what every percentage in the list MEANT, two pairs were not comparable unless swept on the same timeframe, a score could not be compared against itself an hour earlier, and an alert raised from a Daily sweep read exactly like an M15 one. The file already said so at the setTf call site. The sweep is now fixed to a new SWEEP_TIMEFRAME constant set to M15, the SAME timeframe evaluateLiveTrigger fetches, so the number in the sidebar finally refers to the thing that can actually trade. VERIFIED DISPLAY-ONLY BEFORE CHANGING IT, and fixture TF-3 pins it: checkAutoTrades never reads pairData[].conf -- it filters on scanData bucket and then re-evaluates M15 itself -- so this changes what is shown and what alerts, never what trades. setTf no longer calls scanAll: with the sweep decoupled, rescoring all 35 instruments on a VIEWING action was wasted network and, because scanAll has no re-entrancy guard, a reliable way to start a second sweep on top of the running one. renderPairList now compares against SWEEP_TIMEFRAME rather than activeTf, or a chart on H4 would flag all 35 rows as other-timeframe; the mismatch branch is KEPT because a record persisted before this release still carries a timeframe that no longer matches. TWO: THE MSB LABEL STATED THE OPPOSITE OF THE TRUTH. The eligibility row read informational only -- not scored or gated, for a component scoreConfluence adds WEIGHTS.msb points for, into the very total ALERT_THRESHOLD gates on. The scoring was correct and is unchanged; only the claim about it was wrong. It now reports the real weight and threshold read from the protected constants rather than hardcoded, so it cannot drift. THREE: DOJI IS BADGED LIKE A CONFIRMED PATTERN AND IS WORTH ZERO -- detectSignals reports it, WEIGHTS has no entry and scoreConfluence has no branch, so it never moves the number or the alert. Badges for unweighted patterns are now marked not scored, DERIVED from WEIGHTS rather than naming doji, so a pattern that later gains a weight stops being marked automatically. FOUR: TWO DIFFERENT THINGS WERE BOTH CALLED AOI. The 20-point AOI zone touch is a swing cluster on the swept timeframe; the purple band drawn on the chart and the level that sets the stop are D/W structure, fetched only for the pair being viewed or traded -- so a pair can score AOI zone touch where no D/W level exists at all. The badge now names the window and states plainly that it is neither the drawn band nor the stop level; applied at the display layer because detectSignals is protected and its label frozen. FIVE: BIAS PROVENANCE WAS INVISIBLE. The weekly/daily/4H values scoreConfluence reads have two writers -- runAutoTopDownScan, which genuinely fetches and analyses W/D/H4, and three dropdowns the operator fills in by hand -- and Auto Scan DEFAULTS TO OFF, so the common case is hand-typed, scored with no freshness check of any kind. The pair list now marks a score whose bias was not machine-derived, reusing jvmEligibilityIsCurrent, the SAME fail-closed predicate the trade path gates on, rather than inventing a second notion of freshness that could disagree with the one controlling money. The tooltip scopes the warning honestly: the auto-trade path ignores unverified bias entirely, so this affects what is SEEN, not what is traded. TESTING: v157 adds 25 fixtures. Mutation-verified, ten mutations each killed. BIAS-1 SURVIVED ITS FIRST MUTATION: it asserted the variable existed rather than that it was interpolated, so deleting the render site left the declaration behind and the fixture green -- the same hole v12.56.0 CEIL-2 had against a comment. Both it and a new CEIL-R now assert the interpolation that actually reaches the operator.',
   '12.56.0 - THE SCANNER SHOWED THREE THINGS THAT WERE NOT TRUE (display and sweep control flow only; zero protected-function and zero protected-constant drift; no rule, threshold, weight, score, gate, sizing or execution change). WEIGHTS, ALERT_THRESHOLD, scoreConfluence, bestConfluence, detectSignals and getBias are protected and byte-identical -- every defect here was the DISPLAY or the SWEEP claiming something the engine did not do. DEFECT 1, STALE SCORES: scanPair stamps a sweepToken on every record it writes and NOTHING READ IT -- it was demoted to a diagnostic. So when scanPair threw for an instrument its per-pair catch swallowed the error, pairData kept the PREVIOUS sweep entry, and pairEvaluationDisplayState -- which tested only whether a confluence existed at all -- returned EVALUATED with an empty tooltip. The sidebar then rendered a stale percentage in the normal colour with the normal LONG/SHORT tag, indistinguishable from one computed seconds earlier. A new STALE state is checked BEFORE the timeframe comparison, deliberately: a stale record carrying the SELECTED timeframe is the dangerous case because every other cue on screen looks correct. Freshness is measured against a new __jvmLastCompletedSweep, distinct from the start-of-sweep counter -- comparing against that would flag every not-yet-rescanned pair as stale for the whole duration of an in-flight sweep, which is normal and not a fault. Records with no sweepToken are never reclassified. DEFECT 2, THE SWEEP COULD ABORT: per-instrument isolation was added in MOGO-021 so one pair could not kill the sweep, and renderPairList was then called bare inside the same chunk loop, outside any try. A throw there aborts the for-of and every REMAINING CHUNK goes undispatched -- a render fault while drawing chunk 2 leaves 25 of 35 instruments unscanned while the sidebar keeps showing whatever it drew last, reintroducing at chunk granularity exactly the failure mode the catch removed at pair granularity. The render and the pre-loop status writes are now isolated the same way, and a render fault is RECORDED via recordPaperEngineError rather than swallowed. DEFECT 3, AN UNREACHABLE CEILING: scoreConfluence reads bias from scanData, which is written only for the 12 SCAN_PAIRS, while scanAll sweeps all 35 of ALL_PAIRS. For the other 23 the bias row is pushed as a zero-point miss on EVERY sweep unconditionally, so their score cannot exceed 100 minus WEIGHTS.bias3 -- yet it was rendered as a bare percentage against a 100-wide bar beside pairs that can reach 100, making a 40 on EUR/CAD read as the same strength as a 40 on EUR/USD. THE NUMBER IS DELIBERATELY NOT RESCALED: ALERT_THRESHOLD gates on the raw total, so a renormalised percentage would make the sidebar disagree with the trading gate -- the figure would look better while behaviour stayed identical, which is worse than the original defect. The ceiling is DISCLOSED beside the figure instead, derived from WEIGHTS rather than hardcoded, and availability is decided by the same input scoreConfluence reads rather than by testing list membership. TESTING: v156 adds 23 fixtures. Mutation-verified, eight mutations each killed: reverting the stale check kills STALE-1 and STALE-6; setting the completed marker before the loop kills SWEEP-5; un-guarding renderPairList kills SWEEP-1 and SWEEP-2; rescaling pct by the ceiling kills CEIL-3; hardcoding the ceiling kills CEIL-2; deriving availability from SCAN_PAIRS membership kills CEIL-5; removing the STALE tag kills CEIL-7. CEIL-2 SURVIVED ITS FIRST MUTATION and was rewritten: the regex matched the string 100-WEIGHTS.bias3 inside this release own explanatory COMMENT, so hardcoding the real assignment left it green -- it was testing prose, not code. Source assertions now run against a comment-stripped copy. That fixture would have shipped as a false positive without the mutation run.',
   '12.55.0 - ALEX NOW TRADES 28 INSTRUMENTS, AND NOTHING ELSE MOVED (zero protected-function and zero protected-constant drift; no strategy rule, gate, threshold, sizing or execution change). WHY: the forward trade rate was measured, not assumed, from the preserved evidence -- 31 LIVE_CLOSE ALEX trades over 41 days across 12 pairs, which is 0.44 trades per pair-week. Sample size, not strategy quality, is what blocks every open question in this project: the roughly 632 trades needed to separate a real edge from noise sit about 2.3 years away at 12 pairs. ALEX has no global concurrency cap -- its only limit is one open trade per pair plus timeframe -- so instrument count scales the forward rate close to linearly, and 28 pairs puts that near 1 year. THE CHANGE: a new ALEXG_LIVE_PAIRS constant, a strict superset of SCAN_PAIRS holding 28 liquid instruments, read by exactly seven sites -- the live poll loop, both poll-ledger instrumentsConfigured counts, the NOT_REACHED_THIS_TICK accounting sweep, the ALEX panel pair selector, the ALEX manifest instrument declaration, and the journal pair filter. WHAT DELIBERATELY DID NOT CHANGE, and why editing SCAN_PAIRS would have been the wrong fix: JVM auto-trades SCAN_PAIRS and is at a 0 percent win rate while losing money, so widening it would multiply a known loss and teach nothing; the manual Scan tab renders one operator-graded row per SCAN_PAIRS entry and more than doubling that table is a hand-entry chore nobody asked for; and every replay-all loop iterates SCAN_PAIRS, where widening buys nothing because replay is not sample-starved -- forward trading is. Fixtures PAIRS-11 through PAIRS-14 are negative controls pinning all three in place. EXCLUSIONS: the seven exotics (SGD, NOK, SEK, DKK, MXN, ZAR, TRY) stay out; entry spread already costs a measured 9.8 percent of risk on majors and is materially worse there, so they would add cost drag rather than information. HONEST LIMITS: the added crosses correlate with instruments ALEX already trades, so EFFECTIVE sample grows more slowly than the raw count and the 1-year figure is an optimistic bound, not a promise. Worst-case tick cost roughly doubles -- when every pair advances on the same H1 boundary the loop runs 28 sequential dataset fetches of 4 requests each, up from 12 -- and the existing 60-second re-entrancy guard fails safe by skipping and RECORDING the overlapping tick rather than trading on stale data. Tick duration is already in the poll ledger as startedAt and finishedAt, so this is measurable after deployment rather than a guess; the loop was left sequential deliberately, because making pair evaluation concurrent would disturb the synchronous claim invariant that prevents duplicate positions. PRICE DATA: no new fetch plumbing was needed -- the market sweep already covers all 35 ALL_PAIRS in chunks of 5, so the added 16 instruments already had pairData populated. TESTING: v155 adds 16 fixtures, all passing. Mutation-verified, five mutations each killed: reverting the poll loop to SCAN_PAIRS kills PAIRS-7; widening JVM eligibility kills PAIRS-11; adding an exotic kills PAIRS-2; a typo in a pair identifier kills PAIRS-3; and a duplicate top-level declaration kills PAIRS-15, which parses the entire page script -- the guard added after v12.54.0 shipped 28 green fixtures over a page that was dead on load.',
   '12.54.0 — ROUND-NUMBER LEVELS, WITH A CONTROL THAT CAN FALSIFY THEM (zero protected-function and zero protected-constant drift; 64/64 and 4/4 byte-identical). The one mechanism in the research with a published empirical basis: Osler, NY Fed Staff Report 125, examined 9,667 REAL orders and found take-profit orders cluster AT round numbers and stop-losses just beyond. psych_level_v1 trades that claim directly -- reach a round level, fail to close through it, fade the approach, stop placed BEYOND the level where the order study locates the stop cluster, 2R target so the R figures compare against every other arm. THE CONTROL IS THE POINT AND IS THE REASON THIS IS WORTH RUNNING: a mean-reversion rule can profit on ANY evenly spaced grid, so the identical rule also runs on a grid shifted half an interval -- levels as regular and as arbitrary as the round ones -- over THE SAME BARS in the same pass. If the round grid does not beat that control there is no round-number effect here, only a mean-reversion rule that would work anywhere. PSY-C3 is the fixture that matters: the two arms must be CAPABLE of differing on the same bars, or the experiment is theatre that always reports no effect. No verdict is computed anywhere -- the comparison returns two records and the gap between them, and whether a gap means anything is a judgement about sample size rather than arithmetic. REPLAY ONLY: seven named live entry points are asserted to reference nothing in it, and results are labelled REPLAY_RUN at the point of production. Look-ahead is structurally impossible -- the signal is handed a PREFIX and entry is the next bar OPEN -- and PSY-L1 proves it by truncation. A DEFECT THIS RELEASE CAUGHT IN ITSELF: 28 fixtures passed while the deployed page was DEAD ON LOAD with a duplicate top-level declaration, because every fixture extracts ONE function into a fresh realm and a per-function test cannot see a collision BETWEEN functions. PSY-P1 now parses the whole page script and is mutation-verified against exactly that failure; PSY-V1/V2 additionally check the arm produces a workable and BALANCED number of trades on a deterministic random walk, since a rule firing three times in two years answers nothing. 34 fixtures (PSY-G1..4, S1..6, L1..4, M1..2, C1..7, X1..5, P1..4, V1..2).',
@@ -8785,11 +8786,23 @@ function evaluateSetupFullBreakdownCore(input){
   gates.push({id:'confirmation',label:'Acceptable directional confirmation',category:'hard',
     pass:!!entrySig,observed:entrySig?entrySig.label:'no qualifying engulf',required:'fresh engulf matching bias'});
 
-  // 6. MSB -- informational observation only. Not a scored or gated component of the frozen
-  // strategy today (detectSignals() reports it, nothing currently reads it for scoring/gating).
+  // 6. MSB.
+  //
+  // v12.57.0 CORRECTION -- THIS ROW STATED THE OPPOSITE OF THE TRUTH. It read "informational
+  // observation only. Not a scored or gated component of the frozen strategy today (detectSignals()
+  // reports it, nothing currently reads it for scoring/gating)". scoreConfluence() adds
+  // WEIGHTS.msb to the total for a matching MSB, and that total is exactly what ALERT_THRESHOLD
+  // gates on and what the pair list ranks by. So MSB is a scored component worth a real share of
+  // the alert threshold, and the operator was being told it counted for nothing.
+  //
+  // The SCORING is correct and unchanged -- WEIGHTS and scoreConfluence are protected and
+  // byte-identical. Only this claim about the scoring was wrong. Stated as a proportion rather than
+  // a bare number so it cannot drift out of date if WEIGHTS is ever re-issued.
   const msbSig=signals.find(s=>s.type==='msb'&&s.dir===dir);
   gates.push({id:'msb_observation',label:'Market structure break (MSB)',category:'informational',
-    pass:!!msbSig,observed:msbSig?msbSig.label:'not observed',required:'informational only -- not scored or gated'});
+    pass:!!msbSig,observed:msbSig?msbSig.label:'not observed',
+    required:'not a hard gate, but IS scored: '+WEIGHTS.msb+' points of the confluence total '
+      +'(alert threshold '+ALERT_THRESHOLD+')'});
 
   // 7. R:R -- hard eligibility gate. Identical stop/target formula to evaluateLiveTrigger().
   let stop=null,target=null,ratio=null,riskPips=null,rewardPips=null;
@@ -11118,6 +11131,12 @@ function jvmRecordCandidateRejected(oPair,result){
 // two sweeps can overlap. Object-identity diffing proves only "someone rewrote this", and credited
 // an overlapping sweep's writes to the aborted one -- reproducing the exact over-reporting this
 // ledger exists to end. Purely additive: the token is read only by the observation code.
+// v12.57.0: the timeframe the pair-list sweep scores, decoupled from the chart. Must match the
+// timeframe the auto-trade path evaluates -- evaluateLiveTrigger() fetches M15 -- or the sidebar
+// goes back to describing something other than what can trade. Changing this changes what the list
+// shows and what alerts; it does not change what trades, because no trade path reads the swept
+// score (checkAutoTrades filters on scanData.bucket then re-evaluates M15 itself).
+const SWEEP_TIMEFRAME='M15';
 let __jvmSweepToken=0;
 // v12.56.0: the token of the last sweep that DISPATCHED EVERY CHUNK. Distinct from __jvmSweepToken,
 // which increments the instant a sweep starts -- comparing a record against THAT would flag every
@@ -11136,7 +11155,25 @@ async function scanPair(pair,sweepToken,sweepResults){
   // setTf() calls loadChart() and scanAll() unawaited and scanInterval fires on a timer, so a
   // sweep is routinely in flight when the operator clicks a timeframe. Captured ONCE, exactly as
   // loadChart now does. Display attribution only; no rule, gate or trading decision reads it.
-  const sweepTf=activeTf;
+  // v12.57.0: THE SWEEP NO LONGER FOLLOWS THE CHART.
+  //
+  // This was `const sweepTf=activeTf`, so the sidebar scored whichever timeframe the operator
+  // happened to be looking at. Clicking M15 -> Daily silently changed what every percentage in the
+  // list MEANT, and setTf() called scanAll() so the whole list was rescored on a VIEWING action.
+  // Two pairs could not be compared unless they were swept on the same timeframe, a score could not
+  // be compared against itself an hour earlier, and an alert raised from a Daily sweep read exactly
+  // like an M15 one -- the file said so itself.
+  //
+  // The list is now always scored on SWEEP_TIMEFRAME, which is the SAME timeframe the auto-trade
+  // path evaluates (evaluateLiveTrigger fetches M15), so the number in the sidebar finally refers
+  // to the thing that can actually trade. The chart keeps its own chart-local computation and says
+  // so in its own panel -- that surface is unchanged and is where a Daily read still belongs.
+  //
+  // DISPLAY AND ALERTING ONLY, verified before changing it: checkAutoTrades never reads
+  // pairData[].conf. It filters on scanData[pair].bucket and then calls evaluateLiveTrigger(), which
+  // does its own M15 fetch. No trade decision reads the swept score, so this changes what is shown
+  // and what alerts, never what trades.
+  const sweepTf=SWEEP_TIMEFRAME;
   // v12.40.0 (INC-006): take the DIAGNOSED form so a failed fetch can still say why it failed.
   // `candles` below is the identical value fetchCandles() would have returned -- array or null --
   // so every line after this point behaves exactly as before; only the reason is additionally kept.
@@ -11751,7 +11788,13 @@ function renderPairList(){
     const gradeHtml=sd&&sd.grade&&sd.grade!=='—'?`<span class="badge grade-${sd.grade}" style="font-size:9px;padding:1px 4px">${sd.grade}</span>`:'';
     // MOGO-024 TRACK C: activeTf is passed so a score computed on another timeframe is LABELLED
     // rather than silently attributed to the selected one.
-    const evalState=pairEvaluationDisplayState(p,d,activeTf);
+    // v12.57.0: compared against SWEEP_TIMEFRAME, not activeTf. The sidebar no longer claims to
+    // describe the chart, so a chart on H4 must not flag all 35 rows as other-timeframe -- that
+    // would be pure noise and would train the operator to ignore the marker. The check is KEPT
+    // rather than dropped because it still catches a record stamped with a different timeframe:
+    // anything persisted from before this release, or written by a sweep that ran while
+    // SWEEP_TIMEFRAME was a different value.
+    const evalState=pairEvaluationDisplayState(p,d,SWEEP_TIMEFRAME);
     const otherTf=evalState.code==='EVALUATED_ON_OTHER_TIMEFRAME';
     const isStale=evalState.code==='STALE';
     // v12.56.0: THE CEILING. scoreConfluence reads bias from scanData, which is written ONLY for the
@@ -11767,6 +11810,28 @@ function renderPairList(){
     // and untouched. The ceiling is DISCLOSED instead, read from WEIGHTS rather than hardcoded.
     const biasAvailable=!!(sd&&typeof getBias==='function'&&getBias(sd)!=='—');
     const confCeiling=biasAvailable?100:100-WEIGHTS.bias3;
+    // v12.57.0: WHERE THE BIAS CAME FROM. The weekly/daily/4H values scoreConfluence reads have two
+    // writers -- runAutoTopDownScan, which genuinely fetches and analyses W/D/H4, and three
+    // dropdowns the operator fills in by hand on the Scan tab. Auto Scan DEFAULTS TO OFF, so the
+    // common case is hand-typed, and scoreConfluence has no freshness check of any kind: a value
+    // entered weeks ago scores identically to one derived a minute ago.
+    //
+    // The trade path already fails closed on this -- htfSnapshotOf() returns null unless
+    // jvmEligibilityIsCurrent(), whose only writer is runAutoTopDownScan's success path -- so
+    // hand-typed bias can never authorise a trade. But it DOES colour the displayed score, the
+    // "Bias N/3" row and alerting, with nothing on screen saying so. Reusing that same predicate
+    // here rather than inventing a second notion of freshness: one definition, two surfaces.
+    const biasDerived=biasAvailable&&typeof jvmEligibilityIsCurrent==='function'
+      &&jvmEligibilityIsCurrent(sk);
+    const biasHtml=(biasAvailable&&!biasDerived&&!evalState.notEvaluated)
+      ? `<span style="color:var(--gold);opacity:.85;font-size:9px;font-weight:600" title="${escapeHtml(
+          'The '+WEIGHTS.bias3+'-point weekly/daily/4H bias in this score was NOT machine-derived by a '
+          +'current top-down scan — it is either typed by hand on the Scan tab or left over from an '
+          +'earlier scan that has since expired. Nothing checks how old it is before scoring it. '
+          +'Auto Scan (Scan tab) is what derives it from real W/D/H4 candles; it is off by default. '
+          +'Note the auto-TRADE path ignores unverified bias entirely, so this affects what you SEE, '
+          +'not what MOGO trades.')}"> ~bias</span>`
+      : '';
     const ceilingHtml=(!biasAvailable&&!evalState.notEvaluated&&pct)
       ? `<span style="color:var(--text2);font-size:9px;font-weight:600" title="${escapeHtml(
           'Maximum reachable score for this pair is '+confCeiling+', not 100. The '+WEIGHTS.bias3+
@@ -11785,7 +11850,7 @@ function renderPairList(){
         <div class="pair-row-sub">${dirTag}<span style="color:var(--text2)">${price}</span></div>
       </div>
       <div class="pair-row-right">
-        <span class="conf-pct" style="color:${isStale?'var(--gold)':cColor(pct)}" title="${escapeHtml(evalState.title)}">${pct?pct+'%':'—'}${ceilingHtml}${otherTf?`<span style="color:var(--gold);font-size:9px;font-weight:600"> ${escapeHtml(String(evalState.evaluatedTimeframe))}</span>`:''}</span>
+        <span class="conf-pct" style="color:${isStale?'var(--gold)':cColor(pct)}" title="${escapeHtml(evalState.title)}">${pct?pct+'%':'—'}${ceilingHtml}${biasHtml}${otherTf?`<span style="color:var(--gold);font-size:9px;font-weight:600"> ${escapeHtml(String(evalState.evaluatedTimeframe))}</span>`:''}</span>
         <div class="conf-bar-wrap"><div class="conf-bar" style="width:${pct}%;background:${isStale?'var(--gold)':cColor(pct)}"></div></div>
       </div>`;
     el.onclick=()=>{activePair=p;renderPairList();loadChart();};
@@ -13450,8 +13515,29 @@ function renderSignalBadges(signals){
     // actually uses -- different window, different tolerance. detectSignals is PROTECTED and its
     // label is frozen, so the qualifier is added HERE, at the display layer, where it changes no
     // decision. Without it "AOI resistance touch" reads as if it referred to the lines it sits under.
-    const tfq=s.type==='aoi'?` <span style="opacity:.7">(${escapeHtml(String(activeTf))})</span>`:'';
-    row.innerHTML+=`<span class="sig-badge ${cls}">${s.label}${warn}${tfq}</span>`;
+    //
+    // v12.57.0: the parenthetical carried the timeframe but never said the two were DIFFERENT
+    // THINGS, so it read as a detail rather than a distinction. It now names the window, and the
+    // tooltip states plainly that this is not the drawn band and not the level that sets the stop.
+    const tfq=s.type==='aoi'
+      ? ` <span style="opacity:.7" title="${escapeHtml('This is a swing cluster on the '+String(activeTf)
+          +' chart — NOT the purple daily/weekly AOI band drawn on the chart, and NOT the level the '
+          +'trade path uses to place a stop. The structural D/W AOI is fetched only for the pair you '
+          +'are viewing and for a pair being traded, so a badge here can appear where no D/W level exists.')
+          }">(${escapeHtml(String(activeTf))} swing cluster)</span>`
+      : '';
+    // v12.57.0: a badge for a pattern that carries NO WEIGHT was styled like every other "confirmed
+    // pattern". doji is the case -- detectSignals reports it, scoreConfluence has no branch for it
+    // and WEIGHTS has no entry, so it contributes exactly 0 to the number the alert threshold gates
+    // on. Derived from WEIGHTS rather than naming doji, so a pattern that later gains a weight stops
+    // being marked automatically and one that loses it starts.
+    const wKey=s.type==='engulf'?'engulf':s.type==='msb'?'msb':s.type==='aoi'?'aoi':s.type==='wick'?'wick':null;
+    const unscored=(wKey==null||WEIGHTS[wKey]==null)
+      ? ` <span style="opacity:.6;font-size:9px" title="${escapeHtml('Detected and shown, but contributes 0 '
+          + 'to the confluence score — this pattern has no weight in the scoring model, so it never '
+          + 'moves the percentage or the alert threshold.')}">· not scored</span>`
+      : '';
+    row.innerHTML+=`<span class="sig-badge ${cls}">${s.label}${warn}${tfq}${unscored}</span>`;
   });
 }
 
@@ -13493,7 +13579,13 @@ function setTf(tf,btn){
   activeTf=tf;
   document.querySelectorAll('.tf-btn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
-  startCountdown();loadChart();scanAll();
+  // v12.57.0: scanAll() removed from here. The sweep is fixed to SWEEP_TIMEFRAME now, so changing
+  // the CHART timeframe cannot change what the sweep would produce -- rescanning all 35 instruments
+  // on a viewing action was pure network cost, and because scanAll has no re-entrancy guard it was
+  // also a reliable way to start a second sweep on top of the 60-second one already running. The
+  // chart still reloads; the sidebar keeps whatever the last sweep computed, which is now a stable,
+  // comparable figure rather than one that used to change meaning under the operator.
+  startCountdown();loadChart();
 }
 function setFilter(mode,btn){
   filterMode=mode;

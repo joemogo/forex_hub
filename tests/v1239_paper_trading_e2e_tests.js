@@ -1604,7 +1604,8 @@ async function runV1239PaperTradingE2EFixtures(g){
     assert('PTE2E-ALERTTF.0 (PRECONDITION): the sweep genuinely raised an alert, so the assertions below are not vacuous',
       m15.length===1,'alerts='+m15.length);
     assert('PTE2E-ALERTTF.1: a newly raised alert records the timeframe its confluence was ACTUALLY computed on',
-      m15[0].tf==='M15','tf='+String(m15[0]&&m15[0].tf));
+      m15[0].tf===((g.getPairData()||{})['EUR_USD']||{}).timeframe&&m15[0].tf!=null,
+      'tf='+String(m15[0]&&m15[0].tf)+' record='+String(((g.getPairData()||{})['EUR_USD']||{}).timeframe));
 
     // The same pair, the same engine, the same series -- a DIFFERENT selected timeframe. H1 is
     // used because this suite's router serves the firing series for it, so the alert genuinely
@@ -1613,10 +1614,20 @@ async function runV1239PaperTradingE2EFixtures(g){
     g.resetFiredAlerts(); g.setAlertLog([]);
     await g.scanPair('EUR_USD');
     const daily=g.getAlertLog();
-    assert('PTE2E-ALERTTF.2: an alert raised from an H1 sweep is recorded as H1, never as M15 -- auto-trading only ever acts on M15, so mislabelling this is the falsehood the field exists to prevent',
-      daily.length===1&&daily[0].tf==='H1','tf='+String(daily[0]&&daily[0].tf));
-    assert('PTE2E-ALERTTF.3 THE DISCRIMINATOR: the two alerts differ in their recorded timeframe, so a hardcoded value fails here',
-      daily.length===1&&m15[0].tf!==daily[0].tf,'m15='+String(m15[0].tf)+' h1='+String(daily[0]&&daily[0].tf));
+    // v12.57.0: both fixtures previously varied activeTf and required the alert to follow it. The
+    // sweep is now deliberately independent of the chart (scanPair reads SWEEP_TIMEFRAME), so the
+    // two alerts are correctly identical and that manoeuvre discriminates nothing. What the field
+    // actually exists to prevent is an alert MISLABELLED relative to the confluence it reports, and
+    // that is asserted directly here: the alert's tf must equal the timeframe stamped on the
+    // pairData record the alert was raised from. A tf hardcoded anywhere in the alert path that
+    // disagreed with the record would fail -- the same falsehood, caught at its source.
+    const recTf=((g.getPairData()||{})['EUR_USD']||{}).timeframe;
+    assert('PTE2E-ALERTTF.2: an alert records the timeframe of the confluence it reports, never a value of its own',
+      daily.length===1&&recTf!=null&&daily[0].tf===recTf,
+      'alert tf='+String(daily[0]&&daily[0].tf)+' record tf='+String(recTf));
+    assert('PTE2E-ALERTTF.3 THE DISCRIMINATOR: the alert timeframe is READ FROM the evaluation, so a value hardcoded in the alert path fails here',
+      daily.length===1&&m15.length===1&&m15[0].tf===recTf&&daily[0].tf===recTf,
+      'm15='+String(m15[0].tf)+' h1='+String(daily[0]&&daily[0].tf)+' record='+String(recTf));
 
     // Legacy and unknown-provenance alerts.
     assert('PTE2E-ALERTTF.4 BACKWARD COMPATIBLE: an alert raised with no source timeframe records null and is NEVER defaulted to M15',

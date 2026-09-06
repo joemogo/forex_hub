@@ -1104,18 +1104,34 @@ async function runChartAoiFidelityFixtures(g){
     baseReset();
     installSweepRouter();
     g.setActiveTf('H4');
+    g.clearFetchLog();
     await g.scanAll();
     const rec=g.pairDataEntry('EUR_USD');
+    // v12.57.0: compared against the granularity the sweep ACTUALLY FETCHED, not against activeTf.
+    // The sweep no longer follows the chart (scanPair reads SWEEP_TIMEFRAME), so asserting 'H4'
+    // here pinned the old design. The property this fixture exists for -- the record is
+    // attributable to the data it was computed from, so loadChart's guard has something real to
+    // compare -- is unchanged and now asserted directly.
+    const swept=(g.fetchLog().filter(function(r){return r.kind==='candles'&&r.instrument==='EUR_USD';})[0]||{}).granularity;
     assert('CAF-TF.5','WIRING: a real sweep RECORDS the timeframe it evaluated on, so the verdict is attributable at all -- without this the loadChart guard has nothing to compare against',
-      !!rec&&rec.timeframe==='H4','recorded timeframe='+String(rec&&rec.timeframe));
+      !!rec&&swept!=null&&rec.timeframe===swept,'recorded='+String(rec&&rec.timeframe)+' fetched='+String(swept));
     // NOT a fixture: switching the sweep timeframe is setup for CAF-TF.7. An earlier draft asserted
     // this step with a callback that returned `true` unconditionally -- a tautology that could never
     // fail, dressed as evidence. Caught before delivery and demoted to the plain statement it is.
     g.setActiveTf('H1');
+    g.clearFetchLog();
     await g.scanAll();
     const rec2=g.pairDataEntry('EUR_USD');
-    assert('CAF-TF.7','a second sweep on a different timeframe records THAT timeframe -- so the field follows the evaluation and is not a fixed literal',
-      !!rec2&&rec2.timeframe==='H1','recorded timeframe='+String(rec2&&rec2.timeframe));
+    const swept2=(g.fetchLog().filter(function(r){return r.kind==='candles'&&r.instrument==='EUR_USD';})[0]||{}).granularity;
+    // v12.57.0: this was THE DISCRIMINATOR against a hardcoded stamp, and it earned that role by
+    // switching activeTf and requiring the record to follow. The sweep is now deliberately
+    // independent of activeTf, so that exact manoeuvre no longer discriminates anything. The
+    // discrimination is preserved in the stronger form: the stamp must equal the granularity the
+    // sweep really requested. A stamp hardcoded to a value the fetch did not use fails here, which
+    // is the falsehood the original was guarding against -- and unlike the original it also fails
+    // if the sweep constant and the fetch ever drift apart.
+    assert('CAF-TF.7','the recorded timeframe tracks the data actually fetched, so a stamp that disagrees with its own candles fails here',
+      !!rec2&&swept2!=null&&rec2.timeframe===swept2,'recorded='+String(rec2&&rec2.timeframe)+' fetched='+String(swept2));
   }
   {
     baseReset();

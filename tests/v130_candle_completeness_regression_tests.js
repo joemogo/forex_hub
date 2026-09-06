@@ -411,10 +411,15 @@ function runCandleCompletenessFixtures(g){
       g.renderSignalBadges([{type:'aoi',label:'AOI resistance touch',dir:'sell',biasMatch:true}]);
       const m15=g.signalsRowHtml();
       ok(m15.indexOf('AOI resistance touch')!==-1,'the frozen label itself is unchanged');
-      ok(m15.indexOf('(M15)')!==-1,'and the displayed timeframe is stated beside it');
+      // v12.57.0: the qualifier now NAMES the window as well as the timeframe. Both original
+      // properties are still asserted -- the timeframe is stated, and it tracks activeTf rather
+      // than being hard-coded -- plus the distinction the parenthetical previously left implicit.
+      ok(m15.indexOf('(M15 swing cluster)')!==-1,'the displayed timeframe is stated beside it');
+      ok(m15.indexOf('NOT the purple daily/weekly AOI band')!==-1,
+        'and it says plainly this is not the D/W band it sits under');
       g.setActiveTf('H4');
       g.renderSignalBadges([{type:'aoi',label:'AOI resistance touch',dir:'sell',biasMatch:true}]);
-      ok(g.signalsRowHtml().indexOf('(H4)')!==-1,'the qualifier tracks the timeframe, it is not hard-coded');
+      ok(g.signalsRowHtml().indexOf('(H4 swing cluster)')!==-1,'the qualifier tracks the timeframe, it is not hard-coded');
       return 'AOI badges can no longer be read as the D/W lines they sit under';
     });
     await t('AOI-2 a NON-AOI badge is left exactly as the frozen engine produced it',async function(){

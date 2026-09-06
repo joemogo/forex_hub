@@ -447,9 +447,17 @@ function runMarketDataContinuityFixtures(g){
     g.setActiveTf('H4');
     await pending;
     const pd=g.pairData()['EUR_USD'];
-    eq(pd.timeframe,'H1',
-      'the verdict must carry the timeframe it was COMPUTED on, not the one the operator switched to');
-    return 'stamped H1 despite the mid-sweep switch to H4';
+    // v12.57.0: asserted against the granularity the sweep ACTUALLY FETCHED rather than against a
+    // literal. v12.57.0 decoupled the sweep from the chart (scanPair reads SWEEP_TIMEFRAME, not
+    // activeTf), so a literal 'H1' here pins the OLD design rather than the property. The property
+    // -- the stamp describes the data that was evaluated -- is what matters and is strictly
+    // stronger: it fails if the stamp is re-read from activeTf after the await (the original
+    // defect), AND it fails if a hardcoded stamp ever diverges from the real fetch.
+    const reqTf=(g.candleReqs()[0]||{}).granularity;
+    ok(reqTf!=null,'the sweep really did request candles -- otherwise this passes vacuously');
+    eq(pd.timeframe,reqTf,
+      'the verdict must carry the timeframe whose candles it actually evaluated, not the one the operator switched to');
+    return 'stamp matches the fetched granularity despite the mid-sweep switch to H4';
   });
 
   await t('MDSTAMP-2 (POSITIVE CONTROL) an undisturbed sweep still stamps the timeframe it ran on',async function(){
@@ -457,8 +465,13 @@ function runMarketDataContinuityFixtures(g){
     g.setActiveTf('H4'); g.resetPairData(); g.resetFiredAlerts();
     g.route(honest({dur:HOUR,formingLast:true}));
     await g.scanPair('EUR_USD');
-    eq(g.pairData()['EUR_USD'].timeframe,'H4','an H4 sweep stamps H4');
-    return 'stamp follows the sweep';
+    // The control still does its job: it proves the stamp is not decorative. It compares against
+    // the granularity the fetch was actually made with, so a stamp pinned to a constant that
+    // disagreed with the data would fail here -- which is the real thing this control protects.
+    const reqTf2=(g.candleReqs()[0]||{}).granularity;
+    ok(reqTf2!=null,'the sweep really did request candles');
+    eq(g.pairData()['EUR_USD'].timeframe,reqTf2,'the stamp equals the granularity actually fetched');
+    return 'stamp follows the data the sweep evaluated';
   });
 
   // ══ 🔴 MDHIST — runHistoricalDataDiagnostic: a SECOND copy of the pagination arithmetic ══════
