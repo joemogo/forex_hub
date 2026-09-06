@@ -11,7 +11,8 @@
 //
 // The obvious change -- edit SCAN_PAIRS -- is the wrong one, and PAIRS-7..9 and PAIRS-11 exist to
 // stop it being made later. SCAN_PAIRS is read by THREE other consumers that must not grow:
-//   * JVM auto-trading (0% win rate, losing money -- widening it multiplies a loss)
+//   * JVM auto-trading (2 closes ever, against ALEX's 261 -- widening an unmeasured
+//     strategy is not a measurement)
 //   * the manual Scan tab (one operator-graded row per pair; a hand-entry task)
 //   * every "replay all pairs" loop (2.3x slower runs; replay is not sample-starved)
 //
@@ -148,9 +149,14 @@ t('PAIRS-10', 'the ALEX manifest declares what ALEX actually trades. The manifes
 
 // ══ EVERYTHING ELSE STAYED PUT -- THE FIXTURES THAT CATCH THE TEMPTING CHANGE ════════════════
 
-t('PAIRS-11', 'JVM auto-trade eligibility still filters SCAN_PAIRS. JVM is at a 0% win rate and '
-  + 'losing money -- widening its instrument set would multiply a known loss and teach nothing. '
-  + 'This is the most important negative fixture in the file', function () {
+// CORRECTED v12.57.2: this fixture's description claimed JVM was "at a 0% win rate and losing
+// money". That figure came from the ACCOUNT (which carries unrealised losses on open positions) and
+// was compared against closed-trade evidence -- a population mix-up. JVM's preserved record is 1
+// win and 1 loss, net positive. The fixture's PURPOSE is unchanged and the assertion is untouched;
+// only the false justification is corrected.
+t('PAIRS-11', 'JVM auto-trade eligibility still filters SCAN_PAIRS. JVM has produced 2 closes to '
+  + 'ALEX\'s 261, so widening its instrument set would scale a strategy nobody has measured rather '
+  + 'than measure it. This is the most important negative fixture in the file', function () {
   const i = SRC.indexOf('const eligible=SCAN_PAIRS.filter(pair=>{');
   const blk = i < 0 ? '' : SRC.slice(i, i + 300);
   return { pass: i >= 0 && /paperAccount\.openPositions/.test(blk),
