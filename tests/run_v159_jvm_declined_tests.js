@@ -243,6 +243,52 @@ t('JVMD-16', 'an unknown reason becomes UNKNOWN_NOT_RECORDED rather than a plaus
   return { pass: rows(c)[0].reasonCode === 'UNKNOWN_NOT_RECORDED', detail: rows(c)[0].reasonCode };
 });
 
+// ══ THE VIEW ═════════════════════════════════════════════════════════════════════════════════
+//
+// A store nobody can see is a store that answers nothing. v12.51.0 shipped the ALEX decline store
+// WITH its Observatory band; this release must not ship the JVM store without one, or the question
+// it exists to answer stays reachable only by exporting and analysing offline -- which is the
+// friction that leaves a question unanswered for months.
+
+t('JVMD-17', 'the JVM decline summary is actually RENDERED. Building the store without a view would '
+  + 'leave it accumulating invisibly', function () {
+  const render = codeOf(fn('obsRenderJvmDeclined'));
+  const called = /h\+=obsRenderJvmDeclined\(\);/.test(codeOf(SRC));
+  return { pass: /jvmDeclinedSummary\(/.test(render) && called,
+    detail: called ? 'obsRenderJvmDeclined defined and called from the Observatory' : 'DEFINED BUT NEVER CALLED' };
+});
+
+t('JVMD-18', 'the empty state says declines only exist from this version onward, and that a '
+  + 'persistently empty table is ITSELF a finding rather than a blank', function () {
+  const render = fn('obsRenderJvmDeclined');
+  return { pass: /v12\.58\.0 onward/.test(render) && /itself a finding/.test(render),
+    detail: 'empty state is explanatory, not blank' };
+});
+
+t('JVMD-19', 'the view reports pair-days AND occurrences separately -- 3 rows and 40 hits are '
+  + 'different facts and showing only one misrepresents the frequency', function () {
+  const render = fn('obsRenderJvmDeclined');
+  return { pass: /Pair-days/.test(render) && /Times hit/.test(render)
+      && /r\.rows/.test(render) && /r\.occurrences/.test(render),
+    detail: 'both columns rendered from the summary' };
+});
+
+t('JVMD-20', 'the view states that JVM stops at the FIRST failed gate, so a reason recorded here '
+  + 'does not mean the later gates passed -- without that the table reads as a ranking of faults '
+  + 'rather than a funnel', function () {
+  const render = fn('obsRenderJvmDeclined');
+  return { pass: /FIRST gate/.test(render) && /never evaluated/.test(render),
+    detail: 'short-circuit semantics explained in the view' };
+});
+
+t('JVMD-21', 'the view carries the no-outcome statement too. The store refusing to hold an outcome '
+  + 'is worth nothing if the surface implies one', function () {
+  const render = fn('obsRenderJvmDeclined');
+  return { pass: /No outcome is shown/.test(render) && /never happened/.test(render)
+      && !/win rate.{0,20}%/.test(render.replace(/win rate here would/, '')),
+    detail: 'no-outcome stated in the rendered band' };
+});
+
 // ══ GUARDS ═══════════════════════════════════════════════════════════════════════════════════
 
 t('GUARD-1', 'the whole page script parses', function () {
