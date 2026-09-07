@@ -2096,6 +2096,13 @@ button.danger:hover{background:var(--red-dim)}
     <div id="crtWsResultsContainer"></div>
   </div>
 </div>
+<div id="panel-tod" class="panel">
+  <div style="padding:20px 24px;max-width:1100px;margin:0 auto;overflow-y:auto;height:100%">
+    <div class="card" id="todWsHeaderCard"></div>
+    <div class="card" id="todWsControlsCard" style="margin-top:10px"></div>
+    <div id="todWsResultsContainer"></div>
+  </div>
+</div>
 <div id="panel-comingsoon" class="panel">
         <div class="coming-soon-panel">
           <div class="coming-soon-badge">Coming Soon</div>
@@ -2231,9 +2238,10 @@ const ALL_PAIRS=[
 // Bump by 1.0 for a major update (new feature/tab), by 0.1 for a small patch/fix.
 // This shows in the header next to the logo and on the Diagnostics tab, so you can
 // glance at the live site and instantly confirm which build actually deployed.
-const APP_VERSION='12.64.0';
-const APP_VERSION_DATE='04 Sep 2026';
+const APP_VERSION='12.65.0';
+const APP_VERSION_DATE='07 Sep 2026';
 const APP_VERSION_LOG=[
+  '12.65.0 - THE FIRST ARM DERIVED FROM PEER-REVIEWED RESEARCH RATHER THAN A PUBLISHED TRADING RULE (new research arm; zero protected-function and zero protected-constant drift; no rule, threshold, weight, score, gate, sizing or execution change to any existing strategy; tod_session_v1 is NOT authorized to paper trade). WHAT IT TESTS: two independent peer-reviewed papers report that a currency depreciates during the working hours of its OWN market and appreciates during the counter-currency hours -- Breedon and Ranaldo (JMCB 45(7) 2013, sample Jan 1997 to Jun 2007) and Krohn, Mueller and Whelan (Journal of Finance 79(2) 2024, sample Jan 1994 to Dec 2014). The stated cause is ORDER FLOW, not chart shape: a domestic-currency bias leaves dealers carrying a cyclical inventory imbalance. That matters because every other arm MOGO has tested rests on an asserted chart regularity with no mechanism, and psych_level_v1 -- the only arm with a positive point estimate -- is the only other one derived from order-flow research. Breedon and Ranaldo also DISCLOSE THEIR OWN NEGATIVE RESULT: \'most of these simple time-of-day trading strategies are not profitable when trading costs are included\', with EUR/USD named as the one exception because its spread is narrow. THE ARM HAS NO STOP AND NO TARGET. It holds a position between two clock times, so it has no invalidation price, NO RISK DENOMINATOR and therefore NO R-MULTIPLE. An R here would be entirely MOGO invention, and UNKNOWN stays UNKNOWN -- so it is measured in its native units, pips per session, and its evidence package is deliberately NOT trade-shaped: records are SESSION_RETURN_OBSERVATIONS with no realizedR field to misread, and the package states in its own text that scripts/replay_compare.py -- which is R-denominated throughout -- DOES NOT APPLY to it. THE CONTROL IS THE COMPLEMENT, and it is what makes the measurement mean anything: a pair that simply drifted up over the sample would show a positive session mean for a reason having nothing to do with time of day, so all the OTHER hours are measured on the same series and the two must be compared. EUR/USD IS PRE-REGISTERED, declared before any data was fetched because it is the source-named exception; every other instrument is EXPLORATORY and Sidak-corrected for the number examined, because reading the best of twelve as a discovery is how a null result gets dressed up. WHAT IS SOURCE-STATED AND WHAT IS NOT: 08:30-17:00 New York is the only explicit clock window any consulted source gives (Krohn et al) and is labelled SOURCE_STATED; the London window is MOGO own choice and is labelled MOGO CHOICE in the config, in every exported observation, and in the UI. Full register with the extraction caveats: docs/trader-intelligence/rule-registers/TOD-time-of-day-segmentation.md; sources registered as CAND|MOGO|20260907|001 and 002. BOTH SOURCE SAMPLES ARE STALE -- 2007 and 2014 -- and neither paper discusses decay, so this measures data neither of them saw and A NULL RESULT IS THE EXPECTED OUTCOME. TESTING: 37 fixtures, 25 mutations, 25 caught, 0 survived. TWO REAL DEFECTS FOUND BY THE FIXTURES, not by review. The complement legs were originally built from the raw window list and priced independently, which cut them at weekend boundaries that have no candles -- so every Friday-to-Monday leg was REFUSED and vanished from the control silently, and the surviving legs no longer lined up with the priced sessions. Invisible in the means; caught only by a TILING fixture asserting the two arms partition the series with no gap and no overlap. The complement is now derived from the adjacent priced sessions, making the tiling true by construction. Second, an equivalence probe over 2014-2026 showed the DST two-pass conversion and the noon window anchor are EQUIVALENT MUTANTS at these session times (zero differences), but that a near-midnight anchor SKIPS A WHOLE CALENDAR DAY on every spring-forward in both zones -- a real, previously untested defect, now killed by TZ-6b. Both equivalent mutants are recorded as such rather than reported as survivors. GUARD-1/2 WERE REWRITTEN AFTER SURVIVING: they searched the whole file for a disclosure phrase, and once the same phrase appeared in the manifest and the package disclosures they passed even with the header disclosure deleted -- three copies made them unable to fail. They now check each location where the warning must live, and the package disclosures are asserted on the BUILT PACKAGE rather than on source prose. Paper-trading readiness: not assessed.',
   '12.60.0 - TODAY OPPORTUNITIES RANKED INSTRUMENTS MOGO CANNOT TRADE (display only; zero protected-function and zero protected-constant drift; no rule, weight, score, gate, sizing or execution change). The dashboard card ranked ALL_PAIRS, so its top rows were routinely USD/ZAR, USD/SGD and NZD/CAD -- instruments NEITHER strategy can open a position on. The seven exotics are deliberately excluded from ALEXG_LIVE_PAIRS, because entry spread already costs a measured 9.8 percent of risk on majors and is materially worse there, and they were never in SCAN_PAIRS. A card headed Today Opportunities whose best entries are untradeable is not a ranking, it is a distraction placed where the operator looks first. IT WAS WORSE THAN UNTRADEABLE: a pair outside SCAN_PAIRS has no bias data, so its score cannot exceed 100-WEIGHTS.bias3 -- the ceiling v12.56.0 disclosed in the pair list. Ranking those against pairs that CAN reach 100 compared two different scales and systematically buried the tradeable ones; in the operator own dashboard USD/ZAR at 43 outranked every instrument MOGO is allowed to trade. The card now ranks the UNION of what each strategy trades, COMPUTED at render time rather than assumed: ALEX list is a superset of JVM today, and hardcoding that would go silently wrong the moment either list changes -- OPP-3 pins it. The filter is applied BEFORE the sort and the slice, or the top six would be chosen from the wrong set and then trimmed to fewer than six. TESTING: v161 adds 9 fixtures, mutation-verified three ways -- reverting to ALL_PAIRS kills OPP-2, hardcoding the universe to one strategy list kills OPP-3, and filtering after the slice kills OPP-7. OPP-7 ITSELF FAILED FIRST TIME and the reason is recorded: it located .slice(0,6) with a bare indexOf, which found the A-grade card earlier in the same function and compared the wrong positions -- the fixture was wrong, not the code. It now searches from the universe onward. BROWSER VERIFIED with the operator own failure shape: exotics scored at 90 and tradeable pairs at 40, the card correctly shows EUR/USD 40, GBP/USD 39, USD/JPY 38 and no exotic at all.',
   '12.59.0 - JVM COULD NOT TRADE FOR UP TO AN HOUR AFTER EVERY RELOAD (rescan scheduling only; zero protected-function and zero protected-constant drift; no rule, threshold, gate, sizing or execution change, and the eligibility gate itself is byte-identical). THE DEFECT: jvmEligibilityIsCurrent is correct and deliberately fail-closed -- its own comment names post-reload as a case that yields false. Nothing reconciled that with the decision to RESCAN. Both call sites, byte-identical duplicates of one another, asked whether autoScan.lastRunAt was more than an hour old. autoScan.lastRunAt is PERSISTED under fxhub_autoscan. __jvmEligibility and __jvmEligibilityGeneration are session-scoped and reset to empty on every page load. So a reload ten minutes after a scan read the timestamp as fresh, skipped the rescan, and left every pair not-current: htfSnapshotOf returned null for all twelve, htfAlignmentPasses refused each one, and checkAutoTrades declined every candidate with HTF_SNAPSHOT_MISSING -- for up to a full hour, on every reload. The identical hole opened when Auto Scan was toggled off and back on inside the hour, because toggling off deliberately makes every pair not-current (the G-2 note in toggleAutoScan) while the timestamp keeps saying recent. An operator who opens MOGO, watches for half an hour and closes it again may never once reach a state where JVM is permitted to evaluate a trade. This is a strong candidate for why JVM produced 2 closes in months of forward operation, and it is recorded as a candidate rather than a conclusion: the decline store shipped in v12.58.0 is what will actually measure it. THE FIX MOVES THE RESCAN DECISION, NOT THE GATE. No threshold moved and jvmEligibilityIsCurrent is unchanged -- refusing to trade on bias whose freshness cannot be confirmed is right, and STARVE-6 and STARVE-7 exist to stop a future release fixing this by weakening it instead. A new jvmShouldRunTopDownScan asks about the state the decision actually depends on -- is ANYTHING eligible right now -- and keeps the hourly refresh as a second condition, so nothing that worked before stops. Both call sites now share that one decision rather than duplicating a condition, which is how they stayed wrong together. jvmEligibilityAnyCurrent fails CLOSED on a throw: unknown means scan, never assume it is fine. TESTING: v160 adds 14 fixtures, mutation-verified five ways -- restoring the timestamp-only condition kills STARVE-1 and STARVE-2; rescanning unconditionally kills STARVE-4; dropping the hourly half kills STARVE-5; accepting a prior generation kills STARVE-6 and STARVE-7; failing open on a throw kills STARVE-8. BROWSER VERIFIED against the real post-reload state: with a ten-minute-old timestamp and empty session eligibility, nothing is eligible, the OLD condition evaluates false -- it would not have rescanned -- and the new one requests the scan; after a completed scan it correctly requests nothing further.',
   '12.58.0 - JVM RECORDED WHY IT REFUSED EVERY TRADE, AND THREW IT AWAY (durable observability only; zero protected-function and zero protected-constant drift; no rule, gate, threshold, sizing or execution change -- checkAutoTrades is protected and untouched, and the hook used here already existed at a non-protected call site). THE DEFECT: jvmRecordCandidateRejected already computed the right answer on every refused candidate -- the engine own reason verbatim, mapped to a real code by the existing centralized mapper. It emitted that into decisionEventLog, an in-memory array capped at 500 and never written to storage while 27 other keys are persisted. So every JVM refusal died on the next page reload, and after months of forward operation the preserved evidence holds 2 JVM closes and NOTHING about the far larger number of candidates declined. This is the same defect v12.51.0 fixed for ALEX, on the same reasoning: a strategy edge cannot be judged from the trades it TOOK when the ones it refused are the other half of the record. It is also precisely why the question -- why does JVM only have 2 closes -- could not be answered from evidence. The answer was being computed every minute and discarded. WHAT IS KEPT: pair, the engine reason verbatim, its reason code, the confluence WHEN ONE WAS COMPUTED, direction, whether HTF alignment passed, the scan id and the timestamp. Confluence is null rather than 0 when evaluateLiveTrigger short-circuited before scoring -- 0 would assert a measured miss that never happened. Deduped by pair plus reason plus DAY: checkAutoTrades sweeps every 60 seconds and a pair outside the Mon-Wed window is refused on every tick, so without a key the store would measure poll frequency and hit its cap in under a day, while collapsing separate DAYS would hide the very frequency the store exists to reveal. Repeat refusals increment an occurrence count instead of adding rows. Capped at 500, oldest out, and the summary SAYS when it is at the cap rather than quietly shrinking the population it exists to measure. NO OUTCOME FIELD, EVER: a declined candidate was never traded, so it has no win, no loss and no R -- the single worst thing this store could do is grow a win rate, because that would be a performance figure for trades that never existed. JVMD-9 pins it on both the row and the summary. The summary ranks reason codes by how often they actually fired, which is the question worth asking: WHERE does JVM lose its candidates. SAFETY: the durable write happens BEFORE the event-bus emit so a failure in the bus cannot cost the record; both are independently wrapped; a throwing persist still leaves the row in memory; and the recorder result is never read by the trading path. The store is rehydrated by loadSaved, JVM own loader -- it was briefly placed in loadAlexGSaved where it also worked, since both run at init, but a JVM store loaded by the ALEX loader would silently stop the moment ALEX loading became conditional. THE VIEW: Analytics gains a JVM candidates-declined band beside the ALEX one. It is a DIFFERENT table because it answers a different question -- ALEX declines are qualified setups refused at execution, JVM declines are candidates refused at one of six sequential gates, so the useful figure is WHICH GATE and HOW OFTEN. It reports pair-days and occurrences separately, because 3 rows and 40 hits are different facts and showing one alone misrepresents the frequency, and it states that JVM stops at the FIRST failed gate so a reason recorded here does not mean the later gates passed -- without that the table reads as a ranking of faults rather than a funnel. Shipping the store without this view would have left it accumulating invisibly, reachable only by exporting and analysing offline, which is the friction that leaves a question unanswered for months. TESTING: v159 adds 23 fixtures, mutation-verified six ways. ONE MUTATION WAS A FALSE SURVIVOR and is recorded because it nearly passed as evidence: growing a winRate field appeared not to kill JVMD-9, because the string matched ALEX equivalent summary earlier in the file and the mutation edited the wrong function. Retargeted at jvmDeclinedSummary it fails correctly. BROWSER VERIFIED, and this is the check that mattered: 18 fixtures passed while a first browser test showed 0 rows after reload. The cause was the test, not the code -- loadSaved runs in the connect handler, and the test never connected. Re-run through the real path, 3 rows and 4 occurrences survive a reload with every reason code and count intact and no outcome field present.',
@@ -23690,6 +23698,537 @@ async function runPsychLevelReplay(oPair,days,onProgress,shouldCancel){
 // An inverted-direction control was considered and REJECTED: with these two arms sharing one
 // geometry, an inverted arm is close to a mirror by construction and would answer a question
 // nobody asked.
+// ══════════════════════════════════════════════════════════════════════════════════════════════
+// TIME-OF-DAY SESSION SEGMENTATION (tod_session_v1) — the first arm derived from peer-reviewed
+// research rather than from a published trading rule
+// ══════════════════════════════════════════════════════════════════════════════════════════════
+//
+// THE CLAIM, AND WHO MAKES IT. Two independent peer-reviewed papers report that a currency
+// depreciates during the working hours of its OWN market and appreciates during the counter
+// currency's hours:
+//
+//   S1  Breedon & Ranaldo, "Intraday Patterns in FX Returns and Order Flow", JMCB 45(7) 2013
+//       (full text: SNB Working Paper 2011-04). Sample Jan 1997 - Jun 2007, EBS, six crosses.
+//   S2  Krohn, Mueller & Whelan, "Foreign Exchange Fixings and Returns around the Clock",
+//       Journal of Finance 79(2) 2024. Sample Jan 1994 - Dec 2014, nine G10 vs USD.
+//
+// S2 is not a restatement of S1: different authors, different data, a sample running seven years
+// later, and it reaches the SAME SIGN. That is the strongest evidentiary position of any candidate
+// in MOGO's registry, whose other 58 entries are 47 YouTube videos and 11 web articles, none peer
+// reviewed. S1 also DISCLOSES ITS OWN NEGATIVE RESULT -- "most of these simple time-of-day trading
+// strategies are not profitable when trading costs are included" -- with EUR/USD named as the
+// exception because its spread is narrow. Full register:
+// docs/trader-intelligence/rule-registers/TOD-time-of-day-segmentation.md
+//
+// WHY THIS ARM LOOKS NOTHING LIKE THE OTHERS. It has NO STOP AND NO TARGET. The rule is "hold a
+// position between two clock times", so it has no invalidation price and therefore NO RISK
+// DENOMINATOR. An R-multiple here would be entirely MOGO's invention, and UNKNOWN stays UNKNOWN --
+// so this arm is measured in its NATIVE UNITS: return per session in pips and in percent, with the
+// spread charged ONCE per round trip. It is consequently NOT comparable to alex_g_sr_v1, crt_v1 or
+// baseline_trend_v1, all of which are R-denominated, and replay_compare.py -- which is
+// R-denominated throughout -- DOES NOT APPLY to it unchanged.
+//
+// WHAT IS BEING TESTED IS NOT WHAT THE PAPERS TESTED. Both samples are stale: S1 ends June 2007,
+// S2 ends December 2014. Neither discusses decay, and a published, mechanically trivial effect with
+// a decade of exposure is exactly the kind that decays. MOGO is positioned to answer the question
+// the papers cannot, on data neither saw. A NULL RESULT HERE IS THE EXPECTED OUTCOME and is worth
+// exactly as much as a positive one.
+//
+// NOT AUTHORIZED TO PAPER TRADE. Paper-trading readiness: not assessed.
+const TOD_STRATEGY_ID='tod_session_v1';
+const TOD_VERSION='tod_session_v1';
+const TOD_TZ_NY='America/New_York';
+const TOD_TZ_LONDON='Europe/London';
+
+// THE PRE-REGISTERED HYPOTHESIS, fixed here before any data is fetched so it cannot be chosen after
+// seeing the answer: EUR/USD rises across the US session, because the USD weakens in its own hours.
+// 08:30-17:00 New York is the ONLY explicit clock window recovered from any source (S2). Every
+// other window in this file is MOGO's own choice and is labelled as such.
+const RULES_TOD={
+  ruleVersion:'tod_session_v1',
+  config:{
+    granularity:'M15',                 // 08:30 is not on an H1 boundary; M15 resolves it exactly
+    // SOURCE_STATED (S2). The primary test. One window, one direction, declared in advance.
+    primary:{id:'US',tz:TOD_TZ_NY,startMin:8*60+30,endMin:17*60,
+      label:'US session 08:30-17:00 New York',provenance:'SOURCE_STATED (Krohn/Mueller/Whelan 2024)'},
+    // MOGO'S CHOICE, NOT THE SOURCES'. S1's Table 1 lists Europe 07:00-15:00 local, but the
+    // extraction states those are futures-exchange hours given as CONTEXT and does NOT state the
+    // backtest used them. This window is therefore EXPLORATORY and is Sidak-corrected as such.
+    secondary:{id:'EU',tz:TOD_TZ_LONDON,startMin:8*60,endMin:16*60+30,
+      label:'European session 08:00-16:30 London',provenance:'MOGO CHOICE -- window UNKNOWN in sources'},
+    maxStartSlipMinutes:60,            // a session missing its first hour is not that session
+    minSessionCandles:8,               // 2h of M15; below this the window is too gappy to price
+    spreadPips:0                       // charged by the caller; 0 is GROSS and is labelled gross
+  }
+};
+// PURE (deterministic; Intl is a pure function of the instant and the zone). The UTC offset in
+// minutes in effect in `tz` at instant `ms`. Generalises the existing getNYOffsetMinutes and
+// tjrGetLondonOffsetMinutesAt to an arbitrary zone rather than adding a third copy of the same
+// arithmetic.
+function todOffsetMinutesAt(tz,ms){
+  const dtf=new Intl.DateTimeFormat('en-US',{timeZone:tz,hour12:false,
+    year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  const map={};
+  dtf.formatToParts(new Date(ms)).forEach(function(p){ if(p.type!=='literal') map[p.type]=p.value; });
+  let hh=parseInt(map.hour,10); if(hh===24) hh=0;   // some engines format midnight as "24"
+  const asUTC=Date.UTC(parseInt(map.year,10),parseInt(map.month,10)-1,parseInt(map.day,10),
+    hh,parseInt(map.minute,10),parseInt(map.second,10));
+  return Math.round((asUTC-ms)/60000);
+}
+// PURE. A local wall-clock time in `tz` to the UTC instant. TWO-PASS, exactly like
+// tjrLondonLocalToUtcMs, and for the reason that function documents: on a DST transition day the
+// offset that applies to the RESULT can differ from the offset at the naive guess, and a
+// single-pass conversion lands an hour out. This is the whole reason the arm does not just add a
+// fixed -5/-4. Getting it wrong would smear every window by an hour for several weeks a year --
+// weeks in which the US and European changeovers do not even coincide.
+function todLocalToUtcMs(tz,y,mo,d,h,mi){
+  const guess=Date.UTC(y,mo-1,d,h,mi,0);
+  const o1=todOffsetMinutesAt(tz,guess);
+  let corrected=guess-o1*60000;
+  const o2=todOffsetMinutesAt(tz,corrected);
+  if(o2!==o1) corrected=guess-o2*60000;
+  return corrected;
+}
+// PURE. The local calendar date in `tz` at instant `ms`, as {y,mo,d}.
+function todLocalDateAt(tz,ms){
+  const dtf=new Intl.DateTimeFormat('en-US',{timeZone:tz,hour12:false,
+    year:'numeric',month:'2-digit',day:'2-digit'});
+  const map={};
+  dtf.formatToParts(new Date(ms)).forEach(function(p){ if(p.type!=='literal') map[p.type]=p.value; });
+  return{y:parseInt(map.year,10),mo:parseInt(map.month,10),d:parseInt(map.day,10)};
+}
+// PURE. Every session window of `sess` whose START falls inside [fromMs,toMs]. Walks LOCAL calendar
+// dates rather than adding 86400000, so a DST day still produces exactly one window and neither
+// two nor none.
+function todSessionWindows(sess,fromMs,toMs){
+  const out=[];
+  if(!sess||!(fromMs<toMs)) return out;
+  let cur=todLocalDateAt(sess.tz,fromMs);
+  let guard=0;
+  while(guard++<4000){
+    const startUtc=todLocalToUtcMs(sess.tz,cur.y,cur.mo,cur.d,0,0)+sess.startMin*60000;
+    const endUtc=todLocalToUtcMs(sess.tz,cur.y,cur.mo,cur.d,0,0)+sess.endMin*60000;
+    if(startUtc>toMs) break;
+    if(startUtc>=fromMs) out.push({dayKey:cur.y+'-'+String(cur.mo).padStart(2,'0')+'-'+String(cur.d).padStart(2,'0'),
+      startUtc:startUtc,endUtc:endUtc});
+    // advance one local calendar day
+    const nextNoon=todLocalToUtcMs(sess.tz,cur.y,cur.mo,cur.d,12,0)+86400000;
+    cur=todLocalDateAt(sess.tz,nextNoon);
+  }
+  return out;
+}
+// PURE. Price one session window from a chronologically-sorted candle series.
+//
+// NO LOOK-AHEAD BY CONSTRUCTION. Entry is the close of the FIRST candle closing at or after the
+// window start; exit is the close of the LAST candle closing at or before the window end. Both are
+// prices that existed at the instant they are used. Nothing reads a bar beyond the window.
+//
+// IT REFUSES RATHER THAN INTERPOLATES. A window with too few candles, or whose first candle closes
+// more than maxStartSlipMinutes late (a holiday, a feed gap, a weekend edge), returns a reason
+// instead of a number. Silently skipping those is how a sample quietly stops being the sample it
+// claims to be, so every refusal is COUNTED and reported alongside the result.
+function todPriceWindow(candles,win,cfg,pip){
+  if(!Array.isArray(candles)||!candles.length||!win) return{ok:false,reason:'NO_CANDLES'};
+  const inWin=[];
+  for(let i=0;i<candles.length;i++){
+    const c=candles[i];
+    const t=(c&&c.t instanceof Date)?c.t.getTime():(c&&typeof c.t==='number'?c.t:null);
+    if(t==null) continue;
+    if(t>=win.startUtc&&t<=win.endUtc) inWin.push({t:t,c:c.c});
+  }
+  if(inWin.length<cfg.minSessionCandles) return{ok:false,reason:'TOO_FEW_CANDLES',count:inWin.length};
+  const first=inWin[0],last=inWin[inWin.length-1];
+  const slip=(first.t-win.startUtc)/60000;
+  if(slip>cfg.maxStartSlipMinutes) return{ok:false,reason:'START_GAP',slipMinutes:slip};
+  if(!(first.c>0)||!(last.c>0)) return{ok:false,reason:'BAD_PRICE'};
+  const grossPips=(last.c-first.c)/pip;
+  return{ok:true,dayKey:win.dayKey,startUtc:win.startUtc,endUtc:win.endUtc,
+    entry:first.c,exit:last.c,candles:inWin.length,slipMinutes:slip,
+    grossPips:grossPips,grossPct:((last.c-first.c)/first.c)*100};
+}
+// PURE. Summary statistics for a set of priced windows, in the arm's native units.
+//
+// THE SPREAD IS CHARGED ONCE PER OBSERVATION, NOT AGAINST THE MEAN. That distinction destroyed an
+// earlier CRT conclusion in this codebase and the fixture suite now forbids its return. Here it is
+// simple precisely BECAUSE there is no risk denominator: one round trip costs one spread, the same
+// number of pips on every observation, so net mean = gross mean - spread exactly. It is still
+// charged per observation so the standard error is computed on the series actually traded.
+function todSummarize(obs,spreadPips){
+  const sp=(typeof spreadPips==='number'&&isFinite(spreadPips))?spreadPips:0;
+  const n=obs.length;
+  const empty={n:0,meanPips:null,sePips:null,tStat:null,meanPct:null,ciLoPips:null,ciHiPips:null,
+    winShare:null,spreadPips:sp};
+  if(!n) return empty;
+  const net=obs.map(function(o){ return o.grossPips-sp; });
+  const mean=net.reduce(function(a,b){return a+b;},0)/n;
+  const meanPct=obs.reduce(function(a,o){return a+o.grossPct;},0)/n;
+  let se=null,ciLo=null,ciHi=null,t=null;
+  if(n>1){
+    const v=net.reduce(function(a,x){ const d=x-mean; return a+d*d; },0)/(n-1);
+    se=Math.sqrt(v/n);
+    if(se>0){ t=mean/se; ciLo=mean-1.96*se; ciHi=mean+1.96*se; }
+  }
+  const wins=net.filter(function(x){return x>0;}).length;
+  return{n:n,meanPips:mean,sePips:se,tStat:t,meanPct:meanPct,ciLoPips:ciLo,ciHiPips:ciHi,
+    winShare:wins/n,spreadPips:sp};
+}
+// PURE. Runs the pre-registered window and its CONTROL against one candle series.
+//
+// THE CONTROL IS THE COMPLEMENT, and it is the whole reason this measurement means anything. If a
+// pair simply drifted up over the sample, the session window would show a positive mean for a
+// reason that has nothing to do with time of day. The complement -- session end to the NEXT
+// session's start, i.e. all the hours the hypothesis says the opposite about -- must therefore be
+// measured on the SAME series. The hypothesis predicts primary > complement. Two windows that
+// drift the same way are a trend, not a segmentation effect, and this control is what tells them
+// apart. `complementGapHours` is recorded per observation so the weekend legs can be excluded
+// without re-running anything.
+function todRunArms(candles,cfg,pip){
+  const c=cfg||RULES_TOD.config;
+  const out={primary:null,secondary:null,complement:null,windows:0,refusals:{},warnings:[]};
+  if(!Array.isArray(candles)||candles.length<2){ out.warnings.push('NO_DATA'); return out; }
+  const times=candles.map(function(x){ return (x&&x.t instanceof Date)?x.t.getTime():x.t; })
+    .filter(function(x){ return typeof x==='number'&&isFinite(x); });
+  if(times.length<2){ out.warnings.push('NO_TIMESTAMPS'); return out; }
+  const fromMs=Math.min.apply(null,times),toMs=Math.max.apply(null,times);
+  const bump=function(r){ out.refusals[r]=(out.refusals[r]||0)+1; };
+  const price=function(sess){
+    const wins=todSessionWindows(sess,fromMs,toMs);
+    const priced=[];
+    for(let i=0;i<wins.length;i++){
+      const p=todPriceWindow(candles,wins[i],c,pip);
+      if(p.ok) priced.push(p); else bump(p.reason);
+    }
+    return{wins:wins,priced:priced};
+  };
+  const prim=price(c.primary);
+  out.windows=prim.wins.length;
+  out.primary=todSummarize(prim.priced,c.spreadPips);
+  out.primary.observations=prim.priced;
+  const sec=price(c.secondary);
+  out.secondary=todSummarize(sec.priced,c.spreadPips);
+  out.secondary.observations=sec.priced;
+  // The complement of the PRIMARY window: the hours between one PRICED session and the next.
+  //
+  // IT IS DERIVED FROM THE PRICED SESSIONS, NOT RE-PRICED FROM CANDLES, and that is a correction to
+  // the obvious implementation rather than a shortcut. Building complement legs from the raw window
+  // list and pricing each one independently looked right and was wrong twice over: the legs were
+  // cut at weekend window boundaries that have no candles, so every Friday-to-Monday leg was
+  // REFUSED and vanished from the control silently; and the surviving legs no longer lined up with
+  // the priced sessions, so the two arms stopped tiling the sample. Both defects were invisible in
+  // the means and were caught only by the tiling fixture.
+  //
+  // Taking the prices straight from the adjacent sessions makes the tiling true BY CONSTRUCTION:
+  // leg i runs from exactly session i's exit to exactly session i+1's entry, so together the two
+  // arms partition the whole series with no gap and no overlap, and a weekend is one long leg
+  // rather than three refusals. `complementGapHours` is recorded so those long legs can be excluded
+  // in analysis without re-running anything -- an 8.5-hour session and a 63-hour weekend hold are
+  // not the same object and must not be averaged together uncritically.
+  const comp=[];
+  for(let i=0;i<prim.priced.length-1;i++){
+    const a=prim.priced[i],b=prim.priced[i+1];
+    comp.push({ok:true,dayKey:a.dayKey+'~'+b.dayKey,
+      startUtc:a.endUtc,endUtc:b.startUtc,entry:a.exit,exit:b.entry,
+      grossPips:(b.entry-a.exit)/pip,grossPct:((b.entry-a.exit)/a.exit)*100,
+      complementGapHours:(b.startUtc-a.endUtc)/3600000});
+  }
+  out.complement=todSummarize(comp,c.spreadPips);
+  out.complement.observations=comp;
+  return out;
+}
+// PURE. The comparison the hypothesis actually makes. Reported as a record rather than a verdict
+// string, because the caller -- not this function -- decides what counts as decisive.
+//
+// THE DIFFERENCE IS TESTED, NOT JUST THE LEVEL. A positive session mean is not evidence of a
+// time-of-day effect on its own; the claim is that this window differs from the hours around it.
+// The two-sample standard error is the pooled one, and the windows are non-overlapping by
+// construction, so treating them as independent is sound.
+function todCompareArms(res){
+  const p=res&&res.primary,q=res&&res.complement;
+  if(!p||!q||!p.n||!q.n) return{comparable:false,reason:'INSUFFICIENT_SAMPLE'};
+  if(p.sePips==null||q.sePips==null) return{comparable:false,reason:'NO_VARIANCE'};
+  const diff=p.meanPips-q.meanPips;
+  const se=Math.sqrt(p.sePips*p.sePips+q.sePips*q.sePips);
+  const z=se>0?diff/se:null;
+  return{comparable:true,
+    primaryMeanPips:p.meanPips,complementMeanPips:q.meanPips,
+    diffPips:diff,seDiffPips:se,z:z,
+    primaryN:p.n,complementN:q.n,
+    // The hypothesis is DIRECTIONAL and was declared before the data was fetched, so a one-sided
+    // reading is legitimate here -- but the two-sided p is what is reported, because the secondary
+    // window and any later slicing are exploratory and share this figure's error budget.
+    directionAsPredicted:diff>0};
+}
+// PURE. The Sidak-adjusted alpha for k examined comparisons. Duplicated from the CRT arm's
+// reasoning deliberately rather than shared: this arm reports it against a DIFFERENT k, and a
+// shared helper would invite someone to pass the wrong one.
+function todSidakAlpha(k,alpha){
+  const a=(typeof alpha==='number')?alpha:0.05;
+  const n=Math.max(1,k|0);
+  return 1-Math.pow(1-a,1/n);
+}
+// PURE. Assembles the run into the shape the panel and the package both read.
+//
+// THE PRE-REGISTERED PAIR IS REPORTED SEPARATELY FROM EVERYTHING ELSE, and that separation is the
+// point. S1 names EUR/USD as its ONE exception, so EUR/USD was declared the primary before any data
+// was fetched. Sweeping every instrument and reporting the best one is precisely how a null result
+// is dressed up as a discovery -- with 12 instruments, the best of them clears a naive 5% bar by
+// chance about half the time. So the primary pair carries the uncorrected figure and every other
+// pair is EXPLORATORY, Sidak-corrected for the number of pairs actually examined.
+const TOD_PRIMARY_PAIR='EUR_USD';
+function todAssembleReport(runs){
+  const ok=(runs||[]).filter(function(r){ return r&&!r.error&&r.arms&&r.arms.primary; });
+  const primaryRun=ok.filter(function(r){ return r.pair===TOD_PRIMARY_PAIR; })[0]||null;
+  const exploratory=ok.filter(function(r){ return r.pair!==TOD_PRIMARY_PAIR; });
+  return{
+    preRegisteredPair:TOD_PRIMARY_PAIR,
+    preRegistered:primaryRun?{pair:primaryRun.pair,arms:primaryRun.arms,
+      comparison:todCompareArms(primaryRun.arms)}:null,
+    exploratory:exploratory.map(function(r){
+      return{pair:r.pair,arms:r.arms,comparison:todCompareArms(r.arms)}; }),
+    exploratoryK:exploratory.length,
+    exploratorySidakAlpha:todSidakAlpha(exploratory.length,0.05),
+    errors:(runs||[]).filter(function(r){ return r&&r.error; })
+      .map(function(r){ return{pair:r.pair,error:r.error}; })
+  };
+}
+// Fetches and measures one instrument. The ONLY non-pure function in the arm.
+async function runTodReplay(oPair,days,onProgress,shouldCancel){
+  const cfg=RULES_TOD.config;
+  const tf=cfg.granularity;
+  // M15 is 96 bars a day including the weekend gap; ask for headroom and let the pager stop early.
+  const count=Math.min(Math.ceil((days||0)*96)+200,100000);
+  if(onProgress) onProgress('Fetching '+tf+' candles for '+oPair.replace('_','/')+'...');
+  const bars=await fetchCandlesRange(oPair,tf,count);
+  if(shouldCancel&&shouldCancel()) return{cancelled:true};
+  if(!bars||bars.length<cfg.minSessionCandles*10){
+    return{pair:oPair,error:'Not enough '+tf+' history for '+oPair+' (got '+((bars&&bars.length)||0)+' bars).'};
+  }
+  if(onProgress) onProgress('Measuring sessions and their complement...');
+  const arms=todRunArms(bars,cfg,pipSize(oPair));
+  const times=bars.map(function(b){ return b.t instanceof Date?b.t.getTime():b.t; });
+  return{pair:oPair,candlesUsed:bars.length,timeframe:tf,
+    coverageFromUtc:new Date(Math.min.apply(null,times)).toISOString(),
+    coverageToUtc:new Date(Math.max.apply(null,times)).toISOString(),
+    captureBasis:'REPLAY_RUN',population:'REPLAY',arms:arms};
+}
+// PURE. One evidence package holding every session observation from every arm.
+//
+// DELIBERATELY NOT TRADE-SHAPED. Every other arm exports positions and outcomes carrying a
+// realizedR. This arm HAS NO R -- it has no stop, so there is no risk to divide by -- and writing
+// these into a trade-shaped package would let any downstream reader average a session return
+// against genuine R-multiples as though they were the same quantity. The records are therefore
+// SESSION OBSERVATIONS under their own evidenceKind, with no realizedR field to misread, and the
+// package says in its own text that replay_compare.py does not apply to it.
+function todBuildReplayPackage(runs,cfg,opts){
+  const c=(cfg&&cfg.config)?cfg.config:(cfg||RULES_TOD.config);
+  const o=opts||{};
+  const observations=[];
+  let seq=0;
+  (runs||[]).forEach(function(run){
+    if(!run||run.error||!run.arms) return;
+    [['PRIMARY_SESSION',run.arms.primary,c.primary],
+     ['SECONDARY_SESSION',run.arms.secondary,c.secondary],
+     ['COMPLEMENT_CONTROL',run.arms.complement,null]].forEach(function(entry){
+      const armName=entry[0],summary=entry[1],sess=entry[2];
+      if(!summary||!summary.observations) return;
+      summary.observations.forEach(function(ob){
+        observations.push({
+          observationId:'TOD|'+TOD_STRATEGY_ID+'|'+(run.pair||'?')+'|'+armName+'|'+(++seq),
+          strategyId:TOD_STRATEGY_ID,arm:armName,
+          windowProvenance:sess?sess.provenance:'CONTROL -- complement of the primary window',
+          windowLabel:sess?sess.label:'between consecutive primary sessions',
+          instrument:run.pair||null,timeframe:run.timeframe||c.granularity,
+          dayKey:ob.dayKey,
+          windowStartUtc:new Date(ob.startUtc).toISOString(),
+          windowEndUtc:new Date(ob.endUtc).toISOString(),
+          entryPrice:ob.entry,exitPrice:ob.exit,
+          grossPips:ob.grossPips,grossPct:ob.grossPct,
+          barsInWindow:ob.candles!=null?ob.candles:null,
+          complementGapHours:ob.complementGapHours!=null?ob.complementGapHours:null
+        });
+      });
+    });
+  });
+  return{
+    packageVersion:1,
+    evidenceKind:'SESSION_RETURN_OBSERVATIONS',
+    mode:'REPLAY',captureBasis:'REPLAY_RUN',population:'REPLAY',
+    strategyId:TOD_STRATEGY_ID,ruleVersion:c.ruleVersion||TOD_VERSION,
+    generatedAt:new Date(o.stamp||Date.now()).toISOString(),
+    appVersion:(typeof APP_VERSION!=='undefined')?APP_VERSION:null,
+    config:JSON.parse(JSON.stringify(c)),
+    report:todAssembleReport(runs),
+    observations:observations,
+    observationCount:observations.length,
+    disclosures:[
+      'NO R-MULTIPLE EXISTS IN THIS PACKAGE. This arm holds a position between two clock times. It has no stop and no target, therefore no risk denominator, therefore no R. Records are session returns in pips and percent. Do NOT average them against R-denominated evidence from alex_g_sr_v1, crt_v1 or baseline_trend_v1.',
+      'scripts/replay_compare.py DOES NOT APPLY to this package -- every statistic it reports is R-denominated.',
+      'The spread is charged ONCE PER ROUND TRIP by the reader, not baked in here. grossPips is GROSS. At spread s, net mean = gross mean - s exactly, because the cost is a constant per observation rather than a ratio.',
+      'The PRE-REGISTERED hypothesis is EUR/USD only, declared before any data was fetched, because Breedon-Ranaldo name EUR/USD as their single cost-surviving exception. Every other instrument is EXPLORATORY and its figure carries the Sidak-corrected alpha in report.exploratorySidakAlpha.',
+      'The primary window (08:30-17:00 New York) is SOURCE_STATED by Krohn/Mueller/Whelan 2024. The secondary window (08:00-16:30 London) is MOGO\'s own choice -- no consulted source states the European backtest hours.',
+      'Both source samples are stale: Breedon-Ranaldo ends June 2007, Krohn et al ends December 2014. Neither discusses decay. This run measures data neither paper saw, so a null result is the expected outcome and is not a defect.',
+      'Paper-trading readiness: not assessed. This arm is NOT authorized to paper trade.'
+    ]
+  };
+}
+let todLastRuns=null,todRunning=false;
+function todFmt(x,dp){ return (x==null||!isFinite(x))?'—':Number(x).toFixed(dp==null?2:dp); }
+// Renders one arm's row. The error bar is never omitted and n=1 never prints a zero one.
+function todArmRow(label,s,note){
+  if(!s||!s.n) return '<tr><td>'+label+'</td><td colspan="6" style="color:var(--muted)">no priced sessions</td></tr>';
+  const sig=(s.tStat!=null&&Math.abs(s.tStat)>=1.96);
+  return '<tr>'+
+    '<td>'+label+(note?'<div style="font-size:11px;color:var(--muted)">'+note+'</div>':'')+'</td>'+
+    '<td style="text-align:right">'+s.n+'</td>'+
+    '<td style="text-align:right;color:'+(s.meanPips>0?'var(--pos,#3fb950)':'var(--neg,#f85149)')+'">'+todFmt(s.meanPips)+'</td>'+
+    '<td style="text-align:right">'+todFmt(s.sePips)+'</td>'+
+    '<td style="text-align:right">'+(s.ciLoPips==null?'—':todFmt(s.ciLoPips)+' to '+todFmt(s.ciHiPips))+'</td>'+
+    '<td style="text-align:right'+(sig?';font-weight:600':'')+'">'+todFmt(s.tStat)+'</td>'+
+    '<td style="text-align:right">'+(s.winShare==null?'—':(s.winShare*100).toFixed(1)+'%')+'</td></tr>';
+}
+function todRenderOne(r,heading,badge){
+  const a=r.arms,c=r.comparison||todCompareArms(a);
+  let h='<div style="margin-top:14px"><div style="font-weight:600">'+heading+
+    (badge?' <span style="font-size:11px;color:var(--muted)">'+badge+'</span>':'')+'</div>';
+  h+='<table style="width:100%;border-collapse:collapse;font-size:12px;margin-top:6px">'+
+     '<tr style="color:var(--muted);text-align:right"><th style="text-align:left">arm</th><th>n</th>'+
+     '<th>mean pips</th><th>SE</th><th>95% CI</th><th>t</th><th>win%</th></tr>'+
+     todArmRow('US session',a.primary,RULES_TOD.config.primary.label)+
+     todArmRow('Complement (control)',a.complement,'all other hours — the hypothesis predicts this is lower')+
+     todArmRow('London session',a.secondary,'exploratory — window is MOGO\'s choice, not source-stated')+
+     '</table>';
+  if(c&&c.comparable){
+    h+='<div style="margin-top:6px;font-size:12px">Session minus complement: <b>'+todFmt(c.diffPips)+
+       ' pips</b> (SE '+todFmt(c.seDiffPips)+', z '+todFmt(c.z)+') — direction '+
+       (c.directionAsPredicted?'AS PREDICTED':'AGAINST the prediction')+'.</div>';
+  }
+  return h+'</div>';
+}
+function renderTodResults(){
+  const el=document.getElementById('todWsResultsContainer');
+  if(!el) return;
+  if(!todLastRuns||!todLastRuns.length){ el.innerHTML=''; return; }
+  const rep=todAssembleReport(todLastRuns);
+  let h='<div class="card" style="margin-top:10px">';
+  h+='<div style="font-weight:600;margin-bottom:4px">Pre-registered test</div>';
+  h+='<div style="font-size:12px;color:var(--muted);margin-bottom:8px">EUR/USD was named as the '+
+     'single cost-surviving exception by Breedon &amp; Ranaldo and was declared the primary test '+
+     'before any data was fetched. It carries the uncorrected figure.</div>';
+  h+=rep.preRegistered?todRenderOne(rep.preRegistered,'EUR/USD','pre-registered'):
+     '<div style="color:var(--muted)">EUR/USD was not run.</div>';
+  h+='</div>';
+  if(rep.exploratory.length){
+    h+='<div class="card" style="margin-top:10px">';
+    h+='<div style="font-weight:600">Exploratory — '+rep.exploratory.length+' further instrument(s)</div>';
+    h+='<div style="font-size:12px;color:var(--muted);margin-bottom:4px">Not pre-registered. With '+
+       rep.exploratory.length+' examined, the Šidák-corrected threshold is α = '+
+       rep.exploratorySidakAlpha.toFixed(4)+', so a t of about ±'+
+       (rep.exploratorySidakAlpha<0.05?(rep.exploratorySidakAlpha<0.005?'2.9':'2.5'):'1.96')+
+       ' is the bar here, not ±1.96. Reading the best of these as a discovery is the error this '+
+       'split exists to prevent.</div>';
+    rep.exploratory.forEach(function(r){ h+=todRenderOne(r,r.pair.replace('_','/'),''); });
+    h+='</div>';
+  }
+  if(rep.errors.length){
+    h+='<div class="card" style="margin-top:10px"><div style="font-weight:600">Not measured</div>'+
+       rep.errors.map(function(e){ return '<div style="font-size:12px;color:var(--muted)">'+
+         e.pair+' — '+e.error+'</div>'; }).join('')+'</div>';
+  }
+  el.innerHTML=h;
+}
+async function runTodReplayAll(){
+  if(todRunning) return;
+  todRunning=true;
+  const prog=document.getElementById('todWsProgress');
+  const daysEl=document.getElementById('todWsDays');
+  const days=Math.max(180,Math.min(1500,parseInt(daysEl&&daysEl.value,10)||1000));
+  // EUR/USD first, deliberately: the pre-registered test completes even if a later pair fails.
+  const pairs=[TOD_PRIMARY_PAIR].concat(SCAN_PAIRS.map(function(p){ return p.replace('/','_'); })
+    .filter(function(p){ return p!==TOD_PRIMARY_PAIR; }));
+  const runs=[];
+  try{
+    for(let i=0;i<pairs.length;i++){
+      if(prog) prog.textContent='('+(i+1)+'/'+pairs.length+') '+pairs[i]+' ...';
+      try{ runs.push(await runTodReplay(pairs[i],days,function(m){
+        if(prog) prog.textContent='('+(i+1)+'/'+pairs.length+') '+m; })); }
+      catch(e){ runs.push({pair:pairs[i],error:(e&&e.message)?e.message:String(e)}); }
+    }
+    todLastRuns=runs;
+    if(prog) prog.textContent='Done — '+runs.length+' instrument(s).';
+    renderTodResults();
+  } finally { todRunning=false; }
+}
+function exportTodReplay(){
+  if(!todLastRuns){ alert('Run the measurement first.'); return; }
+  const pkg=todBuildReplayPackage(todLastRuns,RULES_TOD.config,{stamp:Date.now()});
+  downloadTextFile('mogo-evidence-'+TOD_STRATEGY_ID+'-REPLAY-'+Date.now()+'.json',
+    'application/json',JSON.stringify(pkg,null,2));
+}
+function initTodWorkspace(){
+  const head=document.getElementById('todWsHeaderCard');
+  if(head) head.innerHTML=
+    '<div style="font-weight:600;font-size:15px">Time-of-Day Segmentation</div>'+
+    '<div style="font-size:12px;color:var(--muted);margin-top:6px;line-height:1.5">'+
+    'Two peer-reviewed papers report that a currency weakens during its own market\'s working '+
+    'hours and strengthens during the counter-currency\'s, because domestic traders keep buying '+
+    'the other currency and dealers\' inventory swings on a daily cycle. This measures whether '+
+    'that still holds. <b>Breedon &amp; Ranaldo end their sample in 2007; Krohn, Mueller &amp; '+
+    'Whelan end in 2014.</b> Neither says whether it survived. A null result here is the expected '+
+    'outcome and is worth as much as a positive one.'+
+    '<br><br><b>This arm has no stop and no target</b> — it holds a position between two clock '+
+    'times, so there is no risk to divide by and <b>no R-multiple</b>. It is measured in pips per '+
+    'session and cannot be compared against ALEX, CRT or the trend baseline. '+
+    '<b>Not authorized to paper trade.</b></div>';
+  const ctrls=document.getElementById('todWsControlsCard');
+  if(ctrls) ctrls.innerHTML=
+    '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">'+
+    '<label style="font-size:12px">Days <input id="todWsDays" type="number" value="1000" min="180" '+
+    'max="1500" style="width:80px;margin-left:6px"></label>'+
+    '<button class="btn" onclick="runTodReplayAll()">Measure sessions</button>'+
+    '<button class="btn" onclick="exportTodReplay()">Export evidence</button>'+
+    '<span id="todWsProgress" style="font-size:12px;color:var(--muted)"></span></div>'+
+    '<div style="font-size:11px;color:var(--muted);margin-top:6px">1,000 days of M15 covers about '+
+    'four years — entirely outside both papers\' samples.</div>';
+  renderTodResults();
+}
+const TOD_MANIFEST={
+  id:TOD_STRATEGY_ID,
+  family:'research_arm',
+  version:TOD_VERSION,
+  label:'Time-of-Day Segmentation',
+  navLabel:'TIME OF DAY',
+  panelId:'tod',
+  workspaceTitle:'Time-of-Day Segmentation — does the session effect still exist?',
+  currentPhase:'Replay only. Not authorized to paper trade.',
+  fullName:'Time-of-day segmentation (Breedon-Ranaldo / Krohn-Mueller-Whelan)',
+  description:'The first MOGO arm derived from peer-reviewed microstructure research rather than a published trading rule. Two independent papers report that a currency depreciates during its own local trading hours, caused by a domestic-currency bias that leaves dealers holding a cyclical inventory imbalance. Measures the US session (08:30-17:00 New York, the only clock window any source states) against the complement of all other hours on the same data, in pips per session. It has NO STOP AND NO TARGET, so it has no R-multiple and is not comparable to the other arms. Both source samples are stale -- 2007 and 2014 -- so this tests data neither paper saw. NOT authorized to paper trade.',
+  author:'External (Breedon & Ranaldo, JMCB 2013; Krohn, Mueller & Whelan, Journal of Finance 2024)',
+  ownership:'external_reconstruction',
+  status:'development',
+  trustLevel:'unverified',
+  badgeColor:'var(--muted)',
+  capabilities:{
+    scanning:false,paperTrading:false,automation:false,journal:false,
+    statistics:false,alerts:false,replay:true,backtesting:false,
+    aiReview:false,aiCoaching:false,reports:false,academyContent:false,
+    diagnostics:false,settings:false,strategyCenterContent:false
+  },
+  dependencies:['candleData'],
+  dna:{
+    style:'Hold a position across a fixed local-time window. No setup, no discretion, no invalidation price.',
+    difficulty:'Trivial to execute; the difficulty is entirely in whether the effect still exists',
+    marketType:'Forex majors, EUR/USD pre-registered',
+    preferredSessions:['New York'],
+    idealConditions:[],avoidConditions:[],strengths:[],weaknesses:[]
+  }
+};
+const TOD_SERVICES={
+  getAccount:()=>null,
+  getJournal:()=>[],
+  normalize:(raw)=>raw,
+  onOpen:()=>initTodWorkspace(),
+  health:()=>'development'
+};
 const CRT_STRATEGY_ID='crt_v1';
 const CRT_VERSION='crt_v1';
 const RULES_CRT={
@@ -24763,7 +25302,8 @@ const STRATEGY_REGISTRY=[
   {manifest:TJR_MANIFEST,services:TJR_SERVICES},
   {manifest:BASELINE_TREND_MANIFEST,services:BASELINE_TREND_SERVICES},
   {manifest:PSYCH_LEVEL_MANIFEST,services:PSYCH_LEVEL_SERVICES},
-  {manifest:CRT_MANIFEST,services:CRT_SERVICES}
+  {manifest:CRT_MANIFEST,services:CRT_SERVICES},
+  {manifest:TOD_MANIFEST,services:TOD_SERVICES}
 ];
 function findStrategyEntry(id){
   return STRATEGY_REGISTRY.find(e=>e.manifest.id===id)||null;

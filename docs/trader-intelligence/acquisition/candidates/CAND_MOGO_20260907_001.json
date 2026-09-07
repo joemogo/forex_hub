@@ -1,0 +1,91 @@
+{
+  "acquisitionStatus": "METADATA_VERIFIED",
+  "authenticityStatus": "LIKELY_SECONDARY",
+  "candidateId": "CAND|MOGO|20260907|001",
+  "canonicalCandidateId": null,
+  "changeLog": [
+    {
+      "actor": "claude-opus-5 (microstructure candidate hunt 2026-09-07)",
+      "changedAt": "2026-09-07T12:33:07Z",
+      "changedFields": [
+        "acquisitionStatus"
+      ],
+      "discoveryMethod": "ARTICLE_URL",
+      "newStatus": "REGISTERED",
+      "priorStatus": "DISCOVERED",
+      "reason": "Candidate successfully validated and durably registered."
+    },
+    {
+      "actor": "claude-opus-5 (microstructure candidate hunt 2026-09-07)",
+      "changedAt": "2026-09-07T12:33:07Z",
+      "changedFields": [
+        "acquisitionStatus"
+      ],
+      "discoveryMethod": "ARTICLE_URL",
+      "newStatus": "METADATA_VERIFIED",
+      "priorStatus": "REGISTERED",
+      "reason": "Phase 1 has no async metadata fetch -- whatever metadata was provided at registration is all that will ever be known without a future connector."
+    }
+  ],
+  "channelOrPublisher": "Francis Breedon; Angelo Ranaldo",
+  "claimedTraderId": "ACADEMIC_MICROSTRUCTURE",
+  "contentHash": null,
+  "contentOrigin": "UNKNOWN_ORIGIN",
+  "contentReference": null,
+  "contentSizeBytes": null,
+  "contentType": null,
+  "createdAt": "2026-09-07T12:33:07Z",
+  "creatorName": "Francis Breedon; Angelo Ranaldo",
+  "description": "PEER_REVIEWED. Published Journal of Money, Credit and Banking 45(7), 2013; SNB Working Paper 2011-04 is the full-text open version. Sample Jan 1997 - Jun 2007, EBS, six crosses (EUR/USD, USD/JPY, GBP/USD, EUR/JPY, USD/CHF, AUD/USD). FINDING: a currency depreciates during its OWN local trading hours and appreciates during the counter-currency's hours. Structural cause given: domestic-currency bias plus market segmentation producing cyclical dealer inventory imbalance -- an order-flow mechanism, not a chart pattern. SOURCE_STATED after costs: 'most of these simple time-of-day trading strategies are not profitable when trading costs are included. However, the notable exception is EUR/USD where the significant intraday pattern combined with narrow spreads in this cross means that this basic strategy has been profitable on average' with 'Sharpe Ratios of 1.3 and 0.9 respectively for the morning short and afternoon long'. Table 2 EUR/USD: EUR session -0.084**, USD session +0.100**. Stability section 2.3 reports year-by-year 1999-2007 'remarkably stable'. UNKNOWN: the exact clock windows used in the backtest; the exact spread assumption in pips. Sample ends 2007 -- 19 years stale as of registration.",
+  "discoveredAt": "2026-09-07T12:33:07Z",
+  "discoveryMethod": "ARTICLE_URL",
+  "duplicateStatus": "NONE",
+  "durationSeconds": null,
+  "language": null,
+  "metadataConfidence": "verified",
+  "normalizedUrl": "https://www.snb.ch/public/asset/en/www-snb-ch/publications/research/working-papers/2011/working_paper_2011_04/publications0_en/working_paper_2011_04.n.pdf",
+  "ownerDecisionIds": [],
+  "ownerReviewStatus": "not_reviewed",
+  "platform": "PDF",
+  "playlistId": null,
+  "playlistPosition": null,
+  "priorityAssessments": [],
+  "processingStatus": "metadata_processed",
+  "provenance": {
+    "registeredVia": "register_source.py"
+  },
+  "publicationDate": "2011-04-01",
+  "rejectionReason": null,
+  "relatedCandidateIds": [],
+  "sourceType": "ARTICLE",
+  "storagePolicy": "METADATA_ONLY",
+  "strategyFamilyCandidates": [],
+  "submittedBy": "claude-opus-5 (microstructure candidate hunt 2026-09-07)",
+  "title": "Intraday Patterns in FX Returns and Order Flow",
+  "topicCandidates": [
+    {
+      "assessedAt": "2026-09-07T12:33:07Z",
+      "classifiedFrom": "DESCRIPTION_DERIVED",
+      "confidence": "medium",
+      "evidenceReference": "journal",
+      "topic": "JOURNALING"
+    },
+    {
+      "assessedAt": "2026-09-07T12:33:07Z",
+      "classifiedFrom": "DESCRIPTION_DERIVED",
+      "confidence": "medium",
+      "evidenceReference": "backtest",
+      "topic": "BACKTESTING"
+    },
+    {
+      "assessedAt": "2026-09-07T12:33:07Z",
+      "classifiedFrom": "DESCRIPTION_DERIVED",
+      "confidence": "medium",
+      "evidenceReference": "session",
+      "topic": "SESSIONS"
+    }
+  ],
+  "updatedAt": "2026-09-07T12:33:07Z",
+  "url": "https://www.snb.ch/public/asset/en/www-snb-ch/publications/research/working-papers/2011/working_paper_2011_04/publications0_en/working_paper_2011_04.n.pdf",
+  "verifiedTraderId": null
+}

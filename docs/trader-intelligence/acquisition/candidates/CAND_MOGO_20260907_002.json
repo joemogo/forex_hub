@@ -1,0 +1,84 @@
+{
+  "acquisitionStatus": "METADATA_VERIFIED",
+  "authenticityStatus": "LIKELY_SECONDARY",
+  "candidateId": "CAND|MOGO|20260907|002",
+  "canonicalCandidateId": null,
+  "changeLog": [
+    {
+      "actor": "claude-opus-5 (microstructure candidate hunt 2026-09-07)",
+      "changedAt": "2026-09-07T12:33:20Z",
+      "changedFields": [
+        "acquisitionStatus"
+      ],
+      "discoveryMethod": "ARTICLE_URL",
+      "newStatus": "REGISTERED",
+      "priorStatus": "DISCOVERED",
+      "reason": "Candidate successfully validated and durably registered."
+    },
+    {
+      "actor": "claude-opus-5 (microstructure candidate hunt 2026-09-07)",
+      "changedAt": "2026-09-07T12:33:20Z",
+      "changedFields": [
+        "acquisitionStatus"
+      ],
+      "discoveryMethod": "ARTICLE_URL",
+      "newStatus": "METADATA_VERIFIED",
+      "priorStatus": "REGISTERED",
+      "reason": "Phase 1 has no async metadata fetch -- whatever metadata was provided at registration is all that will ever be known without a future connector."
+    }
+  ],
+  "channelOrPublisher": "Ingomar Krohn; Philippe Mueller; Paul Whelan",
+  "claimedTraderId": "ACADEMIC_MICROSTRUCTURE",
+  "contentHash": null,
+  "contentOrigin": "UNKNOWN_ORIGIN",
+  "contentReference": null,
+  "contentSizeBytes": null,
+  "contentType": null,
+  "createdAt": "2026-09-07T12:33:20Z",
+  "creatorName": "Ingomar Krohn; Philippe Mueller; Paul Whelan",
+  "description": "PEER_REVIEWED (published version: Journal of Finance 79(2), 2024). PROVENANCE CAVEAT: the text read was the June 2018 working paper, NOT the published JF version -- figures may differ in the published paper and have not been re-checked against it. Sample Jan 1994 - Dec 2014, nine G10 currencies vs USD (AUD CAD EUR JPY NZD NOK SEK CHF GBP). INDEPENDENT CONFIRMATION of the Breedon-Ranaldo direction with seven additional years of data: during US trading hours 8:30am-5:00pm EST foreign currencies APPRECIATE against USD (i.e. USD depreciates in its own local hours), 'ranging between 8.54% (CHF) and 1.51% (CAD)', the yen the sole exception at -2.01%. SOURCE_STATED after costs: 'an equally-weighted portfolio consisting of only these three currency pairs [CHF, EUR, GBP] generates, on average, 3.29% after accounting for transaction costs.' Stability: results 'are robust to...the choice of the sample period.' This is the only SOURCE_STATED explicit clock window found: 8:30am-5:00pm EST for the US session. UNKNOWN: local windows for the non-US sessions; the transaction cost model used. Sample ends 2014 -- 12 years stale as of registration.",
+  "discoveredAt": "2026-09-07T12:33:20Z",
+  "discoveryMethod": "ARTICLE_URL",
+  "duplicateStatus": "NONE",
+  "durationSeconds": null,
+  "language": null,
+  "metadataConfidence": "verified",
+  "normalizedUrl": "https://acfr.aut.ac.nz/__data/assets/pdf_file/0007/190753/Krohn_Mueller_Whelan_Jun2018_FXPremiaAroundTheClock.pdf",
+  "ownerDecisionIds": [],
+  "ownerReviewStatus": "not_reviewed",
+  "platform": "PDF",
+  "playlistId": null,
+  "playlistPosition": null,
+  "priorityAssessments": [],
+  "processingStatus": "metadata_processed",
+  "provenance": {
+    "registeredVia": "register_source.py"
+  },
+  "publicationDate": "2018-06-01",
+  "rejectionReason": null,
+  "relatedCandidateIds": [],
+  "sourceType": "ARTICLE",
+  "storagePolicy": "METADATA_ONLY",
+  "strategyFamilyCandidates": [],
+  "submittedBy": "claude-opus-5 (microstructure candidate hunt 2026-09-07)",
+  "title": "FX Premia Around the Clock (working paper; published as 'Foreign Exchange Fixings and Returns around the Clock', Journal of Finance 2024)",
+  "topicCandidates": [
+    {
+      "assessedAt": "2026-09-07T12:33:20Z",
+      "classifiedFrom": "DESCRIPTION_DERIVED",
+      "confidence": "medium",
+      "evidenceReference": "journal",
+      "topic": "JOURNALING"
+    },
+    {
+      "assessedAt": "2026-09-07T12:33:20Z",
+      "classifiedFrom": "DESCRIPTION_DERIVED",
+      "confidence": "medium",
+      "evidenceReference": "session",
+      "topic": "SESSIONS"
+    }
+  ],
+  "updatedAt": "2026-09-07T12:33:20Z",
+  "url": "https://acfr.aut.ac.nz/__data/assets/pdf_file/0007/190753/Krohn_Mueller_Whelan_Jun2018_FXPremiaAroundTheClock.pdf",
+  "verifiedTraderId": null
+}

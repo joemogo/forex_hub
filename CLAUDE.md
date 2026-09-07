@@ -149,11 +149,21 @@ python3 scripts/replay_compare.py <package>... [--band LO HI]  the standing repl
                                                range so arms with different geometry can be compared.
 ```
 
-**Every replay result goes through `replay_compare.py`.** The same analysis was hand-written four
-times before this existed, and two of those hand runs contained errors that changed the
-conclusion: spread charged against the mean rather than per trade (which hid the whole CRT
-result), and a subgroup reported as significant without correcting for the 17 slices examined.
+**Every R-denominated replay result goes through `replay_compare.py`.** The same analysis was
+hand-written four times before this existed, and two of those hand runs contained errors that
+changed the conclusion: spread charged against the mean rather than per trade (which hid the whole
+CRT result), and a subgroup reported as significant without correcting for the 17 slices examined.
 A result quoted from anything other than this script is a result nobody has checked the method of.
+
+**The one exception is `tod_session_v1`, and it is an exception on purpose.** That arm holds a
+position between two clock times: no stop, no target, therefore no risk denominator and **no R**.
+Every statistic `replay_compare.py` reports is R-denominated, so running it against that arm's
+evidence is meaningless rather than merely imprecise. Its packages are `evidenceKind:
+SESSION_RETURN_OBSERVATIONS`, carry no `realizedR` field at all so nothing can average them against
+genuine R-multiples, and state both facts in their own `disclosures`. Its analysis lives with the
+arm and is gated by `tests/v166_tod_session_tests.js` (37 fixtures) and
+`tests/mutate_v166_tod_session.js` (25 mutations, run against `index.html` itself).
+**Never average a session return against an R-multiple.**
 
 A diagnostic must test reality, not restate a dashboard. If reality contradicts a report, a test,
 or a previous conclusion, **trust the evidence and investigate.**
