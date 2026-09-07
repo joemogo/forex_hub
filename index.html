@@ -2262,9 +2262,10 @@ const ALL_PAIRS=[
 // Bump by 1.0 for a major update (new feature/tab), by 0.1 for a small patch/fix.
 // This shows in the header next to the logo and on the Diagnostics tab, so you can
 // glance at the live site and instantly confirm which build actually deployed.
-const APP_VERSION='12.68.0';
+const APP_VERSION='12.68.1';
 const APP_VERSION_DATE='07 Sep 2026';
 const APP_VERSION_LOG=[
+  '12.68.1 - THE VERDICT LINE OVERSTATED ITS OWN PASS (display and gate correction; zero protected drift; no change to any measurement). The first carry backtest run returned +21.35% over 22.5 years, +0.86% a year, against a 40.1% worst fall -- and the panel printed \'Meets the pre-registered conditions.\' IT DID NOT. The pre-registration says in as many words that a positive mean with a 30% drawdown is a fail, and the verdict checked only the other three conditions. A pass condition that lives only in prose is not a pass condition. maxDrawdownLimit is now config, carryCompareArms returns drawdownAcceptable, the verdict requires it, and the panel names it. A NULL drawdown does NOT pass. CTRL-5 reproduces the operator run exactly and asserts it FAILS. SECOND DEFECT, FOUND BY THE SAME RUN: the Years box sized its request in CALENDAR days while daily bars exist only on trading days, so 15 years fetched ~22.5. Harmless to the arithmetic -- more history is still real history -- but an input that misreports its own range is a control nobody can reason about. The sizing moved out of the async driver into the pure carryBarsForYears specifically so a fixture could reach it; a mutation of it had SURVIVED because the driver needs fetch and no fixture could drive it. TESTING: 28 fixtures (5 new), 27 mutations, 27 caught, 0 survived. WHAT THE RUN ACTUALLY FOUND, recorded because it is the point: carry is real -- +43.07 points of accrued carry against only -12.73 from price, and the reversed control lost 54% -- but OANDA kept about 36% of the gross carry, roughly 1.09%/yr of a 3.01%/yr effect. Over the period the broker cut (24.6 points) EXCEEDED the strategy total return (21.35%). Paper-trading readiness: not assessed.',
   '12.68.0 - CARRY BACKTEST: THE FIRST ARM THAT PREDICTS NOTHING (new research arm; zero protected-function and zero protected-constant drift; read-only; NOT authorized to paper trade). The four chart-pattern arms all tried to predict direction from past prices and all four produced entries indistinguishable from random. This one predicts nothing: it collects an interest-rate difference and accepts whatever the price does. It is a RISK PREMIUM, not an inefficiency, so it is SUPPOSED to lose badly sometimes -- a backtest of this showing no bad periods has a bug. WHY IT COULD BE BUILT AT ALL: v12.66.0 established OANDA markup does not eat the whole differential, and the missing piece was historical rates, which OANDA does not publish. BIS central bank policy rates (CBPOL, data.bis.org) fill it -- 40+ economies, daily, back to the 1980s, unrestricted use with attribution. Stored as CHANGE POINTS ONLY since a policy rate is a step function: 20 years of ten G10 currencies in 9.9 KB, small enough to embed. TWO CHECKS ON THAT DATA, not assumptions: the BIS file writes missing values as NaN, which float() parses and which fails every comparison, so a naive change test ended CAD, GBP and NOK at their first gap; and the gap these rates imply reproduces the gap OANDA implies to a MEDIAN OF 0.10 PERCENTAGE POINTS across 14 instruments, worst 0.68 (NZD/CHF). PRE-REGISTERED BEFORE ANY RESULT WAS SEEN: total return is carry PLUS price change after markup, never carry alone (carry alone is what made short USD/TRY look like 21% a year while the lira fell far enough to cancel it); maximum drawdown is reported BESIDE the return; and a REVERSED CONTROL holds the same pairs the other way, because if both arms make money the result is a currency trend and carry explains nothing. THE BASKET IS SELECTED FROM THE RATES IN FORCE ON EACH REBALANCE DATE, never today\'s -- choosing from today and running over history picks the currencies that turned out to keep paying, the most flattering look-ahead available. The markup is charged on BOTH sides, since OANDA rates decompose as long = d - m/2 and short = -d - m/2. Carry accrues on CALENDAR days, not bars, or weekends under-accrue by 2/7. TESTING: 22 fixtures, 20 mutations, 20 caught, 0 survived. TWO FIXTURES FAILED TO FAIL and were rebuilt: the ranking test used three pairs whose carry gaps were identical, so sorting ascending or descending gave the same answer; and the position cap never bound because only two candidates cleared the carry floor. Paper-trading readiness: not assessed.',
   '12.67.0 - THE DASHBOARD SAID 0% AND DID NOT SAY 0% OF WHAT (display-only; zero protected-function and zero protected-constant drift; no rule, threshold, gate, sizing or execution change; renderDashboard is not a protected function). WHAT WAS INVESTIGATED: the JVM tile read 0% win rate and -$214.06 while a standing open item claimed the preserved evidence showed 1W/1L. Preserved evidence holds THREE closed JVM records -- a +$200 EUR/USD win and two real losses of -$112.32 and -$101.74 -- and the arithmetic gap between -$14.06 and the displayed -$214.06 is exactly the size of the win. THE WIN IS A SEEDED RECORD AND THE QUARANTINE IS CORRECT: entry 13:11:15.571Z, exit 13:11:15.575Z -- FOUR MILLISECONDS to a 2R target -- with round-number geometry throughout (entry 1.085, stop 1.083, target 1.089, pnl exactly 200), no isDeveloperTrade and no tradeSource field where the genuine losses carry both, and a 13-digit positionId where the engine mints 16. TI_TRADE_ID_ENGINE_MINTED caught it correctly. So the dashboard figures were RIGHT and the standing open item was itself the error, having counted a seeded record as a win. THE REAL DEFECT IS THAT NOTHING SAID SO. The tile rendered a bare 0% computed on a filtered set with no indication a third record existed or why it was excluded, and that silence sent two separate investigations hunting a reporting bug that did not exist. dashCoverageNote is a new pure function stating the denominator every figure rests on -- \'2 closed\' normally, \'2 closed - 1 excluded\' with a tooltip naming the reason when something was quarantined. It NEVER states a count it was not given: an unknown denominator renders as no claim at all rather than a fabricated \'0 closed\', because 0% of two trades and 0% of forty are different claims. Only one tradeIntegrityReport call now serves both the P&L netting and the count. TESTING: 8 fixtures, 9 mutations, 9 caught, 0 survived, run against index.html itself. Paper-trading readiness: not assessed.',
   '12.66.0 - CARRY FEASIBILITY: TEST THE ASSUMPTION THAT KILLS THE IDEA, BEFORE BUILDING THE IDEA (read-only diagnostic; zero protected-function and zero protected-constant drift; no rule, threshold, gate, sizing or execution change anywhere; nothing authorized to trade). WHY IT EXISTS: the academic carry literature measures INTERBANK rates, while a retail account is paid the BROKER rate, and the broker takes a cut on both sides. If that markup exceeds the rate differential, every instrument costs money to hold in EITHER direction and carry is dead for this account regardless of what any paper reports. That is one GET call, and it belongs before weeks of building -- the lesson tod_session_v1 should have taught. THE ARITHMETIC NEEDS NO EXTERNAL DATA: for one instrument longRate = d - m/2 and shortRate = -d - m/2, so d = (long - short)/2 and m = -(long + short). On a fair instrument the two rates are equal and opposite and sum to ZERO; whatever they fail to sum to is exactly what the broker keeps. The broker own published numbers are sufficient -- no interbank feed, no licensed data, nothing to acquire. The death condition is explicit: if max(longRate, shortRate) <= 0 for every instrument there is nothing to harvest. AN EMPTY BOOK DOES NOT FIRE THAT FLAG -- missing data is not a finding, and ALL-5 pins the distinction. TESTING: 16 fixtures, 12 mutations, 12 caught, 0 survived. A REAL DEFECT FOUND BY A FIXTURE: the guard was written as !isFinite(rate), and isFinite(null) is TRUE in JavaScript because null coerces to 0 -- so a MISSING financing rate was accepted and read as 0%, which decomposes to zero markup: the single most flattering lie this function could tell. Booleans, empty strings and [] coerce the same way. Coercion is now explicit via carryToRate and DEC-6 drives ten such values. A SECOND FIXTURE FAILED TO FAIL: ALL-6 asserted the median markup on a book whose middle element was identical sorted or unsorted, so dropping the sort killed nothing; rebuilt on a book where the two answers genuinely differ (.03 versus .02). DISCLOSURE CARRIED IN THE UI: these are annualised rates before any price movement, and the currencies paying the most carry are historically the ones that fall hardest when it unwinds. Paper-trading readiness: not assessed.',
@@ -23776,6 +23777,12 @@ const RULES_CARRY={
     rebalanceDays:21,          // ~monthly, in trading days
     minNetCarryAnnual:0.005,   // 0.5%/yr -- below this the position is not worth its own spread
     maxPositions:5,
+    // THE DRAWDOWN LIMIT WAS PRE-REGISTERED AND THEN NOT ENFORCED. The plan said in as many words
+    // that "a positive mean with a 30% drawdown is a fail, not a pass", and the first verdict line
+    // checked only the three other conditions -- so a run returning 0.86% a year against a 40.1%
+    // worst fall printed "Meets the pre-registered conditions." It did not. A pass condition that
+    // lives only in prose is not a pass condition.
+    maxDrawdownLimit:0.30,
     // FALLBACK ONLY. The driver passes OANDA's real per-instrument markup; this is used only when
     // an instrument has no published financing block, and it is the MEDIAN measured on the
     // operator's own account (2.19%/yr round trip), never a flattering zero.
@@ -23973,7 +23980,7 @@ function carryWalkBasket(seriesByPair,rates,markups,cfg,reversed){
   return out;
 }
 // PURE. The comparison the pre-registration commits to. Returns a record, never a verdict.
-function carryCompareArms(basket,control){
+function carryCompareArms(basket,control,cfg){
   const b=carrySummarize(basket&&basket.days,'carry basket');
   const r=carrySummarize(control&&control.days,'reversed control');
   if(!b.n||!r.n) return{comparable:false,reason:'INSUFFICIENT_DATA',basket:b,control:r};
@@ -23982,6 +23989,9 @@ function carryCompareArms(basket,control){
     // The pre-registered pass condition, all three parts, evaluated together.
     basketPositive:b.totalReturn>0,
     beatsReversedControl:(b.totalReturn>r.totalReturn),
+    // The fourth condition, equal to the other three and previously missing entirely.
+    drawdownAcceptable:(b.maxDrawdown!=null&&b.maxDrawdown<=((cfg&&cfg.maxDrawdownLimit)||RULES_CARRY.config.maxDrawdownLimit)),
+    drawdownLimit:((cfg&&cfg.maxDrawdownLimit)||RULES_CARRY.config.maxDrawdownLimit),
     // A currency trend shows up as BOTH arms positive. Carry alone cannot do that: reversing every
     // position must reverse the carry earned, so the control's carry contribution is negative by
     // construction and only a price trend can lift it.
@@ -24003,6 +24013,19 @@ function carryG10Universe(available){
   }
   return out;
 }
+// PURE. How many DAILY bars to request for a given number of years.
+//
+// Daily bars exist only on trading days, about 252 a year. Sizing the request with 365 asked for
+// ~45% more history than the box said: a request for 15 years came back with 22.5. It did not
+// corrupt any arithmetic -- more history is still real history -- but the input was lying about
+// what it did, and a control that misreports its own range is a control nobody can reason about.
+// Extracted from the async driver specifically so a fixture can reach it; it was previously
+// untestable and a mutation of it survived.
+const CARRY_TRADING_DAYS_PER_YEAR=252;
+function carryBarsForYears(years){
+  const y=(typeof years==='number'&&isFinite(years)&&years>0)?years:10;
+  return Math.min(Math.ceil(y*CARRY_TRADING_DAYS_PER_YEAR)+40,9000);
+}
 let carryLastRun=null,carryRunning=false;
 function carryPct(x,dp){ return (x==null||!isFinite(x))?'—':((x>=0?'+':'')+(x*100).toFixed(dp==null?2:dp)+'%'); }
 // Fetches and runs. The ONLY non-pure function in the arm.
@@ -24020,7 +24043,7 @@ async function runCarryBacktest(years,onProgress){
   });
   const universe=carryG10Universe(available);
   if(!universe.length) return{error:'No G10 instruments are available on this account.'};
-  const bars=Math.min(Math.ceil((years||10)*365)+40,9000);
+  const bars=carryBarsForYears(years);
   const seriesByPair={};
   const failed=[];
   for(let i=0;i<universe.length;i++){
@@ -24037,7 +24060,7 @@ async function runCarryBacktest(years,onProgress){
   const control=carryWalkBasket(seriesByPair,CARRY_POLICY_RATES,markups,c,true);
   return{captureBasis:'REPLAY_RUN',population:'REPLAY',
     universe:universe,fetched:Object.keys(seriesByPair).length,failed:failed,
-    markups:markups,basket:basket,control:control,comparison:carryCompareArms(basket,control)};
+    markups:markups,basket:basket,control:control,comparison:carryCompareArms(basket,control,c)};
 }
 function renderCarryBacktest(r){
   if(!r) return '';
@@ -24056,13 +24079,15 @@ function renderCarryBacktest(r){
   };
   let h='';
   // THE VERDICT AGAINST THE PRE-REGISTERED CONDITIONS, not against whatever looks good.
-  const passes=cmp.basketPositive&&cmp.beatsReversedControl&&!cmp.bothPositive;
+  const passes=cmp.basketPositive&&cmp.beatsReversedControl&&!cmp.bothPositive&&cmp.drawdownAcceptable;
   h+='<div style="padding:10px;border-left:3px solid '+(passes?'var(--pos,#3fb950)':'var(--neg,#f85149)')+
      ';margin-bottom:12px;font-size:13px">';
   h+='<b>'+(passes?'Meets the pre-registered conditions.':'Does NOT meet the pre-registered conditions.')+'</b><br>';
   h+='Basket positive: <b>'+(cmp.basketPositive?'yes':'no')+'</b> &middot; '+
      'beats its reversed control: <b>'+(cmp.beatsReversedControl?'yes':'no')+'</b> &middot; '+
-     'both arms positive (would mean a price trend, not carry): <b>'+(cmp.bothPositive?'YES — read nothing into the basket':'no')+'</b>';
+     'both arms positive (would mean a price trend, not carry): <b>'+(cmp.bothPositive?'YES — read nothing into the basket':'no')+'</b> &middot; '+
+     'drawdown within the pre-registered '+((cmp.drawdownLimit||0.3)*100).toFixed(0)+'% limit: <b>'+
+     (cmp.drawdownAcceptable?'yes':'NO — this alone is a fail')+'</b>';
   if(b.maxDrawdown!=null&&b.annualReturn!=null){
     h+='<br>Return per unit of drawdown: <b>'+(cmp.returnOverDrawdown==null?'—':cmp.returnOverDrawdown.toFixed(2))+
        '</b> — '+(b.annualReturn*100).toFixed(1)+'% a year against a '+(b.maxDrawdown*100).toFixed(1)+'% worst fall.';

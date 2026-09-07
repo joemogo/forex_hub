@@ -14,7 +14,8 @@ const ctx={Math,isFinite,isNaN,Date,Object,Array,console,String,Number,Infinity,
 vm.createContext(ctx);
 const EX=['RULES_CARRY','CARRY_STRATEGY_ID','carryRateOn','carrySplitPair','carryNetAnnual',
  'carryWalkInstrument','carryIsoDate','carryMaxDrawdown','carrySelectBasket','carrySummarize',
- 'carryWalkBasket','carryCompareArms','carryG10Universe','CARRY_POLICY_RATES'];
+ 'carryWalkBasket','carryCompareArms','carryG10Universe','CARRY_POLICY_RATES',
+ 'carryBarsForYears','CARRY_TRADING_DAYS_PER_YEAR'];
 try{ vm.runInContext(src+'\n;globalThis.__X={'+EX.map(function(n){return n+':'+n;}).join(',')+'};',ctx); }
 catch(e){ console.log('RUNNER ERROR: '+(e&&e.message)); process.exit(1); }
 const G=ctx.__X;
@@ -177,6 +178,39 @@ t('CTRL-3 BOTH ARMS POSITIVE is detected -- that is a price trend, not carry',fu
   eq(cmp.bothPositive,true,'this is the shape the control exists to expose');
   eq(cmp.beatsReversedControl,true);
 });
+t('CTRL-5 THE REAL RUN: positive, beats its control, and still a FAIL on drawdown',function(){
+  // Reproduces the operator's 2026-09-07 result exactly: +21.35% over 22.5 years (+0.86%/yr)
+  // against a 40.1% worst fall. It satisfies all three of the original conditions, and the
+  // pre-registration ALSO said a positive mean with a 30% drawdown is a fail. The first version of
+  // the verdict checked only the three and printed "Meets the pre-registered conditions."
+  const basket={days:[{equity:1.0,carry:0,price:0},{equity:1.8,carry:0.43,price:-0.13},
+                      {equity:1.078,carry:0,price:0},{equity:1.2135,carry:0,price:0}]};
+  const control={days:[{equity:1.0,carry:0,price:0},{equity:0.4567,carry:-0.80,price:0.13}]};
+  const cmp=G.carryCompareArms(basket,control,G.RULES_CARRY.config);
+  eq(cmp.basketPositive,true,'the basket did make money');
+  eq(cmp.beatsReversedControl,true,'and it did beat its control');
+  eq(cmp.bothPositive,false,'and it is not a price trend');
+  ok(cmp.basket.maxDrawdown>0.30,'but the drawdown is over the limit, got '+cmp.basket.maxDrawdown);
+  eq(cmp.drawdownAcceptable,false,'THIS is the condition that fails, and it must be reported');
+});
+t('CTRL-6 the same shape with a tolerable drawdown passes all four',function(){
+  const basket={days:[{equity:1.0,carry:0,price:0},{equity:1.1,carry:0.1,price:0},
+                      {equity:0.95,carry:0,price:0},{equity:1.25,carry:0,price:0}]};
+  const control={days:[{equity:1.0,carry:0,price:0},{equity:0.8,carry:-0.1,price:0}]};
+  const cmp=G.carryCompareArms(basket,control,G.RULES_CARRY.config);
+  ok(cmp.basket.maxDrawdown<=0.30,'precondition: drawdown within limit');
+  eq(cmp.drawdownAcceptable,true);
+  eq(cmp.basketPositive&&cmp.beatsReversedControl&&!cmp.bothPositive&&cmp.drawdownAcceptable,true);
+});
+t('CTRL-7 a null drawdown is NOT treated as acceptable',function(){
+  // An unmeasurable drawdown must not silently pass the condition.
+  const cmp=G.carryCompareArms({days:[{equity:1.5,carry:0.5,price:0}]},
+                               {days:[{equity:0.7,carry:-0.5,price:0}]},G.RULES_CARRY.config);
+  ok(cmp.basket.maxDrawdown!=null,'this path does produce a drawdown');
+  const cmp2=G.carryCompareArms({days:[{equity:null,carry:0,price:0}]},
+                                {days:[{equity:0.7,carry:-0.5,price:0}]},G.RULES_CARRY.config);
+  eq(cmp2.drawdownAcceptable,false,'no measurable drawdown must not pass');
+});
 t('CTRL-4 an empty run refuses to compare rather than reporting zeros',function(){
   eq(G.carryCompareArms({days:[]},{days:[]}).comparable,false);
 });
@@ -202,6 +236,18 @@ t('RATES-1 the EMBEDDED BIS table is present, complete and sane',function(){
   ['CAD','GBP','NOK'].forEach(function(c){
     ok(R2[c].length>20,c+' has only '+R2[c].length+' points -- the NaN defect is back');
   });
+});
+t('BARS-1 the Years box is sized in TRADING days, so it returns the range it promises',function(){
+  // 15 years x 365 asked for 5,515 daily bars, which is ~22 years of trading days -- the operator
+  // asked for 15 and the panel reported 22.5. Sized correctly, 15 years is ~3,820 bars.
+  eq(G.CARRY_TRADING_DAYS_PER_YEAR,252);
+  eq(G.carryBarsForYears(15),15*252+40);
+  ok(G.carryBarsForYears(15)/252<16,'15 years must request under 16 years of trading days');
+  ok(G.carryBarsForYears(15)<5000,'a calendar-day sizing would exceed 5,500');
+});
+t('BARS-2 a bad or missing year count falls back to a sane default and is capped',function(){
+  [null,undefined,NaN,0,-5,'x',{}].forEach(function(v){ eq(G.carryBarsForYears(v),10*252+40,'input '+JSON.stringify(v)); });
+  eq(G.carryBarsForYears(500),9000,'must respect the hard cap');
 });
 t('GUARD-1 the header states the pre-registered pass conditions and the risk-premium caveat',function(){
   const flat=src.replace(/\n\/\/\s?/g,' ');
