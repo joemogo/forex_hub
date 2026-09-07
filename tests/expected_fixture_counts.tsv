@@ -52,3 +52,4 @@ run_v_paper_trading_audit_tests.js	391
 run_v1240_scan_freshness_tests.js	42
 run_v1241_exit_provenance_tests.js	83
 run_v166_tod_session_tests.js	37
+run_v167_carry_feasibility_tests.js	16

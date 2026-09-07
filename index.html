@@ -1472,6 +1472,16 @@ button.danger:hover{background:var(--red-dim)}
           <div id="storageDiagResults" style="margin-top:12px"></div>
         </div>
         <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+            <div>
+              <div class="section-label" style="margin-bottom:2px">Carry feasibility</div>
+              <div style="font-size:11px;color:var(--text2);max-width:700px">Before any carry strategy is built: does the broker&rsquo;s financing markup already eat the interest-rate gap? On a fair instrument the long and short rates cancel; whatever they fail to cancel to is the broker&rsquo;s cut. Read-only &mdash; one request for instrument metadata, nothing placed.</div>
+            </div>
+            <button class="primary" onclick="runCarryFeasibility()">Check financing rates</button>
+          </div>
+          <div id="carryDiagResults" style="margin-top:12px"></div>
+        </div>
+        <div class="card">
           <div id="diag-results"><div class="empty-state">Click "Run Diagnostics" to check everything.</div></div>
         </div>
 
@@ -2238,9 +2248,10 @@ const ALL_PAIRS=[
 // Bump by 1.0 for a major update (new feature/tab), by 0.1 for a small patch/fix.
 // This shows in the header next to the logo and on the Diagnostics tab, so you can
 // glance at the live site and instantly confirm which build actually deployed.
-const APP_VERSION='12.65.0';
+const APP_VERSION='12.66.0';
 const APP_VERSION_DATE='07 Sep 2026';
 const APP_VERSION_LOG=[
+  '12.66.0 - CARRY FEASIBILITY: TEST THE ASSUMPTION THAT KILLS THE IDEA, BEFORE BUILDING THE IDEA (read-only diagnostic; zero protected-function and zero protected-constant drift; no rule, threshold, gate, sizing or execution change anywhere; nothing authorized to trade). WHY IT EXISTS: the academic carry literature measures INTERBANK rates, while a retail account is paid the BROKER rate, and the broker takes a cut on both sides. If that markup exceeds the rate differential, every instrument costs money to hold in EITHER direction and carry is dead for this account regardless of what any paper reports. That is one GET call, and it belongs before weeks of building -- the lesson tod_session_v1 should have taught. THE ARITHMETIC NEEDS NO EXTERNAL DATA: for one instrument longRate = d - m/2 and shortRate = -d - m/2, so d = (long - short)/2 and m = -(long + short). On a fair instrument the two rates are equal and opposite and sum to ZERO; whatever they fail to sum to is exactly what the broker keeps. The broker own published numbers are sufficient -- no interbank feed, no licensed data, nothing to acquire. The death condition is explicit: if max(longRate, shortRate) <= 0 for every instrument there is nothing to harvest. AN EMPTY BOOK DOES NOT FIRE THAT FLAG -- missing data is not a finding, and ALL-5 pins the distinction. TESTING: 16 fixtures, 12 mutations, 12 caught, 0 survived. A REAL DEFECT FOUND BY A FIXTURE: the guard was written as !isFinite(rate), and isFinite(null) is TRUE in JavaScript because null coerces to 0 -- so a MISSING financing rate was accepted and read as 0%, which decomposes to zero markup: the single most flattering lie this function could tell. Booleans, empty strings and [] coerce the same way. Coercion is now explicit via carryToRate and DEC-6 drives ten such values. A SECOND FIXTURE FAILED TO FAIL: ALL-6 asserted the median markup on a book whose middle element was identical sorted or unsorted, so dropping the sort killed nothing; rebuilt on a book where the two answers genuinely differ (.03 versus .02). DISCLOSURE CARRIED IN THE UI: these are annualised rates before any price movement, and the currencies paying the most carry are historically the ones that fall hardest when it unwinds. Paper-trading readiness: not assessed.',
   '12.65.0 - THE FIRST ARM DERIVED FROM PEER-REVIEWED RESEARCH RATHER THAN A PUBLISHED TRADING RULE (new research arm; zero protected-function and zero protected-constant drift; no rule, threshold, weight, score, gate, sizing or execution change to any existing strategy; tod_session_v1 is NOT authorized to paper trade). WHAT IT TESTS: two independent peer-reviewed papers report that a currency depreciates during the working hours of its OWN market and appreciates during the counter-currency hours -- Breedon and Ranaldo (JMCB 45(7) 2013, sample Jan 1997 to Jun 2007) and Krohn, Mueller and Whelan (Journal of Finance 79(2) 2024, sample Jan 1994 to Dec 2014). The stated cause is ORDER FLOW, not chart shape: a domestic-currency bias leaves dealers carrying a cyclical inventory imbalance. That matters because every other arm MOGO has tested rests on an asserted chart regularity with no mechanism, and psych_level_v1 -- the only arm with a positive point estimate -- is the only other one derived from order-flow research. Breedon and Ranaldo also DISCLOSE THEIR OWN NEGATIVE RESULT: \'most of these simple time-of-day trading strategies are not profitable when trading costs are included\', with EUR/USD named as the one exception because its spread is narrow. THE ARM HAS NO STOP AND NO TARGET. It holds a position between two clock times, so it has no invalidation price, NO RISK DENOMINATOR and therefore NO R-MULTIPLE. An R here would be entirely MOGO invention, and UNKNOWN stays UNKNOWN -- so it is measured in its native units, pips per session, and its evidence package is deliberately NOT trade-shaped: records are SESSION_RETURN_OBSERVATIONS with no realizedR field to misread, and the package states in its own text that scripts/replay_compare.py -- which is R-denominated throughout -- DOES NOT APPLY to it. THE CONTROL IS THE COMPLEMENT, and it is what makes the measurement mean anything: a pair that simply drifted up over the sample would show a positive session mean for a reason having nothing to do with time of day, so all the OTHER hours are measured on the same series and the two must be compared. EUR/USD IS PRE-REGISTERED, declared before any data was fetched because it is the source-named exception; every other instrument is EXPLORATORY and Sidak-corrected for the number examined, because reading the best of twelve as a discovery is how a null result gets dressed up. WHAT IS SOURCE-STATED AND WHAT IS NOT: 08:30-17:00 New York is the only explicit clock window any consulted source gives (Krohn et al) and is labelled SOURCE_STATED; the London window is MOGO own choice and is labelled MOGO CHOICE in the config, in every exported observation, and in the UI. Full register with the extraction caveats: docs/trader-intelligence/rule-registers/TOD-time-of-day-segmentation.md; sources registered as CAND|MOGO|20260907|001 and 002. BOTH SOURCE SAMPLES ARE STALE -- 2007 and 2014 -- and neither paper discusses decay, so this measures data neither of them saw and A NULL RESULT IS THE EXPECTED OUTCOME. TESTING: 37 fixtures, 25 mutations, 25 caught, 0 survived. TWO REAL DEFECTS FOUND BY THE FIXTURES, not by review. The complement legs were originally built from the raw window list and priced independently, which cut them at weekend boundaries that have no candles -- so every Friday-to-Monday leg was REFUSED and vanished from the control silently, and the surviving legs no longer lined up with the priced sessions. Invisible in the means; caught only by a TILING fixture asserting the two arms partition the series with no gap and no overlap. The complement is now derived from the adjacent priced sessions, making the tiling true by construction. Second, an equivalence probe over 2014-2026 showed the DST two-pass conversion and the noon window anchor are EQUIVALENT MUTANTS at these session times (zero differences), but that a near-midnight anchor SKIPS A WHOLE CALENDAR DAY on every spring-forward in both zones -- a real, previously untested defect, now killed by TZ-6b. Both equivalent mutants are recorded as such rather than reported as survivors. GUARD-1/2 WERE REWRITTEN AFTER SURVIVING: they searched the whole file for a disclosure phrase, and once the same phrase appeared in the manifest and the package disclosures they passed even with the header disclosure deleted -- three copies made them unable to fail. They now check each location where the warning must live, and the package disclosures are asserted on the BUILT PACKAGE rather than on source prose. Paper-trading readiness: not assessed.',
   '12.60.0 - TODAY OPPORTUNITIES RANKED INSTRUMENTS MOGO CANNOT TRADE (display only; zero protected-function and zero protected-constant drift; no rule, weight, score, gate, sizing or execution change). The dashboard card ranked ALL_PAIRS, so its top rows were routinely USD/ZAR, USD/SGD and NZD/CAD -- instruments NEITHER strategy can open a position on. The seven exotics are deliberately excluded from ALEXG_LIVE_PAIRS, because entry spread already costs a measured 9.8 percent of risk on majors and is materially worse there, and they were never in SCAN_PAIRS. A card headed Today Opportunities whose best entries are untradeable is not a ranking, it is a distraction placed where the operator looks first. IT WAS WORSE THAN UNTRADEABLE: a pair outside SCAN_PAIRS has no bias data, so its score cannot exceed 100-WEIGHTS.bias3 -- the ceiling v12.56.0 disclosed in the pair list. Ranking those against pairs that CAN reach 100 compared two different scales and systematically buried the tradeable ones; in the operator own dashboard USD/ZAR at 43 outranked every instrument MOGO is allowed to trade. The card now ranks the UNION of what each strategy trades, COMPUTED at render time rather than assumed: ALEX list is a superset of JVM today, and hardcoding that would go silently wrong the moment either list changes -- OPP-3 pins it. The filter is applied BEFORE the sort and the slice, or the top six would be chosen from the wrong set and then trimmed to fewer than six. TESTING: v161 adds 9 fixtures, mutation-verified three ways -- reverting to ALL_PAIRS kills OPP-2, hardcoding the universe to one strategy list kills OPP-3, and filtering after the slice kills OPP-7. OPP-7 ITSELF FAILED FIRST TIME and the reason is recorded: it located .slice(0,6) with a bare indexOf, which found the A-grade card earlier in the same function and compared the wrong positions -- the fixture was wrong, not the code. It now searches from the universe onward. BROWSER VERIFIED with the operator own failure shape: exotics scored at 90 and tradeable pairs at 40, the card correctly shows EUR/USD 40, GBP/USD 39, USD/JPY 38 and no exotic at all.',
   '12.59.0 - JVM COULD NOT TRADE FOR UP TO AN HOUR AFTER EVERY RELOAD (rescan scheduling only; zero protected-function and zero protected-constant drift; no rule, threshold, gate, sizing or execution change, and the eligibility gate itself is byte-identical). THE DEFECT: jvmEligibilityIsCurrent is correct and deliberately fail-closed -- its own comment names post-reload as a case that yields false. Nothing reconciled that with the decision to RESCAN. Both call sites, byte-identical duplicates of one another, asked whether autoScan.lastRunAt was more than an hour old. autoScan.lastRunAt is PERSISTED under fxhub_autoscan. __jvmEligibility and __jvmEligibilityGeneration are session-scoped and reset to empty on every page load. So a reload ten minutes after a scan read the timestamp as fresh, skipped the rescan, and left every pair not-current: htfSnapshotOf returned null for all twelve, htfAlignmentPasses refused each one, and checkAutoTrades declined every candidate with HTF_SNAPSHOT_MISSING -- for up to a full hour, on every reload. The identical hole opened when Auto Scan was toggled off and back on inside the hour, because toggling off deliberately makes every pair not-current (the G-2 note in toggleAutoScan) while the timestamp keeps saying recent. An operator who opens MOGO, watches for half an hour and closes it again may never once reach a state where JVM is permitted to evaluate a trade. This is a strong candidate for why JVM produced 2 closes in months of forward operation, and it is recorded as a candidate rather than a conclusion: the decline store shipped in v12.58.0 is what will actually measure it. THE FIX MOVES THE RESCAN DECISION, NOT THE GATE. No threshold moved and jvmEligibilityIsCurrent is unchanged -- refusing to trade on bias whose freshness cannot be confirmed is right, and STARVE-6 and STARVE-7 exist to stop a future release fixing this by weakening it instead. A new jvmShouldRunTopDownScan asks about the state the decision actually depends on -- is ANYTHING eligible right now -- and keeps the hourly refresh as a second condition, so nothing that worked before stops. Both call sites now share that one decision rather than duplicating a condition, which is how they stayed wrong together. jvmEligibilityAnyCurrent fails CLOSED on a throw: unknown means scan, never assume it is fine. TESTING: v160 adds 14 fixtures, mutation-verified five ways -- restoring the timestamp-only condition kills STARVE-1 and STARVE-2; rescanning unconditionally kills STARVE-4; dropping the hourly half kills STARVE-5; accepting a prior generation kills STARVE-6 and STARVE-7; failing open on a throw kills STARVE-8. BROWSER VERIFIED against the real post-reload state: with a ten-minute-old timestamp and empty session eligibility, nothing is eligible, the OLD condition evaluates false -- it would not have rescanned -- and the new one requests the scan; after a completed scan it correctly requests nothing further.',
@@ -23698,6 +23709,171 @@ async function runPsychLevelReplay(oPair,days,onProgress,shouldCancel){
 // An inverted-direction control was considered and REJECTED: with these two arms sharing one
 // geometry, an inverted arm is close to a mirror by construction and would answer a question
 // nobody asked.
+// ══════════════════════════════════════════════════════════════════════════════════════════════
+// CARRY FEASIBILITY DIAGNOSTIC — does the broker's markup eat the rate differential?
+// ══════════════════════════════════════════════════════════════════════════════════════════════
+//
+// WHY THIS EXISTS, AND WHY IT COMES BEFORE ANY CARRY ARM. The academic carry literature measures
+// INTERBANK rates. A retail account is paid the broker's financing rate, and the broker takes a cut
+// on BOTH sides -- paying less than the differential when you are owed, charging more when you owe.
+// If that markup exceeds the differential, every instrument costs money to hold in EITHER direction
+// and carry is dead for this account no matter what any paper reports. That is a one-call check,
+// and it belongs BEFORE weeks of building, for exactly the reason the time-of-day arm should have
+// taught: test the assumption that kills the idea first.
+//
+// THE ARITHMETIC IS THE WHOLE TRICK, AND IT NEEDS NO EXTERNAL RATE DATA. For one instrument the
+// broker publishes an annualised longRate and shortRate. Decompose them:
+//
+//     longRate  =  d - m/2         d = the true rate differential
+//     shortRate = -d - m/2         m = the broker's round-trip markup
+//
+//     so   d = (longRate - shortRate) / 2        and       m = -(longRate + shortRate)
+//
+// In a market with no markup the two rates are equal and opposite and sum to ZERO. Whatever they
+// fail to sum to is precisely what the broker keeps. The broker's own published numbers are
+// therefore sufficient to indict them -- no interbank feed, no licensed data, nothing to acquire.
+//
+// THE DEATH CONDITION IS EXPLICIT: if max(longRate, shortRate) <= 0 for every instrument, then
+// holding ANY pair in EITHER direction is a net cost, and there is no carry to harvest here.
+// READ-ONLY. This calls one GET endpoint and computes. It places nothing, changes nothing.
+const CARRY_DIAG_VERSION='carry_feasibility_v1';
+// PURE. Splits one instrument's published pair of rates into the differential and the markup.
+// Returns nulls rather than guesses when a rate is missing or unparseable -- an absent financing
+// rate is an unknown, and a zero here would read as "no markup", the most flattering possible lie.
+//
+// COERCION IS EXPLICIT BECAUSE THE OBVIOUS VERSION IS WRONG. `isFinite(null)` is TRUE in JavaScript
+// -- null coerces to 0 -- so a guard written as `!isFinite(L)` accepts a MISSING rate and reads it
+// as 0%, which decomposes to "no markup": the single most flattering lie this function could tell.
+// Booleans and empty strings coerce the same way. Every value is therefore converted deliberately
+// and anything that is not a real number becomes null. Fixture DEC-6 caught this.
+function carryToRate(v){
+  if(v==null) return null;                                    // null AND undefined
+  if(typeof v==='number') return Number.isFinite(v)?v:null;   // rejects NaN and Infinity
+  if(typeof v==='string'){
+    const s=v.trim();
+    if(!s) return null;                                       // Number('') is 0
+    const n=Number(s);
+    return Number.isFinite(n)?n:null;
+  }
+  return null;                                                // booleans, objects, arrays
+}
+function carryDecompose(longRate,shortRate){
+  const L=carryToRate(longRate),S=carryToRate(shortRate);
+  if(L===null||S===null) return{ok:false,reason:'MISSING_RATE',longRate:null,shortRate:null};
+  const differential=(L-S)/2;
+  const markup=-(L+S);
+  const bestRate=Math.max(L,S);
+  return{ok:true,
+    longRate:L,shortRate:S,
+    differential:differential,           // what the rates imply the true gap is
+    markup:markup,                       // what the broker keeps on a round turn
+    bestRate:bestRate,                   // what you would ACTUALLY receive, best side
+    bestSide:(L>=S)?'LONG':'SHORT',
+    // The share of the differential the broker consumes. Undefined when there is no differential
+    // to consume -- reported as null rather than as a division by something near zero.
+    markupShareOfDifferential:(Math.abs(differential)>1e-9)?(markup/Math.abs(differential)):null,
+    // THE DECISIVE FLAG. Both sides negative means the pair costs money to hold either way.
+    paysNothingEitherWay:(bestRate<=0)};
+}
+// PURE. The whole book, ranked by what an account would actually receive.
+function carryAnalyzeAll(instruments){
+  const rows=[],skipped=[];
+  (instruments||[]).forEach(function(ins){
+    const name=ins&&(ins.name||ins.instrument);
+    const f=ins&&ins.financing;
+    if(!name||!f){ skipped.push({instrument:name||'?',reason:'NO_FINANCING_BLOCK'}); return; }
+    const d=carryDecompose(f.longRate,f.shortRate);
+    if(!d.ok){ skipped.push({instrument:name,reason:d.reason}); return; }
+    rows.push(Object.assign({instrument:name,
+      financingDaysOfWeek:Array.isArray(f.financingDaysOfWeek)?f.financingDaysOfWeek.length:null},d));
+  });
+  rows.sort(function(a,b){ return b.bestRate-a.bestRate; });
+  const n=rows.length;
+  const payingAnything=rows.filter(function(r){ return r.bestRate>0; });
+  const markups=rows.map(function(r){ return r.markup; }).sort(function(a,b){ return a-b; });
+  return{
+    rows:rows,skipped:skipped,count:n,
+    instrumentsPayingSomething:payingAnything.length,
+    // THE VERDICT. Stated as a record, not a sentence, so the caller decides what it means.
+    everyInstrumentCostsMoneyEitherWay:(n>0&&payingAnything.length===0),
+    medianMarkup:n?markups[Math.floor(n/2)]:null,
+    bestInstrument:n?rows[0]:null,
+    generatedAt:null   // stamped by the caller; kept out of the pure function
+  };
+}
+// PURE. Formats an annualised decimal rate as a percentage string.
+function carryFmtRate(x,dp){ return (x==null||!isFinite(x))?'—':(x*100).toFixed(dp==null?3:dp)+'%'; }
+let carryLastAnalysis=null;
+// The ONLY non-pure function here. One authenticated GET against the account's own instrument list.
+// READ-ONLY: it requests instrument metadata, not prices, not positions, and writes nothing.
+async function carryFetchFinancing(){
+  if(!cfg||!cfg.key||!cfg.accountId) return{error:'Not connected — no account configured.'};
+  const url=`${apiBase()}/v3/accounts/${cfg.accountId}/instruments`;
+  let r;
+  try{ r=await fetch(url,{headers:{'Authorization':`Bearer ${cfg.key}`}}); }
+  catch(e){ return{error:'Network error reaching OANDA: '+((e&&e.message)||String(e))}; }
+  if(!r.ok) return{error:'OANDA returned HTTP '+r.status+' for the instruments endpoint.'};
+  let d;
+  try{ d=await r.json(); }catch(e){ return{error:'OANDA returned a response that is not JSON.'}; }
+  if(!d||!Array.isArray(d.instruments)) return{error:'OANDA returned no instrument list.'};
+  return{instruments:d.instruments};
+}
+async function runCarryFeasibility(){
+  const el=document.getElementById('carryDiagResults');
+  if(el) el.innerHTML='<div class="muted" style="font-size:12px">Reading the account’s financing rates…</div>';
+  const res=await carryFetchFinancing();
+  if(res.error){ if(el) el.innerHTML='<div style="font-size:12px;color:var(--neg,#f85149)">'+res.error+'</div>'; return; }
+  const a=carryAnalyzeAll(res.instruments);
+  a.generatedAt=new Date().toISOString();
+  carryLastAnalysis=a;
+  if(el) el.innerHTML=renderCarryFeasibility(a);
+}
+function renderCarryFeasibility(a){
+  if(!a||!a.count) return '<div style="font-size:12px;color:var(--muted)">No instruments carried a financing block, '+
+    'so nothing could be measured. That is missing data, NOT a finding about carry.</div>';
+  const pos=a.rows.filter(function(r){ return r.bestRate>0; });
+  let h='';
+  // THE VERDICT FIRST, because it is the only thing that decides whether a carry arm gets built.
+  if(a.everyInstrumentCostsMoneyEitherWay){
+    h+='<div style="padding:10px;border-left:3px solid var(--neg,#f85149);margin-bottom:12px;font-size:13px">'+
+       '<b>Every instrument costs money to hold in either direction.</b> The broker’s markup exceeds '+
+       'the rate differential everywhere. There is no carry to harvest on this account, and no arm '+
+       'should be built.</div>';
+  }else{
+    h+='<div style="padding:10px;border-left:3px solid var(--muted);margin-bottom:12px;font-size:13px">'+
+       '<b>'+pos.length+' of '+a.count+' instruments pay something</b> on their better side. '+
+       'Median broker markup: <b>'+carryFmtRate(a.medianMarkup,2)+'</b> a year, round trip. '+
+       'That markup is what OANDA keeps out of the rate gap — it is the whole question, and it is '+
+       'charged whether the trade wins or loses.</div>';
+  }
+  h+='<table style="width:100%;border-collapse:collapse;font-size:12px">'+
+     '<tr style="color:var(--muted);text-align:right">'+
+     '<th style="text-align:left">instrument</th><th>you receive</th><th>side</th>'+
+     '<th>true gap</th><th>broker keeps</th><th>% of gap taken</th></tr>';
+  a.rows.slice(0,30).forEach(function(r){
+    const good=r.bestRate>0;
+    h+='<tr>'+
+      '<td>'+r.instrument.replace('_','/')+'</td>'+
+      '<td style="text-align:right;color:'+(good?'var(--pos,#3fb950)':'var(--neg,#f85149)')+'">'+carryFmtRate(r.bestRate,2)+'</td>'+
+      '<td style="text-align:right">'+(good?r.bestSide:'—')+'</td>'+
+      '<td style="text-align:right">'+carryFmtRate(Math.abs(r.differential),2)+'</td>'+
+      '<td style="text-align:right">'+carryFmtRate(r.markup,2)+'</td>'+
+      '<td style="text-align:right">'+(r.markupShareOfDifferential==null?'—':
+         (r.markupShareOfDifferential*100).toFixed(0)+'%')+'</td></tr>';
+  });
+  h+='</table>';
+  if(a.rows.length>30) h+='<div style="font-size:11px;color:var(--muted);margin-top:4px">Showing the 30 best of '+a.rows.length+'.</div>';
+  if(a.skipped.length) h+='<div style="font-size:11px;color:var(--muted);margin-top:6px">'+a.skipped.length+
+    ' instrument(s) had no financing data and were skipped, not counted as zero.</div>';
+  h+='<div style="font-size:11px;color:var(--muted);margin-top:10px;line-height:1.5">'+
+     '<b>How to read this.</b> On a fair instrument the long and short rates would be equal and '+
+     'opposite. Whatever they fail to cancel to is the broker’s cut, shown as “broker keeps”. '+
+     'A pair only pays you if the true gap is bigger than that cut. <b>These are annualised rates '+
+     'before any price movement</b> — carry pays this slowly while the exchange rate can move far '+
+     'more, in either direction, and historically the currencies that pay the most carry are the '+
+     'ones that fall hardest when it unwinds. <b>Nothing here is authorized to trade.</b></div>';
+  return h;
+}
 // ══════════════════════════════════════════════════════════════════════════════════════════════
 // TIME-OF-DAY SESSION SEGMENTATION (tod_session_v1) — the first arm derived from peer-reviewed
 // research rather than from a published trading rule
