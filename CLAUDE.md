@@ -140,7 +140,20 @@ python3 scripts/trader_intelligence/forward_coverage.py        is a missing coho
 python3 scripts/trader_intelligence/reconstructability.py      could a strategy be rebuilt from a candidate?
 python3 scripts/trader_intelligence/observation_graph_reconcile.py  do the preserved observations and the graph agree?
 python3 scripts/trader_intelligence/identity_manifest.py --packages <file>  which trades have ever existed (append-only)
+python3 scripts/replay_compare.py <package>... [--band LO HI]  the standing replay analysis: per-arm
+                                               distribution with median planned R and stop size, an error
+                                               bar on every figure, pairwise differences, a subgroup sweep
+                                               Sidak-corrected for the number of slices EXAMINED, and spread
+                                               charged per trade (never against the mean). REFUSES to mix
+                                               captureBasis populations. --band restricts to a stop-size
+                                               range so arms with different geometry can be compared.
 ```
+
+**Every replay result goes through `replay_compare.py`.** The same analysis was hand-written four
+times before this existed, and two of those hand runs contained errors that changed the
+conclusion: spread charged against the mean rather than per trade (which hid the whole CRT
+result), and a subgroup reported as significant without correcting for the 17 slices examined.
+A result quoted from anything other than this script is a result nobody has checked the method of.
 
 A diagnostic must test reality, not restate a dashboard. If reality contradicts a report, a test,
 or a previous conclusion, **trust the evidence and investigate.**
