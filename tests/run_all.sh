@@ -196,6 +196,10 @@ fi
 if ! node tests/mutate_v167_carry_feasibility.js; then
   OVERALL_EXIT=1
 fi
+
+if ! node tests/mutate_v168_dashboard_coverage_note.js; then
+  OVERALL_EXIT=1
+fi
 echo ""
 
 echo "--- Protected-function / protected-constant drift check ---"

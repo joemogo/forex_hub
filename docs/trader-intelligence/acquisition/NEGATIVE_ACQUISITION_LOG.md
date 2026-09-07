@@ -847,3 +847,45 @@ strategy whose rules are *already published in mechanically specified form* — 
 literature rather than a person. `baseline_trend_v1` is exactly that and needed no acquisition
 step. That route should be preferred over trader reconstruction until an operator-supplied export
 or a consenting trader changes the evidence position.
+
+---
+
+## Session 2026-09-07 — arms tested to a conclusion
+
+**A DISTINCT CLASS, DELIBERATELY NOT ONE OF THE FOUR ABOVE.** The four failure classes in this
+file's rules all describe *acquisition* — a source that could not be retrieved, or that was
+retrieved and does not state the fact. The rows below are the opposite situation: the material was
+acquired, the rule was reconstructed, an arm was built, and **the arm was tested and returned
+null**. Recording that under `SOURCE_DOES_NOT_STATE` would blur the classes the rules forbid
+blurring, so it gets its own class, `TESTED_NULL`, and its own section.
+
+CLAUDE.md points negative results here, and the purpose clause covers this exactly: *so a future
+session does not repeat the search.* Without these rows, a later session can and will rebuild the
+time-of-day arm from the same two papers.
+
+**A `TESTED_NULL` row is not a claim that the method does not work for anyone.** It records that
+MOGO's reconstruction of it, on these instruments and samples, did not beat its control. Re-testing
+requires **new evidence** — a different reconstruction, a different market, or a source stating a
+rule MOGO did not have — not a fresh enthusiasm for the same idea.
+
+| arm | source class | tested | result | do not re-test without |
+|---|---|---|---|---|
+| `alex_g_sr_v1` | YouTube, SOURCE_STATED only | 2,542 replayed + 43 forward | replay −0.057R/trade; forward −0.21R/trade at 26% win over 43 closed | a reconstruction differing in a stated rule, not a parameter tweak |
+| `crt_v1` | web articles, no attributable originator | 7,838 swept + 4,882 control | −0.039R swept on stops ≥5 pips; −0.001R on geometry matched to the other arms | a source that defines candle 1 mechanically — still UNKNOWN |
+| `baseline_trend_v1` | MOGO's own control arm | 502 | −0.092R/trade | nothing; it exists to be beaten, not to be fixed |
+| `psych_level_v1` | peer-reviewed order flow (Osler, NY Fed SR125) | 3,555 | +0.0084R/trade, not significant | **see discrepancy note below** |
+| `tod_session_v1` | peer-reviewed ×2 (JMCB 2013; J. Finance 2024) | 1,002 sessions × 12 instruments | EUR/USD pre-registered test failed and ran **against** the predicted direction; nothing cleared the Šidák bar; **zero instruments profitable after spread** | historical interest-rate data, or a sample the papers' own windows cover |
+
+**Discrepancy, recorded rather than reconciled away.** `psych_level_v1` was reported earlier in this
+project at **+0.026R**; the figure measured directly from its replay package on 2026-09-07 is
+**+0.0084R**. Both are statistically indistinguishable from zero and neither changes the conclusion,
+but they are not the same number and the difference has not been traced. Whoever next touches that
+arm should establish which subset each figure was computed on before quoting either.
+
+**The finding that supersedes all five rows.** Across ~19,300 replayed trades, all four
+chart-pattern arms produce entries **indistinguishable from random entry** once geometry is matched
+— the probability of reaching any favourable level before the stop lands on the coin-flip value
+1/(1+T) to within a few points. See `entries-are-indistinguishable-from-random.md` and
+`crt-randomness-and-two-method-errors.md` in the project. **This is the reason not to build a fifth
+chart-pattern arm**, and it is stronger than any individual null above: the information content was
+measured, not merely undetected.

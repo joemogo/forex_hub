@@ -17,8 +17,11 @@ if(i0<0||i1<0||i1<=i0){
   console.log('RUNNER ERROR: could not locate the tod_session_v1 block in index.html');
   process.exit(1);
 }
-// back up to the opening rule line of the banner comment
-const src=html.slice(html.lastIndexOf('// ',html.lastIndexOf('\n',i0)-1)>=0?html.lastIndexOf('\n',i0-200)+1:i0,i1);
+// Slice from the START of the marker's own line to the CRT constant. An earlier version walked
+// backwards looking for the banner rule and broke the moment another block was inserted above this
+// one -- it began mid-function and the suite died with "Illegal return statement" rather than
+// reporting anything useful. An explicit line boundary cannot drift that way.
+const src=html.slice(html.lastIndexOf('\n',i0)+1,i1);
 const ctx={Intl:Intl,Date:Date,Math:Math,isFinite:isFinite,parseInt:parseInt,console:console,
   String:String,Array:Array,Object:Object,JSON:JSON,Number:Number,document:undefined};
 vm.createContext(ctx);
