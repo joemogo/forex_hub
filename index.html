@@ -2231,7 +2231,7 @@ const ALL_PAIRS=[
 // Bump by 1.0 for a major update (new feature/tab), by 0.1 for a small patch/fix.
 // This shows in the header next to the logo and on the Diagnostics tab, so you can
 // glance at the live site and instantly confirm which build actually deployed.
-const APP_VERSION='12.63.0';
+const APP_VERSION='12.64.0';
 const APP_VERSION_DATE='04 Sep 2026';
 const APP_VERSION_LOG=[
   '12.60.0 - TODAY OPPORTUNITIES RANKED INSTRUMENTS MOGO CANNOT TRADE (display only; zero protected-function and zero protected-constant drift; no rule, weight, score, gate, sizing or execution change). The dashboard card ranked ALL_PAIRS, so its top rows were routinely USD/ZAR, USD/SGD and NZD/CAD -- instruments NEITHER strategy can open a position on. The seven exotics are deliberately excluded from ALEXG_LIVE_PAIRS, because entry spread already costs a measured 9.8 percent of risk on majors and is materially worse there, and they were never in SCAN_PAIRS. A card headed Today Opportunities whose best entries are untradeable is not a ranking, it is a distraction placed where the operator looks first. IT WAS WORSE THAN UNTRADEABLE: a pair outside SCAN_PAIRS has no bias data, so its score cannot exceed 100-WEIGHTS.bias3 -- the ceiling v12.56.0 disclosed in the pair list. Ranking those against pairs that CAN reach 100 compared two different scales and systematically buried the tradeable ones; in the operator own dashboard USD/ZAR at 43 outranked every instrument MOGO is allowed to trade. The card now ranks the UNION of what each strategy trades, COMPUTED at render time rather than assumed: ALEX list is a superset of JVM today, and hardcoding that would go silently wrong the moment either list changes -- OPP-3 pins it. The filter is applied BEFORE the sort and the slice, or the top six would be chosen from the wrong set and then trimmed to fewer than six. TESTING: v161 adds 9 fixtures, mutation-verified three ways -- reverting to ALL_PAIRS kills OPP-2, hardcoding the universe to one strategy list kills OPP-3, and filtering after the slice kills OPP-7. OPP-7 ITSELF FAILED FIRST TIME and the reason is recorded: it located .slice(0,6) with a bare indexOf, which found the A-grade card earlier in the same function and compared the wrong positions -- the fixture was wrong, not the code. It now searches from the universe onward. BROWSER VERIFIED with the operator own failure shape: exotics scored at 90 and tradeable pairs at 40, the card correctly shows EUR/USD 40, GBP/USD 39, USD/JPY 38 and no exotic at all.',
@@ -16437,6 +16437,150 @@ const EVIDENCE_OBSERVATION_EVICT_BATCH=5000;
 const EVIDENCE_HASH_EXCLUDED_FIELDS=Object.freeze(['contentHash','contentHashAlgorithm','contentHashCanonicalization','contentHashProvenance','contentHashScope','export']);
 const EVIDENCE_SETUPS_MAX=1000;              // ruling C4
 const EVIDENCE_ZONES_MAX_PER_PAIR=200;       // ruling C4
+// ══════════════════════════════════════════════════════════════════════════════════════════════
+// BYTE-AWARE BUFFER BUDGETS — the cap that can actually fire before localStorage dies
+// ══════════════════════════════════════════════════════════════════════════════════════════════
+//
+// THE DEFECT THIS FIXES, MEASURED ON THE OPERATOR INSTANCE. The quota banner read "storage full"
+// while navigator.storage.estimate reported 7.6% of the ORIGIN quota used, with ten gigabytes
+// free. Those are two different limits: localStorage has its own per-origin ceiling of roughly
+// 5-10 MB, entirely separate from the origin quota that IndexedDB draws on. localStorage was at
+// 8.29 MB -- fxhub_alexg_zones 5.76 MB and fxhub_alexg_setups 1.76 MB, together 91% of it.
+//
+// And BOTH COUNT CAPS WERE SATISFIED: 2,361 zones with zero pairs over the 200-per-pair cap, and
+// 882 setups against a cap of 1,000. The caps count RECORDS; the ceiling is in BYTES. At 200
+// zones per pair across the 28 instruments ALEX has observed since v12.55.0, the count cap
+// permits about 5,600 zones -- on the order of 13 MB at their actual size. The cap can never
+// fire before localStorage dies, which is why eviction never ran and the buffer grew without
+// limit.
+//
+// THE BUDGETS ARE DELIBERATELY CONSERVATIVE. Together they reserve 3.5 MB of a ~5 MB floor,
+// leaving room for the ledger, journal and config keys that share the same origin.
+const EVIDENCE_ZONES_MAX_BYTES=2500000;      // ~2.5 MB
+const EVIDENCE_SETUPS_MAX_BYTES=1000000;     // ~1.0 MB
+// PURE. What a value will actually occupy. Most engines bill localStorage in UTF-16 code units,
+// and the key occupies space alongside its value, so both are counted -- the same arithmetic the
+// storage diagnostic reports, so the two can never disagree about what is over budget.
+function evidenceBufferBytes(value,key){
+  let s;
+  try{ s=JSON.stringify(value); }catch(e){ return null; }   // a cyclic buffer is a defect, not a size
+  if(s==null) return null;
+  return (s.length+String(key||'').length)*2;
+}
+// PURE. Is either buffer over its byte budget? Returned as a record rather than a boolean, so the
+// caller and the fixtures can see WHICH one and by how much.
+function evidenceBufferByteState(){
+  const zones=(typeof alexGZoneState!=='undefined')?alexGZoneState:null;
+  const setups=(typeof alexGSetupState!=='undefined')?alexGSetupState:null;
+  const zb=zones?evidenceBufferBytes(zones,'fxhub_alexg_zones'):null;
+  const sb=setups?evidenceBufferBytes(setups,'fxhub_alexg_setups'):null;
+  return{
+    zoneBytes:zb,setupBytes:sb,
+    zoneBudget:EVIDENCE_ZONES_MAX_BYTES,setupBudget:EVIDENCE_SETUPS_MAX_BYTES,
+    zonesOverBudget:(zb!=null&&zb>EVIDENCE_ZONES_MAX_BYTES),
+    setupsOverBudget:(sb!=null&&sb>EVIDENCE_SETUPS_MAX_BYTES)
+  };
+}
+// PURE given the persisted set. Trims the setup buffer oldest-first until it is under BOTH its
+// count cap and its byte budget, skipping any record the eviction-safety rule protects.
+//
+// IT STOPS RATHER THAN BREAKING THE SAFETY RULE. If everything still over budget is protected --
+// belonging to an open position, or to a closed trade whose evidence is not yet in tier (b) --
+// the trim stops and reports `stillOver`. An over-full buffer is recoverable; a deleted record is
+// not, and that ordering does not change just because the pressure is now measured in bytes.
+function evidenceTrimSetupsToBudget(list,blockedIds){
+  const blocked=blockedIds||{};
+  const out={kept:list,evicted:0,skipped:0,stillOver:false};
+  if(!Array.isArray(list)||!list.length) return out;
+  const sorted=list.slice().sort(function(a,b){
+    return (b&&b.qualificationTimestamp||0)-(a&&a.qualificationTimestamp||0);   // newest first
+  });
+  // Cost is accumulated per record rather than re-serialising the whole array each iteration.
+  // Two reasons, and the first is correctness: asking "is the buffer under budget?" BEFORE adding
+  // a record accepts the one that takes it over, which is how the first version of this landed at
+  // exactly 1.00 MB against a 1.00 MB budget. The candidate's own cost has to be counted first.
+  // The second is cost: re-serialising was O(n^2) over a buffer this is meant to run on.
+  const base=(2+'fxhub_alexg_setups'.length)*2;             // the [] plus the key
+  let used=base;
+  const costOf=function(rec){
+    let j; try{ j=JSON.stringify(rec); }catch(e){ return null; }
+    return j==null?null:(j.length+1)*2;                     // +1 for the separating comma
+  };
+  const keep=[];
+  for(let i=0;i<sorted.length;i++){
+    const s=sorted[i];
+    const protectedRec=!!(s&&s.setupId!=null&&blocked[String(s.setupId)]);
+    const c=costOf(s);
+    const fits=(c!=null)&&(keep.length<EVIDENCE_SETUPS_MAX)&&(used+c<=EVIDENCE_SETUPS_MAX_BYTES);
+    if(fits){ keep.push(s); used+=c; continue; }
+    if(protectedRec){ keep.push(s); if(c!=null) used+=c; out.skipped++; out.stillOver=true; continue; }
+    out.evicted++;
+  }
+  out.kept=keep;
+  return out;
+}
+// PURE given the persisted set. The zone equivalent, trimmed GLOBALLY oldest-first rather than
+// per pair -- the per-pair count cap cannot see a total that is spread thinly across 28
+// instruments, which is precisely how 2,361 zones sat 5.76 MB over budget with no pair in breach.
+function evidenceTrimZonesToBudget(zoneState,blockedZoneIds){
+  const blocked=blockedZoneIds||{};
+  const out={kept:zoneState,evicted:0,skipped:0,stillOver:false};
+  if(!zoneState||typeof zoneState!=='object') return out;
+  const all=[];
+  Object.keys(zoneState).forEach(function(pair){
+    const tfs=zoneState[pair]||{};
+    Object.keys(tfs).forEach(function(tf){
+      const list=tfs[tf]&&Array.isArray(tfs[tf].validatedZones)?tfs[tf].validatedZones:null;
+      if(list) list.forEach(function(z){ all.push({pair:pair,tf:tf,z:z}); });
+    });
+  });
+  if(!all.length) return out;
+  all.sort(function(a,b){ return (b.z&&b.z.formedAt||0)-(a.z&&a.z.formedAt||0); });   // newest first
+  // The skeleton MIRRORS the real shape -- {validatedZones:[]} per timeframe, not a bare array.
+  // The first version used bare arrays, so the base was measured against a structure 19 characters
+  // per timeframe smaller than the one actually written, and the trim landed 798 bytes OVER a
+  // 2.5 MB budget. TRIM-4 caught it because it asserts the FINAL measured size, not the intent.
+  const survivors={};
+  Object.keys(zoneState).forEach(function(pair){
+    survivors[pair]={};
+    Object.keys(zoneState[pair]||{}).forEach(function(tf){ survivors[pair][tf]={validatedZones:[]}; });
+  });
+  // Same per-record accumulation as the setup trimmer, and for the same two reasons. The base is
+  // the empty skeleton -- every pair and timeframe key with an empty array -- measured once.
+  const base=evidenceBufferBytes(survivors,'fxhub_alexg_zones')||0;
+  let used=base;
+  const costOf=function(z){
+    let j; try{ j=JSON.stringify(z); }catch(e){ return null; }
+    return j==null?null:(j.length+1)*2;
+  };
+  const perPair={};
+  for(let i=0;i<all.length;i++){
+    const e=all[i];
+    const protectedRec=!!(e.z&&e.z.id!=null&&blocked[String(e.z.id)]);
+    const n=(perPair[e.pair]||0);
+    const c=costOf(e.z);
+    const fits=(c!=null)&&(n<EVIDENCE_ZONES_MAX_PER_PAIR)&&(used+c<=EVIDENCE_ZONES_MAX_BYTES);
+    if(fits||protectedRec){
+      survivors[e.pair][e.tf].validatedZones.push(e.z);
+      perPair[e.pair]=n+1;
+      if(c!=null) used+=c;
+      if(!fits){ out.skipped++; out.stillOver=true; }
+      continue;
+    }
+    out.evicted++;
+  }
+  if(out.evicted){
+    Object.keys(zoneState).forEach(function(pair){
+      Object.keys(zoneState[pair]||{}).forEach(function(tf){
+        if(zoneState[pair][tf]&&Array.isArray(zoneState[pair][tf].validatedZones)){
+          zoneState[pair][tf].validatedZones=(survivors[pair][tf]&&survivors[pair][tf].validatedZones)||[];
+        }
+      });
+    });
+  }
+  out.kept=zoneState;
+  return out;
+}
 const EVIDENCE_UNEXPORTED_BLOCKING_THRESHOLD=50;
 const EVIDENCE_FILENAME_HASH_CHARS=12;
 const EVIDENCE_MAX_WRITE_FAILURES=50;
@@ -19317,7 +19461,12 @@ async function evidenceEnforceBufferLimits(){
       if(evidenceCountZonesForPair(pair)>EVIDENCE_ZONES_MAX_PER_PAIR) overZones=true;
     });
   }
-  if(!overSetups&&!overZones) return{evictedSetups:0,evictedZones:0,skipped:0};
+  // v12.64.0: a COUNT cap alone can never fire before localStorage dies -- measured at 8.29 MB
+  // with both count caps satisfied. The byte state is therefore a first-class trigger, not a
+  // refinement of the count one.
+  const byteState=evidenceBufferByteState();
+  if(!overSetups&&!overZones&&!byteState.zonesOverBudget&&!byteState.setupsOverBudget)
+    return{evictedSetups:0,evictedZones:0,skipped:0,byteState:byteState};
   const packages=await evidenceListPackages();               // throws if tier (b) is unavailable
   const persistedTradeIds={};
   packages.forEach(function(p){ if(p&&p.sourceTradeId!=null) persistedTradeIds[String(p.sourceTradeId)]=true; });
@@ -19353,48 +19502,33 @@ function evidenceEvictBuffers(persistedTradeIds){
     if(p.setupId!=null) blockedSetupIds[String(p.setupId)]=true;
     if(p.zoneId!=null) blockedZoneIds[String(p.zoneId)]=true;
   });
-  if(typeof alexGSetupState!=='undefined'&&Array.isArray(alexGSetupState)&&alexGSetupState.length>EVIDENCE_SETUPS_MAX){
-    const sorted=alexGSetupState.slice().sort(function(a,b){
-      return (b&&b.qualificationTimestamp||0)-(a&&a.qualificationTimestamp||0);   // newest first
-    });
-    const keep=[],overflow=sorted.slice(EVIDENCE_SETUPS_MAX);
-    sorted.slice(0,EVIDENCE_SETUPS_MAX).forEach(function(s){ keep.push(s); });
-    overflow.forEach(function(s){
-      if(s&&s.setupId!=null&&blockedSetupIds[String(s.setupId)]){ keep.push(s); skipped++; }
-      else evictedSetups++;
-    });
-    if(evictedSetups) alexGSetupState=keep;
+  // v12.64.0: trims to the BYTE budget as well as the count cap, in one pass, and stops rather
+  // than evicting a protected record when the two demands conflict.
+  let stillOverSetups=false,stillOverZones=false;
+  if(typeof alexGSetupState!=='undefined'&&Array.isArray(alexGSetupState)){
+    const r=evidenceTrimSetupsToBudget(alexGSetupState,blockedSetupIds);
+    evictedSetups=r.evicted; skipped+=r.skipped; stillOverSetups=r.stillOver;
+    if(r.evicted) alexGSetupState=r.kept;
   }
+  // Trimmed GLOBALLY oldest-first, not per pair. A per-pair count cap cannot see a total spread
+  // thinly across 28 instruments -- which is exactly how 2,361 zones sat 5.76 MB over budget with
+  // no single pair in breach.
   if(typeof alexGZoneState!=='undefined'&&alexGZoneState){
-    Object.keys(alexGZoneState).forEach(function(pair){
-      if(evidenceCountZonesForPair(pair)<=EVIDENCE_ZONES_MAX_PER_PAIR) return;
-      const tfs=alexGZoneState[pair];
-      const all=[];
-      Object.keys(tfs).forEach(function(tf){
-        const list=tfs[tf]&&Array.isArray(tfs[tf].validatedZones)?tfs[tf].validatedZones:null;
-        if(list) list.forEach(function(z){ all.push({tf,z}); });
-      });
-      all.sort(function(a,b){ return (b.z&&b.z.formedAt||0)-(a.z&&a.z.formedAt||0); });  // newest first
-      const survivors={};
-      Object.keys(tfs).forEach(function(tf){ survivors[tf]=[]; });
-      all.forEach(function(entry,i){
-        const blocked=entry.z&&entry.z.id!=null&&blockedZoneIds[String(entry.z.id)];
-        if(i<EVIDENCE_ZONES_MAX_PER_PAIR||blocked){
-          survivors[entry.tf].push(entry.z);
-          if(i>=EVIDENCE_ZONES_MAX_PER_PAIR&&blocked) skipped++;
-        }else evictedZones++;
-      });
-      if(evictedZones){
-        Object.keys(tfs).forEach(function(tf){
-          if(tfs[tf]&&Array.isArray(tfs[tf].validatedZones)) tfs[tf].validatedZones=survivors[tf]||[];
-        });
-      }
-    });
+    const r=evidenceTrimZonesToBudget(alexGZoneState,blockedZoneIds);
+    evictedZones=r.evicted; skipped+=r.skipped; stillOverZones=r.stillOver;
   }
   if(evictedSetups||evictedZones){
     try{ saveAlexGRest(); }catch(e){ evidenceRecordWriteFailure('eviction-persist',e); }
   }
-  return{evictedSetups,evictedZones,skipped};
+  // stillOver is NOT a failure to report quietly: it means the buffer is over budget and every
+  // remaining candidate is protected, so the only way to free space is to get the evidence safely
+  // into tier (b). The operator has to know that, because no amount of waiting will fix it.
+  if(stillOverSetups||stillOverZones){
+    try{ evidenceStorageBanner={severity:'warning',
+      message:'Buffer over its size budget and every remaining record is protected — export evidence to release it. See Diagnostics → Storage.'};
+      renderEvidenceExportBanner(); }catch(e){}
+  }
+  return{evictedSetups,evictedZones,skipped,stillOverSetups,stillOverZones};
 }
 
 
