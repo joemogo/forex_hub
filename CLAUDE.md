@@ -198,6 +198,15 @@ began, and its sample could only resolve 2.02 pips regardless. `carry_g10_v1` fo
 105 years of data would be needed to resolve it. **A null from an underpowered test is not evidence
 of absence**, and four of this project's six arms were in exactly that position.
 
+**The randomness finding is the exception, and it was verified rather than assumed.** Pooling the
+four chart-pattern arms' MFE proportions (n about 7,000) puts the 95% bound on any true edge at
+**+0.016R**, and at **+0.028R** under the worst case for correlation between arms — assuming they
+are perfectly correlated, i.e. discarding three of the four. Both sit well under the 0.06R bar. So
+those four arms' individual nulls prove nothing, while the POOLED exclusion does: **these entries
+do not carry a tradeable edge, measured, not merely undetected.** That is what justifies not
+building a fifth chart-pattern arm on FX majors — and the distinction between a null and a bound is
+the one to keep making.
+
 **The standing bar this implies.** For a trade-based arm (1R stop, 2R target, sigma about 1.0R) with
 a 0.05R round trip, the gross edge needed is 0.089R at 2,542 trades and 0.061R at 30,000 — and it
 **stops falling there, because past ~5,000 trades the cost dominates the detection floor**. More
