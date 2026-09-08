@@ -205,3 +205,40 @@ trade**. This is **disclosed** in `replayDisclosures` and is **not special-cased
 
 Every pass/fail criterion in §5 stands exactly as pre-registered: P1, P2, P3 and P4's 30% threshold
 are unchanged, as are all four fail clauses. §6, §7, §8 and §9 are unchanged.
+
+### 10.7 Additional exploratory variant — `aoi_close_v1_bodytouch`
+
+**Added 8 September 2026, before any arm code and before any replay run**, on the same terms as the
+rest of §10. Appended after §10.6 rather than inserted, so the amendment record stays append-only.
+§10.6 still holds: this variant touches no §5 criterion.
+
+Identical to the primary arm in every respect except the **touch candidate set**: a touch is **any
+daily bar whose body enters the band**, not only a daily swing point. The band is still built from
+the **first three such body edges**, under the **same rules as §10.1** — width **<= 60 pips** as a
+formation constraint, expansion **symmetrically about the midpoint** to 5 pips if narrower, **no
+overlap** with an existing unexpired zone (first-formed wins), formation at the **third** touch, and
+**expiry = formation + 2 years** with no extension by later touches.
+
+**Reported for direction only. Not part of pass/fail** — it cannot rescue a fail and cannot upgrade
+a pass, on the same terms as the §6 slices and the two §7 variants. Everything else is unchanged:
+entry, stop, target selection (§10.3), costs, the shifted-zone control, and every §5 criterion.
+
+**Why it is worth running.** §10.1 recorded "three reactions at the level", rather than "three bars
+passing through it", as a **MOGO choice** and not a source-stated rule. This variant is the direct
+test of that choice: it restores §3 row 1's literal reading, which §10.1 had to replace in order to
+break the circularity. A large divergence between the two arms is evidence that the choice, rather
+than the rule, is carrying the result — which is exactly the kind of thing a null or a pass here
+would otherwise hide.
+
+**UNRESOLVED — must be settled before this variant is built.** §10.1 obtains exactly one price per
+touch by naming the swing side: `max(open, close)` for a swing high, `min(open, close)` for a swing
+low. A non-swing bar has no swing side, so "such body edges" does not yet name a single price. At
+least three readings are live, and they place the band differently — which moves the far edge, and
+therefore the stop and planned R:
+
+  (a) both body edges of a qualifying bar are candidate edges;
+  (b) only the body edge nearer the band's current extent;
+  (c) the body treated as an interval, the band being the hull of the qualifying intervals.
+
+Recorded as UNKNOWN rather than inferred, per the project's own rule. No reading is chosen here, and
+this variant is not built until one is.
