@@ -873,19 +873,43 @@ rule MOGO did not have — not a fresh enthusiasm for the same idea.
 | `alex_g_sr_v1` | YouTube, SOURCE_STATED only | 2,542 replayed + 43 forward | replay −0.057R/trade; forward −0.21R/trade at 26% win over 43 closed | a reconstruction differing in a stated rule, not a parameter tweak |
 | `crt_v1` | web articles, no attributable originator | 7,838 swept + 4,882 control | −0.039R swept on stops ≥5 pips; −0.001R on geometry matched to the other arms | a source that defines candle 1 mechanically — still UNKNOWN |
 | `baseline_trend_v1` | MOGO's own control arm | 502 | −0.092R/trade | nothing; it exists to be beaten, not to be fixed |
-| `psych_level_v1` | peer-reviewed order flow (Osler, NY Fed SR125) | 3,555 | +0.0084R/trade, not significant | **see discrepancy note below** |
+| `psych_level_v1` | peer-reviewed order flow (Osler, NY Fed SR125) | 1,783 treatment + 1,772 control | +0.0264R/trade (t 0.78); beats its control by +0.036R (z 0.76) — neither significant | a materially different level definition, not a parameter tweak |
 | `tod_session_v1` | peer-reviewed ×2 (JMCB 2013; J. Finance 2024) | 1,002 sessions × 12 instruments | EUR/USD pre-registered test failed and ran **against** the predicted direction; nothing cleared the Šidák bar; **zero instruments profitable after spread** | historical interest-rate data, or a sample the papers' own windows cover |
+| `carry_g10_v1` | BIS policy rates + academic carry literature | 22.5 years, G10 basket, monthly reselection | effect is **REAL** — +43.07pp accrued carry against only −12.73pp from price, reversed control −54.33% — but **+0.86%/yr against a 40.1% drawdown**; the broker's cut (24.6pp) exceeded the entire total return (21.35%) | a venue whose financing markup is materially below OANDA's ~2.19%/yr round trip |
 
-**Discrepancy, recorded rather than reconciled away.** `psych_level_v1` was reported earlier in this
-project at **+0.026R**; the figure measured directly from its replay package on 2026-09-07 is
-**+0.0084R**. Both are statistically indistinguishable from zero and neither changes the conclusion,
-but they are not the same number and the difference has not been traced. Whoever next touches that
-arm should establish which subset each figure was computed on before quoting either.
+**Discrepancy RESOLVED 2026-09-07, and the error was mine.** `psych_level_v1` was reported earlier
+at **+0.026R** and I measured **+0.0084R** from its replay package, then filed the difference as
+untraced. Traced: the package holds **two** arms, `psych_round` (n=1,783) and `psych_offset_control`
+(n=1,772). +0.026R is the treatment arm alone — the earlier figure, and the correct one.
+**+0.0084R was the treatment and its control averaged together**, which is the same class of mistake
+as the CRT one: pooling populations that exist precisely so they can be compared. The row above now
+carries the arm's own figure.
 
-**The finding that supersedes all five rows.** Across ~19,300 replayed trades, all four
+What the arm actually shows, stated properly:
+
+| | n | mean R | SE | t |
+|---|---|---|---|---|
+| `psych_round` | 1,783 | **+0.0264** | 0.0337 | 0.78 |
+| `psych_offset_control` | 1,772 | −0.0096 | 0.0335 | −0.29 |
+| **treatment − control** | | **+0.0360** | 0.0475 | z 0.76 |
+
+95% CI on the difference: **−0.057 to +0.129**. Neither the level nor the difference is significant,
+so the conclusion is unchanged — but it is now a null that has been measured rather than a number
+nobody could explain. **Its geometry is clean**, unlike CRT's: median stop 61.5 pips, 0.1% under
+5 pips, so a 1-pip spread costs 0.016R and the arm still reads +0.010R net. It is the least-bad of
+the six and remains indistinguishable from zero.
+
+**The finding that supersedes the four chart-pattern rows.** Across ~19,300 replayed trades, all four
 chart-pattern arms produce entries **indistinguishable from random entry** once geometry is matched
 — the probability of reaching any favourable level before the stop lands on the coin-flip value
 1/(1+T) to within a few points. See `entries-are-indistinguishable-from-random.md` and
 `crt-randomness-and-two-method-errors.md` in the project. **This is the reason not to build a fifth
 chart-pattern arm**, and it is stronger than any individual null above: the information content was
 measured, not merely undetected.
+
+**And the finding that supersedes `carry_g10_v1`.** Carry is the one effect in this project that was
+measured and found **real**. It still fails, because the venue takes ~36% of it. That reframes what
+a candidate has to clear: not merely *"is there an effect?"* but *"is there an effect large enough to
+survive a retail cost structure?"* **Cost every future candidate before building it**, the way
+`carry feasibility` (v12.66.0) did — that check is the reusable lesson of this whole sequence, and it
+would have killed `tod_session_v1` in an hour instead of a day.

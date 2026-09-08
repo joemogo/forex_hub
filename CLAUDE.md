@@ -98,6 +98,43 @@ evidence"*, never *"what should I research next?"*.
 - Balances do **not** chain trade-by-trade: up to 5 positions run concurrently,
   `balanceBefore` is stamped at entry and `balanceAfter` at exit.
 
+## Delivering a release to the operator
+
+The sandbox git proxy refuses to push to `joemogo/forex_hub` (403, repository not in the session's
+authorized set). `fetch` works. So every release reaches the operator as a **bundle** he applies
+himself, and the shape of that command matters more than it looks.
+
+**NEVER give him a force-fetch into his working branch.** The obvious command is:
+
+```
+git fetch <bundle> '+refs/heads/<branch>:refs/heads/<branch>'     # WRONG
+```
+
+The `+` is a force update. If his local branch holds commits the bundle does not — and it will, the
+moment any other session, machine or person commits there — that fetch **resets the branch and
+those commits survive only in the reflog**. On 2026-09-07 every deploy command in a long session
+used this form. It was safe purely by luck: his branch happened to sit exactly on each bundle's
+base. A second Claude session then committed five times on the same branch, and the next command
+would have destroyed three commits that existed nowhere else, *then* failed at the final step —
+so the operator would have seen an error, no success line, and the work already gone.
+
+**Use a temp ref, and publish only to `mogo-main`:**
+
+```
+cd ~/Desktop/"Forex Hub" \
+  && git fetch <bundle> refs/heads/<branch>:refs/temp/<release> \
+  && git push origin refs/temp/<release>:mogo-main \
+  && echo "=== DEPLOYED OK ==="
+```
+
+No `+`, a ref that cannot already exist, and his working branch is never touched. `mogo-main` is the
+branch the live PAPER instance serves, so it is the only one a deploy needs. Pushing the working
+branch was always just a backup copy, and it is the half that can destroy things.
+
+**Before quoting any deploy command, `git fetch origin` and look at where the branch actually is.**
+It is a shared branch now. A bundle whose base is no longer origin's tip is a bundle whose command
+needs re-deriving, not re-sending.
+
 ## The running instance
 
 Prefer read-only inspection, isolated testing and replay analysis. Do not restart MOGO,
@@ -140,6 +177,10 @@ python3 scripts/trader_intelligence/forward_coverage.py        is a missing coho
 python3 scripts/trader_intelligence/reconstructability.py      could a strategy be rebuilt from a candidate?
 python3 scripts/trader_intelligence/observation_graph_reconcile.py  do the preserved observations and the graph agree?
 python3 scripts/trader_intelligence/identity_manifest.py --packages <file>  which trades have ever existed (append-only)
+python3 scripts/candidate_power.py --effect E --sigma S --n N --cost C   BEFORE building anything:
+                                               can the effect clear its cost, and could this sample
+                                               see it if it did? Two floors. --selftest runs the
+                                               project's own six arms as fixtures.
 python3 scripts/replay_compare.py <package>... [--band LO HI]  the standing replay analysis: per-arm
                                                distribution with median planned R and stop size, an error
                                                bar on every figure, pairwise differences, a subgroup sweep
@@ -148,6 +189,14 @@ python3 scripts/replay_compare.py <package>... [--band LO HI]  the standing repl
                                                captureBasis populations. --band restricts to a stop-size
                                                range so arms with different geometry can be compared.
 ```
+
+**Cost and power the candidate BEFORE building it — `candidate_power.py`.** Six arms were built
+here before anyone asked either question in advance, and two of them were answerable in an hour.
+`tod_session_v1` chased a 0.58-pip effect against a 0.8-pip spread: negative before the statistics
+began, and its sample could only resolve 2.02 pips regardless. `carry_g10_v1` found a **real**
+3.01%/yr effect of which the broker keeps 1.09%, leaving 1.92% against a 4.13% detection floor —
+105 years of data would be needed to resolve it. **A null from an underpowered test is not evidence
+of absence**, and four of this project's six arms were in exactly that position.
 
 **Every R-denominated replay result goes through `replay_compare.py`.** The same analysis was
 hand-written four times before this existed, and two of those hand runs contained errors that
