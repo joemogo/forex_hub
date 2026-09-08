@@ -198,6 +198,14 @@ began, and its sample could only resolve 2.02 pips regardless. `carry_g10_v1` fo
 105 years of data would be needed to resolve it. **A null from an underpowered test is not evidence
 of absence**, and four of this project's six arms were in exactly that position.
 
+**The standing bar this implies.** For a trade-based arm (1R stop, 2R target, sigma about 1.0R) with
+a 0.05R round trip, the gross edge needed is 0.089R at 2,542 trades and 0.061R at 30,000 — and it
+**stops falling there, because past ~5,000 trades the cost dominates the detection floor**. More
+data cannot lower the bar below about **0.06R per trade, roughly a 2-point win-rate lift over a
+coin**. Nothing tested here has come close; the best, `psych_round`, measured +0.026R. Do not build
+a candidate whose plausible edge is under that bar, and where one clears it, run the replay WIDE
+before concluding — n is the cheapest thing to buy, right up until cost takes over.
+
 **Every R-denominated replay result goes through `replay_compare.py`.** The same analysis was
 hand-written four times before this existed, and two of those hand runs contained errors that
 changed the conclusion: spread charged against the mean rather than per trade (which hid the whole
