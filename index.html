@@ -24292,6 +24292,1007 @@ function renderCarryFeasibility(a){
   return h;
 }
 // ══════════════════════════════════════════════════════════════════════════════════════════════
+// AOI CLOSE (aoi_close_v1) — "EVERYTHING OFF": CLOSE INSIDE A DAILY ZONE, AND NOTHING ELSE
+// ══════════════════════════════════════════════════════════════════════════════════════════════
+//
+// Pre-registered in full at docs/trader-intelligence/rule-registers/preregistration-aoi_close_v1.md
+// BEFORE any of this code existed. Every ruling this file implements that the source did not state
+// is recorded there as an amendment (§10), with its reason, and dated before the first run. Read
+// that document before reading these numbers; nothing here overrides it.
+//
+// THE CLAIM. Revelio Trading reports that fxalexg's support/resistance method works BETTER with
+// every discretionary filter removed: no trend, no bias, no pattern, no retest. Enter on the first
+// candle that closes inside a daily zone, stop 5 pips beyond the far edge, target the nearest daily
+// swing, skip under 2R, cap at 4R. He reports profit factor 1.1-1.35 on 14/16 pairs across a
+// 2016-2021 / 2022-2026 train-test split.
+//
+// EXPECTED RESULT, STATED BEFORE THE RUN: NULL. Four chart-pattern arms in this repository have
+// already measured as random entries. The prior for a fifth is zero. A null is the normal outcome.
+//
+// WHAT MAKES THIS FALSIFIABLE RATHER THAN DECORATIVE. A profitable result on real zones proves
+// nothing on its own -- "price closes into a band and then reverts" is not a claim unique to AOIs.
+// So the identical rule also runs on zones SHIFTED BY HALF THEIR OWN WIDTH, over the same bars, in
+// the same pass. If real zones do not beat shifted zones the result is "closing into any band and
+// fading it", and §5's P3 fails whatever P1 says.
+//
+// THE ZONE CIRCULARITY, AND WHY THIS FILE DOES NOT IMPORT ALEX'S CLUSTERER. §3 of the
+// pre-registration defined a touch against the band and the band from the touches, which is not
+// computable. alexGAcceptReaction would have supplied a seed, but it groups WICK anchors at
+// dailyATR(14) x zoneClusterATRMultiplier -- a multiplier this codebase itself marks EXPERIMENTAL
+// and untuned (rule ALEX_SR_008) -- and importing it would decide zone membership on wicks while
+// counting touches on bodies. §10.1 replaced it with a construction that introduces NO tunable
+// parameter: only the numbers the source already states (3 touches, 5 pips, 60 pips) plus
+// alexGFindSwingPoints reused byte-identically. That choice is itself tested, by the
+// aoi_close_v1_bodytouch variant (§10.7/§10.8).
+//
+// NOT AUTHORIZED TO PAPER TRADE. capabilities.paperTrading is false and a fixture fails if it
+// changes. None of the seven live entry points reference anything in this file.
+
+const AOI_CLOSE_STRATEGY_ID='aoi_close_v1';
+const AOI_CLOSE_VERSION='aoi_close_v1';
+// §4: when a bar carries no bid/ask, the measured forward-corpus median cost is charged INSTEAD OF
+// a zero, and the trade is flagged. A missing spread is not a free trade.
+const AOI_CLOSE_SPREAD_FALLBACK_RISK_SHARE=0.098;
+const RULES_AOI_CLOSE={
+  ruleVersion:'aoi_close_v1',
+  config:{
+    // Reused from alexGFindSwingPoints, which §8 permits and §10.1 requires. Passed as a literal
+    // rather than read from RULES_ALEXG so this arm never couples to a protected constant.
+    swingLookback:3,
+    minTouches:3,          // source-stated: "body touches >= 3"
+    maxZoneWidthPips:60,   // source-stated. §10.2: a FORMATION CONSTRAINT, never a post-hoc clip.
+    minZoneWidthPips:5,    // source-stated. Expanded symmetrically about the midpoint (§10.1(3)).
+    stopBufferPips:5,      // source-stated: 5 pips beyond the far edge
+    minRR:2,               // source-stated: under 2R -> skip
+    maxRR:4,               // source-stated: over 4R -> cap at 4R
+    expiryYears:2,         // source-stated: expire 2 years after FORMATION, never extended
+    riskPercentHWM:0.5,    // §5 P4 sizing only; never part of an R figure
+    trendSwingScanBars:200,// only read by the htfBiasGate variant
+    // ── THE ONLY FIELDS A VARIANT CHANGES ────────────────────────────────────────────────────
+    touchSource:'SWING',   // 'SWING' (§10.1) | 'ANY_BODY' (§10.7 + §10.8)
+    shiftZones:false,      // §4 control arm
+    strictBreak:false,     // §7 aoi_close_v1_strictbreak
+    htfBiasGate:false      // §7 aoi_close_v1_daily_htf
+  }
+};
+
+// PURE. Calendar expiry, not 730 days -- "2 years after formation" is a calendar statement and a
+// leap year would silently shorten a day-count version by one day.
+function aoiCloseExpiryMs(formationMs,years){
+  if(typeof formationMs!=='number'||!isFinite(formationMs)) return null;
+  const d=new Date(formationMs);
+  return Date.UTC(d.getUTCFullYear()+(years||2),d.getUTCMonth(),d.getUTCDate(),
+    d.getUTCHours(),d.getUTCMinutes(),d.getUTCSeconds(),d.getUTCMilliseconds());
+}
+
+// PURE, PREFIX-ONLY. Every candidate touch price a daily series offers, each stamped with the bar
+// at which it becomes KNOWABLE.
+//
+// THE 3-BAR SWING LAG IS THE WHOLE POINT. alexGFindSwingPoints confirms a swing only once three
+// bars have printed on BOTH sides, so a swing at bar j is not knowable until bar j+lookback. Using
+// j as the confirmation bar would let a zone form off a swing the market had not yet completed --
+// the exact look-ahead the truncation fixture exists to catch. Disclosed, not silently absorbed.
+//
+// SWING mode (§10.1) yields ONE price per swing: the body edge on the swing side. ANY_BODY mode
+// (§10.7) yields BOTH body edges of every bar as separate candidates, at most one of which may
+// enter any single set -- which is how §10.8's "the edge nearer the band's current extent" is
+// implemented without a second rule: the tightest qualifying window naturally selects the nearer.
+function aoiCloseTouchCandidates(daily,cfg){
+  const c=(cfg&&cfg.config)?cfg.config:(cfg||RULES_AOI_CLOSE.config);
+  const out=[];
+  if(!Array.isArray(daily)||!daily.length) return out;
+  const num=function(x){ return typeof x==='number'&&isFinite(x); };
+  if(c.touchSource==='ANY_BODY'){
+    for(let i=0;i<daily.length;i++){
+      const b=daily[i];
+      if(!b||!num(b.o)||!num(b.c)) continue;
+      const lo=Math.min(b.o,b.c),hi=Math.max(b.o,b.c);
+      // A body is known at its own close: no lag, and none is invented to match SWING mode.
+      out.push({barIndex:i,confirmBarIndex:i,price:hi,edge:'BODY_HIGH',swingSide:null});
+      if(hi!==lo) out.push({barIndex:i,confirmBarIndex:i,price:lo,edge:'BODY_LOW',swingSide:null});
+    }
+    return out;
+  }
+  const sw=alexGFindSwingPoints(daily,c.swingLookback);
+  const push=function(arr,side){
+    (arr||[]).forEach(function(s){
+      const b=daily[s.barIndex];
+      if(!b||!num(b.o)||!num(b.c)) return;
+      out.push({barIndex:s.barIndex,confirmBarIndex:s.barIndex+c.swingLookback,
+        price:side==='high'?Math.max(b.o,b.c):Math.min(b.o,b.c),
+        edge:side==='high'?'BODY_HIGH':'BODY_LOW',swingSide:side});
+    });
+  };
+  push(sw.swingHighs,'high');
+  push(sw.swingLows,'low');
+  out.sort(function(a,b){
+    return a.confirmBarIndex-b.confirmBarIndex||a.barIndex-b.barIndex||a.price-b.price;
+  });
+  return out;
+}
+
+// PURE. Deterministic zone identity -- no Date.now, no Math.random, reproducible across runs.
+function aoiCloseZoneId(pair,formationMs,low,high){
+  return 'AOIZ|'+(pair||'?')+'|'+formationMs+'|'+low.toFixed(6)+'|'+high.toFixed(6);
+}
+
+// PURE, PREFIX-ONLY. Builds every zone the daily series ever forms, each stamped with the bar that
+// formed it, so a caller can ask "which zones existed at time T" without re-running anything.
+//
+// A ZONE FORMED AT DAILY BAR b DEPENDS ONLY ON daily[0..b]. That is what makes the incremental
+// form-once/filter-by-time approach identical to re-running the builder at every bar, and it is
+// what the truncation fixture proves rather than assumes.
+//
+// §10.1(2): a newly confirmed edge plus >= 2 earlier UNEXPIRED edges fitting inside 60 pips.
+// §10.1(3): band is the hull of those edges; expanded symmetrically about the midpoint if under 5.
+// §10.1(4): never overlaps an existing unexpired zone -- first-formed wins, and the newcomer is
+//           recorded as a TOUCH of the incumbent instead, whose band does not move.
+// §10.1(5): formation time is the CONFIRMATION bar of the third touch; expiry runs from formation
+//           and is never extended by a later touch.
+function aoiCloseFormZones(daily,cfg,pip,pair){
+  const c=(cfg&&cfg.config)?cfg.config:(cfg||RULES_AOI_CLOSE.config);
+  const zones=[];
+  if(!Array.isArray(daily)||daily.length<c.swingLookback*2+1) return zones;
+  const maxW=c.maxZoneWidthPips*pip,minW=c.minZoneWidthPips*pip;
+  const cands=aoiCloseTouchCandidates(daily,c);
+  if(!cands.length) return zones;
+  const closeMs=[];
+  for(let i=0;i<daily.length;i++) closeMs.push(getCandleCloseTime(daily,i,'D').getTime());
+  const confirmedMs=function(k){ return closeMs[Math.min(k.confirmBarIndex,closeMs.length-1)]; };
+  const byBar={};
+  cands.forEach(function(k){
+    if(k.confirmBarIndex>=daily.length) return;
+    (byBar[k.confirmBarIndex]=byBar[k.confirmBarIndex]||[]).push(k);
+  });
+  const confirmed=[];               // every candidate knowable so far, price-sorted on demand
+  for(let b=0;b<daily.length;b++){
+    const arrivals=byBar[b];
+    if(!arrivals||!arrivals.length) continue;
+    const nowMs=closeMs[b];
+    arrivals.forEach(function(k){ confirmed.push(k); });
+    arrivals.forEach(function(cand){
+      const live=zones.filter(function(z){ return nowMs<z.expiryMs; });
+      // ── 1. already inside a live zone? then it is a touch, and nothing moves (§10.1(4)) ──
+      const host=live.filter(function(z){ return cand.price>=z.low&&cand.price<=z.high; })
+        .sort(function(x,y){ return x.formationMs-y.formationMs; })[0];
+      if(host){
+        host.touches.push({barIndex:cand.barIndex,price:cand.price,edge:cand.edge,
+          swingSide:cand.swingSide,confirmedAtMs:nowMs,role:'LATER_TOUCH'});
+        return;
+      }
+      // ── 2. try to form: the TIGHTEST qualifying set containing this edge (§10.1(2)) ──
+      // "earlier UNEXPIRED edges" (§10.1(2)), on the SAME calendar clock the zones themselves
+      // expire on. A day-count approximation here would disagree with aoiCloseExpiryMs across a
+      // leap year and quietly admit an edge the zone rule had already retired.
+      const pool=confirmed.filter(function(k){
+        return k!==cand&&aoiCloseExpiryMs(confirmedMs(k),c.expiryYears)>nowMs;
+      }).concat([cand]).sort(function(x,y){ return x.price-y.price||x.barIndex-y.barIndex; });
+      const pos=pool.indexOf(cand);
+      if(pos<0) return;
+      let best=null;
+      for(let i=pos;i>=0;i--){
+        if((pool[pos].price-pool[i].price)>maxW) break;   // widening left can only get worse
+        const bars={};let distinct=0,j=i;
+        for(let q=i;q<=pos;q++){ const bi=pool[q].barIndex; if(!bars[bi]){bars[bi]=1;distinct++;} }
+        j=pos;
+        while(distinct<c.minTouches&&j+1<pool.length){
+          j++;
+          if((pool[j].price-pool[i].price)>maxW) break;
+          const bi=pool[j].barIndex; if(!bars[bi]){bars[bi]=1;distinct++;}
+        }
+        if(distinct<c.minTouches) continue;
+        const span=pool[j].price-pool[i].price;
+        if(span>maxW) continue;
+        const earliest=Math.min.apply(null,pool.slice(i,j+1).map(function(x){ return x.barIndex; }));
+        // tightest -> most edges -> earliest. Stated in §10.1(2) and applied in that order.
+        if(!best||span<best.span-1e-12
+           ||(Math.abs(span-best.span)<=1e-12&&(j-i+1)>best.count)
+           ||(Math.abs(span-best.span)<=1e-12&&(j-i+1)===best.count&&earliest<best.earliest)){
+          best={i:i,j:j,span:span,count:j-i+1,earliest:earliest,
+            members:pool.slice(i,j+1)};
+        }
+      }
+      if(!best) return;
+      let low=pool[best.i].price,high=pool[best.j].price;
+      if((high-low)<minW){                                  // §10.1(3): symmetric, about the midpoint
+        const mid=(low+high)/2;
+        low=mid-minW/2; high=mid+minW/2;
+      }
+      // ── 3. no overlap with a live zone; first-formed wins (§10.1(4)) ──
+      const clash=live.filter(function(z){ return low<=z.high&&high>=z.low; })
+        .sort(function(x,y){ return x.formationMs-y.formationMs; })[0];
+      if(clash){
+        clash.touches.push({barIndex:cand.barIndex,price:cand.price,edge:cand.edge,
+          swingSide:cand.swingSide,confirmedAtMs:nowMs,role:'OVERLAP_TOUCH'});
+        return;
+      }
+      zones.push({
+        id:aoiCloseZoneId(pair,nowMs,low,high),
+        low:low,high:high,
+        formationMs:nowMs,formationBarIndex:b,
+        expiryMs:aoiCloseExpiryMs(nowMs,c.expiryYears),
+        widthPips:(high-low)/pip,
+        touchSource:c.touchSource,
+        shifted:false,brokenAtMs:null,
+        touches:best.members.map(function(m){
+          return{barIndex:m.barIndex,price:m.price,edge:m.edge,swingSide:m.swingSide,
+            confirmedAtMs:confirmedMs(m),role:'FORMING_TOUCH'};
+        })
+      });
+    });
+  }
+  return zones;
+}
+
+// PURE. THE CONTROL (§4). Every zone moved by half its OWN width, so the control keeps the real
+// arm's zone COUNT, WIDTH DISTRIBUTION and TIMING exactly and differs only in WHERE the bands sit.
+// A control built from random bands would differ in all four at once and could not isolate
+// anything. Direction is fixed (up) and disclosed: alternating or randomising it would make the
+// control non-deterministic, and this arm's whole value rests on being re-runnable.
+function aoiCloseShiftZones(zones,pip){
+  return (zones||[]).map(function(z){
+    const shift=(z.high-z.low)/2;
+    const low=z.low+shift,high=z.high+shift;
+    return Object.assign({},z,{
+      id:'SHIFT|'+z.id,low:low,high:high,shifted:true,shiftPips:shift/pip,
+      // The touches belong to the REAL band. They are kept for provenance and are deliberately not
+      // re-derived against the shifted band, where they would no longer be touches at all.
+      touches:z.touches.slice()
+    });
+  });
+}
+
+// PURE. §7 aoi_close_v1_strictbreak -- the operator's own broken-AOI rule, which the SOURCE
+// rejects (§3 row 5 keeps a zone valid until expiry, because Revelio tested break invalidation and
+// every variant was worse). Stamped onto a COPY so the base arm can never see it.
+//
+// "Closed through" is read via the protected alexGZoneRole: the zone's role flips from support to
+// resistance, or the reverse, on a daily CLOSE. A wick through is not a close through.
+function aoiCloseMarkBreaks(zones,daily){
+  const out=(zones||[]).map(function(z){ return Object.assign({},z); });
+  if(!Array.isArray(daily)||!daily.length) return out;
+  const closeMs=[];
+  for(let i=0;i<daily.length;i++) closeMs.push(getCandleCloseTime(daily,i,'D').getTime());
+  out.forEach(function(z){
+    let lastRole=null;
+    for(let i=0;i<daily.length;i++){
+      if(closeMs[i]<z.formationMs) continue;
+      if(closeMs[i]>=z.expiryMs) break;
+      const role=alexGZoneRole(z,daily[i].c);
+      if(role==='inside'){ continue; }
+      if(lastRole&&role!==lastRole){ z.brokenAtMs=closeMs[i]; break; }
+      lastRole=role;
+    }
+  });
+  return out;
+}
+
+// PURE. Which zones are tradeable at time T: formed, unexpired, and -- only under strictBreak --
+// not yet closed through. Returns them oldest-first so selection is deterministic.
+function aoiCloseActiveZones(zones,atMs,cfg){
+  const c=(cfg&&cfg.config)?cfg.config:(cfg||RULES_AOI_CLOSE.config);
+  return (zones||[]).filter(function(z){
+    if(!(z.formationMs<=atMs)) return false;
+    if(!(atMs<z.expiryMs)) return false;
+    if(c.strictBreak&&z.brokenAtMs!=null&&z.brokenAtMs<=atMs) return false;
+    return true;
+  }).sort(function(x,y){ return x.formationMs-y.formationMs; });
+}
+
+// PURE, PREFIX-ONLY. candles[0..i] is the entire world this decision may see, and h1[i] is the bar
+// being decided on. Nothing after it is read -- which is what the truncation fixture proves.
+//
+// "First candle that closes INSIDE a daily zone" (§2 rule 4). Approach direction comes from the
+// close BEFORE it (§3 row 3): above the zone -> the zone is support -> buy; below -> resistance ->
+// sell. §10.5: alexGZoneRole is reused AS-IS with its inclusive boundaries, so a previous close
+// sitting exactly ON an edge reads as `inside`, which means there is no approach direction and no
+// trade. That is disclosed and deliberately NOT special-cased.
+function aoiCloseSignal(h1,i,activeZones){
+  if(!Array.isArray(h1)||i<1||i>=h1.length) return null;
+  const cur=h1[i],prev=h1[i-1];
+  if(!cur||!prev||typeof cur.c!=='number'||typeof prev.c!=='number') return null;
+  if(!isFinite(cur.c)||!isFinite(prev.c)) return null;
+  const zs=activeZones||[];
+  for(let k=0;k<zs.length;k++){
+    const z=zs[k];
+    if(alexGZoneRole(z,cur.c)!=='inside') continue;
+    const prevRole=alexGZoneRole(z,prev.c);
+    if(prevRole==='inside') continue;              // not a FIRST close inside, or §10.5 boundary
+    return{zone:z,direction:prevRole==='support'?'buy':'sell',approachSide:prevRole,
+      qualifyingClose:cur.c,priorClose:prev.c,signalBarIndex:i};
+  }
+  return null;
+}
+
+// PURE. §10.3 (supersedes §3 row 6): the NEAREST-IN-PRICE daily swing point beyond the entry, in
+// the trade direction, from alexGFindSwingPoints reused byte-identically. §2 rule 6 said "nearest"
+// and it is the source, so it wins over §3 row 6's "most recent".
+//
+// Every swing this returns is already confirmed: alexGFindSwingPoints only reports a swing with
+// `lookback` bars printed on BOTH sides, and `daily` here is a prefix truncated at the signal bar.
+// There is no separate confirmation filter because there is nothing left to filter.
+function aoiCloseTarget(dailyPrefix,direction,entry,cfg){
+  const c=(cfg&&cfg.config)?cfg.config:(cfg||RULES_AOI_CLOSE.config);
+  if(!Array.isArray(dailyPrefix)||dailyPrefix.length<c.swingLookback*2+1) return null;
+  if(typeof entry!=='number'||!isFinite(entry)) return null;
+  const sw=alexGFindSwingPoints(dailyPrefix,c.swingLookback);
+  const pool=(direction==='buy'?sw.swingHighs:sw.swingLows)
+    .map(function(s){ return s.price; })
+    .filter(function(p){ return typeof p==='number'&&isFinite(p)&&(direction==='buy'?p>entry:p<entry); });
+  if(!pool.length) return null;
+  return direction==='buy'?Math.min.apply(null,pool):Math.max.apply(null,pool);
+}
+
+// PURE. Stop 5 pips beyond the FAR edge (§3 row 4), target from §10.3, then §2 rule 6's two gates.
+// Fails CLOSED: a next-bar open already past its own stop, or already through its own target, is
+// not this trade with poor geometry -- it is not this trade at all.
+function aoiCloseGeometry(zone,direction,entry,targetLevel,cfg,pip){
+  const c=(cfg&&cfg.config)?cfg.config:(cfg||RULES_AOI_CLOSE.config);
+  if(!zone||(direction!=='buy'&&direction!=='sell')) return null;
+  if(typeof entry!=='number'||!isFinite(entry)) return null;
+  if(typeof targetLevel!=='number'||!isFinite(targetLevel)) return null;
+  if(!(pip>0)) return null;
+  const farEdge=direction==='buy'?zone.low:zone.high;
+  const buf=c.stopBufferPips*pip;
+  const stop=direction==='buy'?farEdge-buf:farEdge+buf;
+  const risk=direction==='buy'?entry-stop:stop-entry;
+  if(!isFinite(risk)||risk<=0) return{skipped:'NO_RISK'};
+  const reward=direction==='buy'?targetLevel-entry:entry-targetLevel;
+  if(!isFinite(reward)||reward<=0) return{skipped:'TARGET_BEHIND_ENTRY'};
+  let rr=reward/risk,target=targetLevel,capped=false;
+  if(rr<c.minRR) return{skipped:'BELOW_MIN_RR',plannedRR:rr};
+  if(rr>c.maxRR){                                    // §2 rule 6: over 4R -> cap AT 4R
+    target=direction==='buy'?entry+c.maxRR*risk:entry-c.maxRR*risk;
+    rr=c.maxRR; capped=true;
+  }
+  return{direction:direction,stop:stop,target:target,plannedRR:rr,capped:capped,
+    farEdge:farEdge,riskPrice:risk,riskPips:risk/pip,
+    stopBasis:'FIVE_PIPS_BEYOND_FAR_ZONE_EDGE'};
+}
+
+// PURE. §7 aoi_close_v1_daily_htf -- Alex's paired higher-timeframe bias put BACK as a gate, to
+// test Revelio's claim that it hurts. For an H1 entry the pair is D + H4, per RULES_ALEXG's own
+// htfPriority ordering (W > D > H4 > H1); the W+D pair belongs to a D entry, which this arm does
+// not trade. Both must agree with the trade direction, computed by the PROTECTED
+// alexGComputeTrendContext on prefixes only.
+function aoiCloseHtfBiasPass(dailyPrefix,h4Prefix,direction,cfg){
+  const c=(cfg&&cfg.config)?cfg.config:(cfg||RULES_AOI_CLOSE.config);
+  if(!Array.isArray(dailyPrefix)||!Array.isArray(h4Prefix)) return false;
+  if(!dailyPrefix.length||!h4Prefix.length) return false;
+  const tcCfg={trendSwingScanBars:c.trendSwingScanBars,trendSwingLookback:c.swingLookback};
+  const d=alexGComputeTrendContext(dailyPrefix,dailyPrefix.length-1,tcCfg);
+  const h=alexGComputeTrendContext(h4Prefix,h4Prefix.length-1,tcCfg);
+  const need=direction==='buy'?'UPTREND':'DOWNTREND';
+  return d.trendContext===need&&h.trendContext===need;
+}
+
+// THE WALKER. Deliberately the same shape as crtReplayTrades and psychLevelReplayTrades: a
+// prefix-only signal, entry at the NEXT bar open, exits resolved by the PROTECTED alexGWalkOutcome,
+// one position at a time. The arms must differ only where they are meant to differ.
+//
+// ENTRY IS THE BAR AFTER THE QUALIFYING CLOSE (§3 row 7). Revelio enters AT the close. That would
+// require reading the bar that produced the signal, so this is the conservative reading, it gives
+// up part of the move, and it is disclosed rather than presented as equivalent.
+//
+// ONE OPEN TRADE PER PAIR (§2 rule 7) falls out of the scan itself: after a trade the cursor jumps
+// to its exit bar, so this pair cannot be in two trades at once. Re-entry (§3 row 8) then needs no
+// separate rule -- the next signal must again be a FIRST close inside, which requires price to have
+// closed outside in between.
+//
+// THE WINDOW IS ENFORCED HERE, NOT AT FETCH TIME (§4). Bars before windowFromMs are read for zone
+// FORMATION and can never open a trade; that asymmetry is the whole reason zone history may reach
+// back before the test window without contaminating it.
+function aoiCloseReplayTrades(h1,daily,h4,zones,cfg,opts){
+  const c=(cfg&&cfg.config)?cfg.config:(cfg||RULES_AOI_CLOSE.config);
+  const o=opts||{};
+  const pair=o.pair||null;
+  const pip=pipSize(pair||'EUR_USD');
+  const tf=o.timeframe||'H1';
+  const out={trades:[],skipped:[],barsScanned:0,signals:0,
+    arm:o.arm||'BASE',variant:o.variant||AOI_CLOSE_STRATEGY_ID,
+    entryBasis:'NEXT_BAR_OPEN',ambiguousMode:'conservative',
+    touchSource:c.touchSource,strictBreak:!!c.strictBreak,htfBiasGate:!!c.htfBiasGate,
+    zonesAvailable:(zones||[]).length,spreadFallbackCount:0,
+    windowFromMs:(o.windowFromMs==null?null:o.windowFromMs),
+    windowToMs:(o.windowToMs==null?null:o.windowToMs)};
+  if(!Array.isArray(h1)||h1.length<3||!(pip>0)) return out;
+  const h1Ms=[];for(let k=0;k<h1.length;k++) h1Ms.push(getCandleCloseTime(h1,k,tf).getTime());
+  const dArr=Array.isArray(daily)?daily:[],hArr=Array.isArray(h4)?h4:[];
+  const dMs=[];for(let k=0;k<dArr.length;k++) dMs.push(getCandleCloseTime(dArr,k,'D').getTime());
+  const hMs=[];for(let k=0;k<hArr.length;k++) hMs.push(getCandleCloseTime(hArr,k,'H4').getTime());
+  let dPtr=0,hPtr=0,i=1,guard=0;
+  while(i<h1.length-1){
+    if(++guard>h1.length+2) break;
+    out.barsScanned++;
+    const nowMs=h1Ms[i];
+    while(dPtr<dMs.length&&dMs[dPtr]<=nowMs) dPtr++;
+    while(hPtr<hMs.length&&hMs[hPtr]<=nowMs) hPtr++;
+    if(o.windowToMs!=null&&nowMs>o.windowToMs) break;
+    if(o.windowFromMs!=null&&nowMs<o.windowFromMs){ i++; continue; }
+    const sig=aoiCloseSignal(h1,i,aoiCloseActiveZones(zones,nowMs,c));
+    if(!sig){ i++; continue; }
+    out.signals++;
+    const dailyPrefix=dArr.slice(0,dPtr);
+    if(c.htfBiasGate&&!aoiCloseHtfBiasPass(dailyPrefix,hArr.slice(0,hPtr),sig.direction,c)){
+      out.skipped.push({barIndex:i,reason:'HTF_BIAS_DISAGREES',direction:sig.direction,zoneId:sig.zone.id});
+      i++; continue;
+    }
+    const entryBarIndex=i+1,entryBar=h1[entryBarIndex];
+    const entry=(entryBar&&typeof entryBar.o==='number'&&isFinite(entryBar.o))?entryBar.o:null;
+    if(entry==null){
+      out.skipped.push({barIndex:i,reason:'NO_ENTRY_PRICE',direction:sig.direction,zoneId:sig.zone.id});
+      i++; continue;
+    }
+    const targetLevel=aoiCloseTarget(dailyPrefix,sig.direction,entry,c);
+    if(targetLevel==null){
+      out.skipped.push({barIndex:i,reason:'NO_DAILY_SWING_BEYOND_ENTRY',direction:sig.direction,zoneId:sig.zone.id});
+      i++; continue;
+    }
+    const g=aoiCloseGeometry(sig.zone,sig.direction,entry,targetLevel,c,pip);
+    if(!g||g.skipped){
+      out.skipped.push({barIndex:i,reason:(g&&g.skipped)||'NO_GEOMETRY',direction:sig.direction,
+        zoneId:sig.zone.id,plannedRR:(g&&g.plannedRR)!=null?g.plannedRR:null});
+      i++; continue;
+    }
+    const w=alexGWalkOutcome(h1,entryBarIndex,g.direction,g.stop,g.target,'conservative',tf);
+    const ex=alexGComputeMAEMFE(h1,entryBarIndex,w.exitBarIndex,g.direction,entry,pip);
+    // §4 COSTS. A real per-bar spread when the bar carries bid/ask; otherwise the measured
+    // forward-corpus median share of risk, CHARGED and FLAGGED -- never silently zero.
+    let spreadPips=(typeof o.spreadPipsAt==='function')?o.spreadPipsAt(entryBarIndex):null;
+    let spreadEstimated=false;
+    if(!(typeof spreadPips==='number'&&isFinite(spreadPips)&&spreadPips>=0)){
+      spreadPips=g.riskPips*AOI_CLOSE_SPREAD_FALLBACK_RISK_SHARE;
+      spreadEstimated=true; out.spreadFallbackCount++;
+    }
+    const resultR=w.stillOpen?null:(w.result==='Win'?g.plannedRR:-1);
+    const spreadR=g.riskPips>0?spreadPips/g.riskPips:null;
+    // §10.4 mark-to-market samples: one point per calendar day the trade is open, taken at that
+    // day's LAST H1 close, and at the exit PRICE on the exit day. Carried on the trade so the
+    // equity builder never re-reads candles and can never sample a different path.
+    const mtm=[];
+    let curDate=null,lastIdx=null;
+    for(let j=entryBarIndex;j<=w.exitBarIndex&&j<h1.length;j++){
+      const ds=new Date(h1Ms[j]).toISOString().slice(0,10);
+      if(curDate!==null&&ds!==curDate){
+        const px=h1[lastIdx].c;
+        mtm.push({date:curDate,r:((g.direction==='buy'?px-entry:entry-px)/g.riskPrice)});
+      }
+      curDate=ds; lastIdx=j;
+    }
+    if(curDate!==null){
+      const px=w.stillOpen?h1[lastIdx].c:w.exitPrice;
+      mtm.push({date:curDate,r:((g.direction==='buy'?px-entry:entry-px)/g.riskPrice)});
+    }
+    out.trades.push({
+      strategyId:AOI_CLOSE_STRATEGY_ID,variant:out.variant,arm:out.arm,
+      pair:pair,timeframe:tf,
+      zoneId:sig.zone.id,zoneLow:sig.zone.low,zoneHigh:sig.zone.high,
+      zoneWidthPips:sig.zone.widthPips,zoneShifted:!!sig.zone.shifted,
+      zoneFormationMs:sig.zone.formationMs,zoneTouchCount:(sig.zone.touches||[]).length,
+      approachSide:sig.approachSide,priorClose:sig.priorClose,qualifyingClose:sig.qualifyingClose,
+      direction:g.direction,entry:entry,stop:g.stop,target:g.target,
+      farEdge:g.farEdge,stopBasis:g.stopBasis,
+      plannedRR:g.plannedRR,targetCappedAt4R:g.capped,
+      signalBarIndex:i,entryBarIndex:entryBarIndex,exitBarIndex:w.exitBarIndex,
+      entryTimestamp:h1Ms[entryBarIndex],exitTimestamp:w.exitTimestamp,
+      result:w.result,ambiguous:w.ambiguous,stillOpen:w.stillOpen,exitPrice:w.exitPrice,
+      resultR:resultR,
+      riskPips:g.riskPips,
+      spreadPips:spreadPips,spreadR:spreadR,spreadEstimated:spreadEstimated,
+      netR:(resultR==null||spreadR==null)?null:(resultR-spreadR),
+      maePips:ex.maePips,mfePips:ex.mfePips,
+      maeR:g.riskPips>0?ex.maePips/g.riskPips:null,
+      mfeR:g.riskPips>0?ex.mfePips/g.riskPips:null,
+      mtm:mtm
+    });
+    i=w.stillOpen?h1.length:Math.max(w.exitBarIndex,i+1);
+  }
+  return out;
+}
+
+// PURE. Everything §8 requires reported for EVERY arm and variant, in one shape so one reader
+// compares them. Gross AND net are both carried: §5 says a positive gross with a negative net is a
+// FAIL, which is only checkable if both survive to the report.
+//
+// SPREAD IS CHARGED PER TRADE, never against the mean. Each trade already carries its own spreadR
+// (spreadPips / its own riskPips); a mean-level charge divides by the average risk instead and, on
+// this repository's own record, once hid an entire arm's result.
+function aoiCloseSummary(trades){
+  const t=(trades||[]).filter(function(x){ return x&&!x.stillOpen&&typeof x.resultR==='number'; });
+  const out={n:t.length,wins:0,winRate:null,
+    grossMeanR:null,grossSeR:null,netMeanR:null,netSeR:null,
+    meanPlannedRR:null,medianPlannedRR:null,medianRiskPips:null,tightStopShare:null,
+    reach1R:null,reach1RSe:null,reach2R:null,reach2RSe:null,
+    spreadEstimatedShare:null,medianSpreadPips:null,cappedShare:null,stillOpenExcluded:0};
+  out.stillOpenExcluded=(trades||[]).filter(function(x){ return x&&x.stillOpen; }).length;
+  if(!t.length) return out;
+  const med=function(a){
+    const s=a.slice().sort(function(x,y){ return x-y; });
+    const m=Math.floor(s.length/2);
+    return s.length%2?s[m]:(s[m-1]+s[m])/2;
+  };
+  const stat=function(arr){
+    if(!arr.length) return{mean:null,se:null};
+    const mu=arr.reduce(function(s,x){ return s+x; },0)/arr.length;
+    if(arr.length<2) return{mean:mu,se:null};
+    const v=arr.reduce(function(s,x){ return s+(x-mu)*(x-mu); },0)/(arr.length-1);
+    return{mean:mu,se:Math.sqrt(v/arr.length)};
+  };
+  const share=function(n,d){
+    if(!d) return{p:null,se:null};
+    const p=n/d;
+    return{p:p,se:Math.sqrt(p*(1-p)/d)};
+  };
+  out.wins=t.filter(function(x){ return x.resultR>0; }).length;
+  out.winRate=out.wins/t.length;
+  const gs=stat(t.map(function(x){ return x.resultR; }));
+  out.grossMeanR=gs.mean; out.grossSeR=gs.se;
+  const netArr=t.map(function(x){ return x.netR; })
+    .filter(function(x){ return typeof x==='number'&&isFinite(x); });
+  const ns=stat(netArr);
+  out.netMeanR=ns.mean; out.netSeR=ns.se;
+  const rr=t.map(function(x){ return x.plannedRR; })
+    .filter(function(x){ return typeof x==='number'&&isFinite(x); });
+  if(rr.length){
+    out.meanPlannedRR=rr.reduce(function(s,x){ return s+x; },0)/rr.length;
+    out.medianPlannedRR=med(rr);
+  }
+  const risk=t.map(function(x){ return x.riskPips; })
+    .filter(function(x){ return typeof x==='number'&&isFinite(x)&&x>0; });
+  if(risk.length){
+    out.medianRiskPips=med(risk);
+    // BY CONSTRUCTION THIS IS ZERO: the stop sits 5 pips beyond a band that is itself at least 5
+    // pips wide, so risk cannot fall under 5. §8 requires printing it anyway -- a non-zero value
+    // here means the zone builder produced a band it should never have produced.
+    out.tightStopShare=risk.filter(function(x){ return x<5; }).length/risk.length;
+  }
+  // §4: mfeR and maeR are MAGNITUDES (alexGComputeMAEMFE returns non-negative pip excursions), so
+  // reaching +kR is mfeR >= k. Checked before use, as §4 demands, not assumed.
+  const withMfe=t.filter(function(x){ return typeof x.mfeR==='number'&&isFinite(x.mfeR); });
+  if(withMfe.length){
+    const r1=share(withMfe.filter(function(x){ return x.mfeR>=1; }).length,withMfe.length);
+    const r2=share(withMfe.filter(function(x){ return x.mfeR>=2; }).length,withMfe.length);
+    out.reach1R=r1.p; out.reach1RSe=r1.se; out.reach2R=r2.p; out.reach2RSe=r2.se;
+  }
+  const sp=t.map(function(x){ return x.spreadPips; })
+    .filter(function(x){ return typeof x==='number'&&isFinite(x); });
+  if(sp.length) out.medianSpreadPips=med(sp);
+  out.spreadEstimatedShare=t.filter(function(x){ return x.spreadEstimated; }).length/t.length;
+  out.cappedShare=t.filter(function(x){ return x.targetCappedAt4R; }).length/t.length;
+  return out;
+}
+
+// PURE. §10.4. ONE shared equity line across all 12 pairs, each trade sized at 0.5% of the
+// high-water mark AS OF ITS OWN OPEN, concurrent positions allowed one per pair.
+//
+// THE DECIDING DRAWDOWN IS DAILY MARK-TO-MARKET -- every open position marked at each daily close
+// plus realised P&L -- because that is the drawdown an operator would actually sit through. The
+// closed-trade-only line is reported BESIDE it, for comparison with the source's -28.8%, and does
+// NOT decide. Both go through the unmodified carryMaxDrawdown.
+//
+// Spread is charged at OPEN on both lines, so an open position is never marked as though its entry
+// were free.
+function aoiCloseEquityCurves(trades,cfg){
+  const c=(cfg&&cfg.config)?cfg.config:(cfg||RULES_AOI_CLOSE.config);
+  const t=(trades||[]).filter(function(x){
+    return x&&!x.stillOpen&&typeof x.netR==='number'&&isFinite(x.netR)
+      &&Array.isArray(x.mtm)&&x.mtm.length;
+  });
+  const out={n:t.length,markToMarketDrawdown:null,closedOnlyDrawdown:null,
+    markToMarketFinal:null,closedOnlyFinal:null,days:0,riskPercentHWM:c.riskPercentHWM};
+  if(!t.length) return out;
+  const dateSet={};
+  t.forEach(function(x){ x.mtm.forEach(function(p){ dateSet[p.date]=1; }); });
+  const dates=Object.keys(dateSet).sort();
+  const byEntry={};
+  t.forEach(function(x){ (byEntry[x.mtm[0].date]=byEntry[x.mtm[0].date]||[]).push(x); });
+  const risk=c.riskPercentHWM/100;
+  let realised=0,hwm=1;
+  const mtmLine=[],closedLine=[];
+  const open=[];
+  dates.forEach(function(d){
+    (byEntry[d]||[]).forEach(function(x){
+      const map={};
+      x.mtm.forEach(function(p){ map[p.date]=p.r; });
+      // 0.5% of the high-water mark AS OF THIS TRADE'S OPEN -- the mark-to-market line's own HWM,
+      // since that is the line P4 decides on.
+      open.push({t:x,frac:risk*hwm,map:map,lastR:x.mtm[0].r,endDate:x.mtm[x.mtm.length-1].date});
+    });
+    let unreal=0;
+    for(let k=open.length-1;k>=0;k--){
+      const o=open[k];
+      if(o.endDate===d){ realised+=o.t.netR*o.frac; open.splice(k,1); continue; }
+      const r=o.map[d];
+      if(typeof r==='number'&&isFinite(r)) o.lastR=r;   // a weekend carries the last mark forward
+      unreal+=(o.lastR-(typeof o.t.spreadR==='number'?o.t.spreadR:0))*o.frac;
+    }
+    const eq=1+realised+unreal;
+    if(eq>hwm) hwm=eq;
+    mtmLine.push(eq);
+    closedLine.push(1+realised);
+  });
+  out.days=dates.length;
+  out.markToMarketDrawdown=carryMaxDrawdown(mtmLine);
+  out.closedOnlyDrawdown=carryMaxDrawdown(closedLine);
+  out.markToMarketFinal=mtmLine[mtmLine.length-1];
+  out.closedOnlyFinal=closedLine[closedLine.length-1];
+  return out;
+}
+
+// PURE. Two-sided normal tail. Abramowitz & Stegun 7.1.26, accurate to ~1.5e-7 -- far beyond what
+// a p-value read against a 0.05 line needs, and deterministic.
+function aoiCloseTwoSidedP(z){
+  if(typeof z!=='number'||!isFinite(z)) return null;
+  const x=Math.abs(z)/Math.SQRT2;
+  const tt=1/(1+0.3275911*x);
+  const y=1-(((((1.061405429*tt-1.453152027)*tt)+1.421413741)*tt-0.284496736)*tt+0.254829592)*tt*Math.exp(-x*x);
+  return Math.max(0,Math.min(1,1-y));
+}
+
+// PURE. The comparison, stated AS a comparison. No verdict is returned here -- only the two
+// records and the difference between them, with an error bar on it. Welch, because the two arms
+// have no reason to share a variance.
+function aoiCloseCompareArms(aTrades,bTrades,labelA,labelB){
+  const A=aoiCloseSummary(aTrades),B=aoiCloseSummary(bTrades);
+  const out={a:A,b:B,labelA:labelA||'A',labelB:labelB||'B',
+    netDifference:null,netDifferenceSe:null,z:null,pTwoSided:null,comparable:!!(A.n&&B.n)};
+  if(A.netMeanR==null||B.netMeanR==null||A.netSeR==null||B.netSeR==null) return out;
+  out.netDifference=A.netMeanR-B.netMeanR;
+  out.netDifferenceSe=Math.sqrt(A.netSeR*A.netSeR+B.netSeR*B.netSeR);
+  if(out.netDifferenceSe>0){
+    out.z=out.netDifference/out.netDifferenceSe;
+    out.pTwoSided=aoiCloseTwoSidedP(out.z);
+  }
+  return out;
+}
+
+// PURE. §5, applied EXACTLY as pre-registered and with no criterion altered.
+//
+// PROVISIONAL BY DESIGN. CLAUDE.md requires every R-denominated replay result to go through
+// scripts/replay_compare.py, because four hand-written versions of this analysis produced two
+// wrong conclusions. This function exists so the page can show the inputs, not so it can rule --
+// the authoritative figures come from that script reading the exported package.
+function aoiCloseEvaluateCriteria(baseTrades,controlTrades,equity){
+  const S=aoiCloseSummary(baseTrades);
+  const cmp=aoiCloseCompareArms(baseTrades,controlTrades,'REAL_ZONES','SHIFTED_CONTROL');
+  const p1=(S.netMeanR!=null&&S.netSeR!=null)
+    ? (S.netMeanR>0&&(S.netMeanR-1.96*S.netSeR)>0) : null;
+  const p2=(S.reach1R!=null&&S.reach1RSe!=null&&S.reach2R!=null&&S.reach2RSe!=null)
+    ? ((S.reach1R-2*S.reach1RSe)>=0.5&&(S.reach2R-2*S.reach2RSe)>=(1/3)) : null;
+  const p3=(cmp.netDifference!=null&&cmp.pTwoSided!=null)
+    ? (cmp.netDifference>0&&cmp.pTwoSided<0.05) : null;
+  const p4=(equity&&equity.markToMarketDrawdown!=null)
+    ? (equity.markToMarketDrawdown<0.30) : null;
+  const all=[p1,p2,p3,p4];
+  return{
+    P1:{pass:p1,netMeanR:S.netMeanR,netSeR:S.netSeR,
+      ci95:(S.netMeanR!=null&&S.netSeR!=null)?[S.netMeanR-1.96*S.netSeR,S.netMeanR+1.96*S.netSeR]:null},
+    P2:{pass:p2,reach1R:S.reach1R,reach1RSe:S.reach1RSe,reach2R:S.reach2R,reach2RSe:S.reach2RSe,
+      coin1R:0.5,coin2R:1/3},
+    P3:{pass:p3,netDifference:cmp.netDifference,se:cmp.netDifferenceSe,pTwoSided:cmp.pTwoSided},
+    P4:{pass:p4,markToMarketDrawdown:(equity&&equity.markToMarketDrawdown),
+      closedOnlyDrawdown:(equity&&equity.closedOnlyDrawdown),threshold:0.30},
+    survives:all.every(function(x){ return x===true; }),
+    undetermined:all.some(function(x){ return x===null; }),
+    authority:'PROVISIONAL — scripts/replay_compare.py is the standing analysis for every R-denominated result.'
+  };
+}
+
+// Runs EVERY arm and variant over the SAME bars in one pass. A control compared against a
+// different dataset is not a control, and a variant run on a different fetch is not a variant.
+// The ONLY differences between the calls are the config switches named in RULES_AOI_CLOSE.
+function aoiCloseRunAllArms(h1,daily,h4,cfg,opts){
+  const base=(cfg&&cfg.config)?cfg.config:(cfg||RULES_AOI_CLOSE.config);
+  const o=opts||{};
+  const pair=o.pair||null;
+  const pip=pipSize(pair||'EUR_USD');
+  const swingZones=aoiCloseFormZones(daily,base,pip,pair);
+  const bodyCfg=Object.assign({},base,{touchSource:'ANY_BODY'});
+  const bodyZones=aoiCloseFormZones(daily,bodyCfg,pip,pair);
+  const run=function(zones,c,arm,variant){
+    return aoiCloseReplayTrades(h1,daily,h4,zones,c,Object.assign({},o,{arm:arm,variant:variant}));
+  };
+  return{
+    pair:pair,candlesUsed:{H1:(h1||[]).length,D:(daily||[]).length,H4:(h4||[]).length},
+    zoneCounts:{swing:swingZones.length,body:bodyZones.length},
+    captureBasis:'REPLAY_RUN',population:'REPLAY',
+    // §4 PRIMARY and its control, same bars, same pass.
+    base:run(swingZones,base,'REAL_ZONES',AOI_CLOSE_STRATEGY_ID),
+    control:run(aoiCloseShiftZones(swingZones,pip),base,'SHIFTED_CONTROL',AOI_CLOSE_STRATEGY_ID+'_shifted'),
+    // §7 and §10.7 variants -- exploratory, never part of pass/fail.
+    strictbreak:run(aoiCloseMarkBreaks(swingZones,daily),
+      Object.assign({},base,{strictBreak:true}),'REAL_ZONES',AOI_CLOSE_STRATEGY_ID+'_strictbreak'),
+    dailyHtf:run(swingZones,Object.assign({},base,{htfBiasGate:true}),
+      'REAL_ZONES',AOI_CLOSE_STRATEGY_ID+'_daily_htf'),
+    bodytouch:run(bodyZones,bodyCfg,'REAL_ZONES',AOI_CLOSE_STRATEGY_ID+'_bodytouch'),
+    sameCandles:true
+  };
+}
+
+// PURE. Pools every pair's runs into the per-arm report §8 requires, plus the two pre-registered
+// comparisons. Exploratory differences carry a CI and are labelled exploratory in the output
+// itself, so a reader cannot mistake one for a result.
+function aoiCloseAggregate(runs,cfg){
+  const c=(cfg&&cfg.config)?cfg.config:(cfg||RULES_AOI_CLOSE.config);
+  const pull=function(key){
+    const all=[];
+    (runs||[]).forEach(function(r){
+      if(r&&r[key]&&Array.isArray(r[key].trades)) all.push.apply(all,r[key].trades);
+    });
+    return all;
+  };
+  const base=pull('base'),control=pull('control'),strict=pull('strictbreak'),
+        htf=pull('dailyHtf'),body=pull('bodytouch');
+  const equityBase=aoiCloseEquityCurves(base,c);
+  return{
+    arms:{
+      base:aoiCloseSummary(base),control:aoiCloseSummary(control),
+      strictbreak:aoiCloseSummary(strict),dailyHtf:aoiCloseSummary(htf),
+      bodytouch:aoiCloseSummary(body)
+    },
+    equity:{base:equityBase,control:aoiCloseEquityCurves(control,c)},
+    primaryComparison:aoiCloseCompareArms(base,control,'REAL_ZONES','SHIFTED_CONTROL'),
+    exploratory:{
+      strictbreakVsBase:Object.assign(
+        aoiCloseCompareArms(strict,base,'STRICTBREAK','BASE'),{exploratory:true}),
+      dailyHtfVsBase:Object.assign(
+        aoiCloseCompareArms(htf,base,'DAILY_HTF','BASE'),{exploratory:true}),
+      bodytouchVsBase:Object.assign(
+        aoiCloseCompareArms(body,base,'BODYTOUCH','BASE'),{exploratory:true})
+    },
+    criteria:aoiCloseEvaluateCriteria(base,control,equityBase)
+  };
+}
+
+// §4's pre-registered out-of-sample window -- Revelio's OWN holdout period. Bars before FROM are
+// read for zone formation ONLY and can never open a trade; the walker enforces that, not the fetch.
+const AOI_CLOSE_WINDOW_FROM_MS=Date.UTC(2022,0,1,0,0,0);
+const AOI_CLOSE_WINDOW_TO_MS=Date.UTC(2026,4,31,23,59,59);
+// Zone formation needs the full 2-year expiry horizon in hand before the window opens, or the
+// first months of the test would trade against a zone population that is still filling up.
+const AOI_CLOSE_DAILY_FROM_MS=Date.UTC(2020,0,1,0,0,0);
+
+const AOI_CLOSE_MANIFEST={
+  id:AOI_CLOSE_STRATEGY_ID,
+  family:'research_arm',
+  version:AOI_CLOSE_VERSION,
+  label:'AOI Close',
+  navLabel:'AOI Close',
+  panelId:'aoiClose',
+  workspaceTitle:'AOI Close — every filter off, against shifted zones',
+  currentPhase:'Replay only. Not authorized to paper trade.',
+  fullName:'AOI Close (first close inside a daily zone, everything else removed)',
+  description:'Tests Revelio Trading\'s claim that fxalexg\'s support/resistance method improves when every discretionary filter is removed: enter the first candle that closes inside a daily zone, stop 5 pips beyond the far edge, target the nearest daily swing, skip under 2R, cap at 4R. No trend, no bias, no pattern, no retest. The identical rule ALSO runs on zones shifted by half their own width, on the same bars -- if real zones do not beat shifted ones the result is "closing into any band and fading it", not "AOIs work". Pre-registered in full before any code. NOT authorized to paper trade.',
+  author:'Revelio Trading (reconstruction of a method attributed to fxalexg)',
+  ownership:'external_reconstruction',
+  status:'development',
+  trustLevel:'unverified',
+  badgeColor:'var(--muted)',
+  capabilities:{
+    scanning:false,paperTrading:false,automation:false,journal:false,
+    statistics:false,alerts:false,replay:true,backtesting:false,
+    aiReview:false,aiCoaching:false,reports:false,academyContent:false,
+    diagnostics:false,settings:false,strategyCenterContent:false
+  },
+  dependencies:['candleData'],
+  dna:{
+    style:'Close inside a daily zone and fade it. No trend, no bias, no pattern, no retest, and a shifted-zone control run on the same bars.',
+    difficulty:'Trivial to execute; the difficulty is entirely in whether the zones mean anything',
+    marketType:'Forex, the same 12 instruments ALEX observes',
+    preferredSessions:[],idealConditions:[],avoidConditions:[],strengths:[],weaknesses:[]
+  }
+};
+
+// PURE. ONE evidence package holding every replayed trade from EVERY arm and variant, each
+// carrying its own variant id, so the arms can never drift into separate files that then get
+// compared across runs. captureBasis is REPLAY_RUN and mode is REPLAY, stated at the top, so the
+// analysis scripts bucket it without being told.
+function aoiCloseBuildReplayPackage(runs,cfg,opts){
+  const c=(cfg&&cfg.config)?cfg.config:(cfg||RULES_AOI_CLOSE.config);
+  const o=opts||{};
+  const positions=[],outcomes=[],setups=[];
+  let seq=0,stillOpen=0,estimatedSpread=0;
+  const KEYS=['base','control','strictbreak','dailyHtf','bodytouch'];
+  (runs||[]).forEach(function(run){
+    KEYS.forEach(function(k){
+      const arm=run&&run[k];
+      if(!arm||!Array.isArray(arm.trades)) return;
+      arm.trades.forEach(function(t){
+        // A still-open trade is NOT exported as an outcome. It has no result, and writing one with
+        // a null realizedR invites a reader to treat it as a zero.
+        if(t.stillOpen){ stillOpen++; return; }
+        if(t.spreadEstimated) estimatedSpread++;
+        const id='AOI|'+t.variant+'|'+(t.pair||run.pair||'?')+'|'+(++seq);
+        setups.push({
+          setupId:id,setupType:t.variant,
+          setupLabel:(t.arm==='SHIFTED_CONTROL'?'SHIFTED-ZONE CONTROL':'FIRST CLOSE INSIDE DAILY ZONE'),
+          strategyId:AOI_CLOSE_STRATEGY_ID,
+          instrument:t.pair||run.pair||null,timeframe:t.timeframe||'H1',
+          ruleAttribution:{ruleSetId:t.variant,unverifiedConditionCount:0,
+            contradictsEngineClassification:false,failedConditionIds:[]},
+          contextRefs:{session:null,trendContext:null,approachSide:t.approachSide},
+          structureRefs:{arm:t.arm,variant:t.variant,
+            zoneId:t.zoneId,zoneLow:t.zoneLow,zoneHigh:t.zoneHigh,
+            zoneWidthPips:t.zoneWidthPips,zoneShifted:t.zoneShifted,
+            zoneFormationMs:t.zoneFormationMs,zoneTouchCount:t.zoneTouchCount,
+            farEdge:t.farEdge,stopBasis:t.stopBasis,targetCappedAt4R:t.targetCappedAt4R}
+        });
+        positions.push({
+          positionId:id,setupId:id,
+          instrument:t.pair||run.pair||null,timeframe:t.timeframe||'H1',
+          direction:t.direction,entryPrice:t.entry,
+          entryTimestamp:t.entryTimestamp?new Date(t.entryTimestamp).toISOString():null,
+          entrySpreadPips:t.spreadPips,
+          entrySpreadProvenance:t.spreadEstimated?'ESTIMATED_FORWARD_CORPUS_MEDIAN':'OBSERVED_BID_ASK',
+          originalStop:t.stop,currentStop:t.stop,target:t.target,
+          plannedRR:t.plannedRR,riskPercent:c.riskPercentHWM,
+          stopDistancePips:t.riskPips,
+          isDeveloperTrade:false,tradeSource:'replay',
+          evidenceCompleteness:'PARTIAL'
+        });
+        outcomes.push({
+          outcomeId:id+'|outcome',positionId:id,
+          exitPrice:t.exitPrice,
+          exitTimestamp:t.exitTimestamp?new Date(t.exitTimestamp).toISOString():null,
+          exitReasonCode:t.result,exitDetectionSource:'replay_candle',
+          plannedR:t.plannedRR,recordedResultR:t.resultR,realizedR:t.resultR,
+          realizedRProvenance:'FIXED_R_BY_METHODOLOGY',
+          realizedRBasis:{entryPrice:t.entry,exitPrice:t.exitPrice,direction:t.direction,
+            riskDistance:Math.abs(t.entry-t.stop),riskDistanceSource:'abs(entry-stop)'},
+          spreadChargedPips:t.spreadPips,spreadChargedR:t.spreadR,netR:t.netR,
+          pnl:undefined,
+          maeR:t.maeR,mfeR:t.mfeR,maePips:t.maePips,mfePips:t.mfePips,
+          ambiguous:t.ambiguous,evidenceCompleteness:'PARTIAL'
+        });
+      });
+    });
+  });
+  return{
+    packageSchemaVersion:'mogo.evidence-package.v1',
+    packageId:'PKG|'+AOI_CLOSE_STRATEGY_ID+'|REPLAY|'+(o.stamp||0),
+    captureBasis:'REPLAY_RUN',
+    identity:{strategyId:AOI_CLOSE_STRATEGY_ID,strategyVersion:AOI_CLOSE_VERSION,
+      strategyVersionProvenance:'OBSERVED',mode:'REPLAY',engineVersion:APP_VERSION,
+      captureOrigin:(typeof location!=='undefined'&&location&&location.origin)?location.origin:null},
+    configSnapshot:{ruleVersion:RULES_AOI_CLOSE.ruleVersion,config:c},
+    configSnapshotProvenance:'OBSERVED',
+    objects:{candidates:[],decisions:[],marketContexts:[],
+      qualifiedSetups:setups,positions:positions,outcomes:outcomes},
+    objectCounts:{candidates:0,decisions:0,marketContexts:0,
+      qualifiedSetups:setups.length,positions:positions.length,outcomes:outcomes.length},
+    // Every §3 and §10 choice, in the file rather than in someone's memory.
+    replayDisclosures:{
+      preregistration:'docs/trader-intelligence/rule-registers/preregistration-aoi_close_v1.md — written before any code, amended in §10 before the first run.',
+      expectedResultStatedBeforeRun:'NULL. Four chart-pattern arms already measured as random entries; the prior for a fifth is zero.',
+      touchDefinition:'§3 row 1 + §10.1(1). A touch is a DAILY SWING POINT\'s body edge on the swing side — max(open,close) for a swing high, min(open,close) for a swing low — from alexGFindSwingPoints(candles,3) reused byte-identically. NOT every daily bar. The aoi_close_v1_bodytouch variant tests this choice directly.',
+      zoneConstruction:'§10.1(2)-(5). A newly confirmed edge plus >=2 earlier unexpired edges fitting inside 60 pips; tightest set wins, ties to most edges then earliest; band is their hull, expanded symmetrically about the midpoint to 5 pips if narrower; never overlaps a live zone (first-formed wins, newcomer recorded as a touch); formation at the third touch\'s CONFIRMATION bar; expiry two calendar years from formation, never extended.',
+      zoneClustererNotImported:'alexGAcceptReaction\'s ATR clustering was deliberately NOT imported. It groups WICK anchors at dailyATR(14) x zoneClusterATRMultiplier, which this codebase marks EXPERIMENTAL and untuned (rule ALEX_SR_008), and it would decide membership on wicks while counting touches on bodies. No tunable parameter is introduced anywhere in this arm.',
+      swingLagDisclosed:'A swing at daily bar j is not knowable until bar j+3, so a zone forms at the third touch\'s confirmation bar, not at the touch bar. This is the 3-bar lag §10.1(5) discloses and the truncation fixture enforces.',
+      approachDirection:'§3 row 3 + §10.5. Support if the entry-TF close BEFORE the qualifying close was above the zone, resistance if below, via the protected alexGZoneRole with its INCLUSIVE boundaries. A prior close exactly ON an edge therefore reads as inside, which means no approach direction and NO TRADE. Not special-cased.',
+      stopBasis:'§3 row 4. Five pips beyond the FAR edge — zone low for buys, zone high for sells. Risk = (entry - far edge) + 5 pips.',
+      targetSelection:'§10.3, which SUPERSEDES §3 row 6. Nearest-IN-PRICE daily swing beyond entry (§2 rule 6 is the source and wins over §3 row 6\'s "most recent"), from alexGFindSwingPoints(candles,3) among swings confirmed before the signal bar. Under 2R skipped; over 4R the target is moved to exactly 4R.',
+      breakInvalidation:'§3 row 5. A zone stays valid until expiry — no break invalidation — because Revelio tested it and every variant was worse. The operator\'s own broken-AOI rule runs separately as the exploratory aoi_close_v1_strictbreak variant.',
+      entryBasis:'NEXT_BAR_OPEN',
+      entryNote:'§3 row 7. Revelio enters AT the qualifying close. That would read the bar that produced the signal, so entry is the next bar\'s open. Conservative relative to the source; gives up part of the move.',
+      reentry:'§3 row 8. Allowed on the next fresh first-close-inside event, which requires price to have closed outside in between. Falls out of the signal rule; no separate mechanism.',
+      onePositionPerPair:'§2 rule 7. Enforced by the scan cursor jumping to each trade\'s exit bar.',
+      ambiguousMode:'conservative',
+      instrumentSet:'§3 row 9. The 12 SCAN_PAIRS, so results compare directly with the four arms already run. Revelio\'s 16 are not fully listed.',
+      window:'§4. 2022-01-01 to 2026-05-31, Revelio\'s own out-of-sample period. Bars before it are used for ZONE FORMATION ONLY and can never open a trade; enforced in the walker.',
+      costModel:'§4. OANDA real per-bar spread from bid/ask at entry, charged PER TRADE as spreadPips/riskPips — never against the mean. Where a bar carries no bid/ask the measured forward-corpus median (9.8% of risk) is charged and the trade is flagged spreadEstimated. Both gross and net are reported; NET decides.',
+      sizingAndDrawdown:'§10.4. R figures are fixed 1R per trade and are sizing-free. The drawdown figure alone uses 0.5% of the high-water mark as of each trade\'s OPEN on one shared 12-pair equity line; the DECIDING drawdown is daily mark-to-market via carryMaxDrawdown unchanged, with closed-trade-only reported beside it and NOT deciding.',
+      controlArm:'§4. The identical rule on zones shifted UP by half their own width — same count, same widths, same timing, same bars, different location. Direction is fixed and disclosed rather than randomised, because this arm has to be re-runnable.',
+      exploratoryVariants:'aoi_close_v1_strictbreak (§7), aoi_close_v1_daily_htf (§7), aoi_close_v1_bodytouch (§10.7/§10.8). All three are reported for DIRECTION ONLY: none can rescue a fail or upgrade a pass.',
+      lookAheadControl:'Signal, zone formation and target all read only candles[0..i]; entry is bar i+1 open. Verified by truncation on every trade\'s own signal bar (fixture AOI-1, CRT-1 shape).',
+      exitEngine:'alexGWalkOutcome / alexGComputeMAEMFE — the protected exit functions ALEX uses, unmodified, so the arms differ only at entry.',
+      analysisAuthority:'Every R-denominated figure from this package must go through scripts/replay_compare.py. Any pass/fail shown in the page itself is PROVISIONAL.',
+      paperTradingAuthorized:false,
+      stillOpenExcluded:stillOpen,
+      spreadEstimatedCount:estimatedSpread
+    }
+  };
+}
+
+// Real per-bar spread (§4), from OANDA's own price=BA bid/ask H1 candles -- never a synthetic or
+// interpolated substitute. Returns a close-time -> spread-in-pips map, or null.
+//
+// FAILS SOFT ON PURPOSE. A null here does not silently become a zero cost: every trade then takes
+// §4's measured fallback and is flagged spreadEstimated, and the count travels in the package. A
+// missing spread must never look like a free trade.
+async function aoiCloseFetchSpreadMap(pair,fromMs,toMs){
+  const pip=pipSize(pair);
+  if(!(pip>0)) return null;
+  const map={};
+  let cursor=fromMs,guard=0,got=0;
+  try{
+    while(cursor<toMs&&guard<400){
+      guard++;
+      const url=`${apiBase()}/v3/instruments/${pair}/candles?granularity=H1&price=BA&count=5000&from=${encodeURIComponent(new Date(cursor).toISOString())}`;
+      const r=await fetch(url,{headers:{'Authorization':`Bearer ${cfg.key}`,'Accept-Datetime-Format':'RFC3339'}});
+      if(!r.ok) return got?map:null;
+      const d=await r.json();
+      if(!d||!Array.isArray(d.candles)||!d.candles.length) break;
+      if(marketDataIdentityOutcome(d,pair,'H1')==='MISMATCH') return got?map:null;
+      let last=cursor;
+      d.candles.forEach(function(k){
+        if(!k.complete||!k.bid||!k.ask) return;
+        const ts=new Date(k.time).getTime();
+        last=Math.max(last,ts);
+        if(ts>toMs) return;
+        const bid=parseFloat(k.bid.c),ask=parseFloat(k.ask.c);
+        if(!isFinite(bid)||!isFinite(ask)||ask<bid) return;
+        // Keyed by the bar's CLOSE time, because that is what getCandleCloseTime gives the walker.
+        map[getCandleCloseTime([{t:new Date(ts)}],0,'H1').getTime()]=(ask-bid)/pip;
+        got++;
+      });
+      if(last<=cursor) break;
+      cursor=last+1;
+    }
+  }catch(e){ return got?map:null; }
+  return got?map:null;
+}
+
+// Fetches the three series one pair needs. Daily reaches back to AOI_CLOSE_DAILY_FROM_MS so the
+// zone population is already mature when the test window opens -- §4's "bars before 2022 may be
+// used only for zone formation".
+async function fetchAoiCloseDatasets(oPair,onProgress){
+  const spanDays=Math.ceil((AOI_CLOSE_WINDOW_TO_MS-AOI_CLOSE_DAILY_FROM_MS)/86400000);
+  if(onProgress) onProgress('Fetching H1 for '+oPair.replace('_','/')+'...');
+  const H1=await fetchCandlesRange(oPair,'H1',Math.min(spanDays*24,40000));
+  if(onProgress) onProgress('Fetching D for '+oPair.replace('_','/')+'...');
+  const D=await fetchCandlesRange(oPair,'D',Math.min(spanDays+60,5000));
+  if(onProgress) onProgress('Fetching H4 for '+oPair.replace('_','/')+'...');
+  const H4=await fetchCandlesRange(oPair,'H4',Math.min(spanDays*6,40000));
+  return{H1:H1||[],D:D||[],H4:H4||[]};
+}
+
+async function runAoiCloseReplay(oPair,onProgress,shouldCancel){
+  const cfg=RULES_AOI_CLOSE.config;
+  const ds=await fetchAoiCloseDatasets(oPair,onProgress);
+  if(shouldCancel&&shouldCancel()) return{cancelled:true};
+  if(!ds.H1.length||ds.D.length<cfg.swingLookback*2+1){
+    return{error:'Not enough history for '+oPair+' (H1 '+ds.H1.length+', D '+ds.D.length+').'};
+  }
+  if(onProgress) onProgress('Fetching real bid/ask spread for '+oPair.replace('_','/')+'...');
+  const spreadMap=await aoiCloseFetchSpreadMap(oPair,AOI_CLOSE_WINDOW_FROM_MS,AOI_CLOSE_WINDOW_TO_MS);
+  const h1Ms=[];
+  for(let i=0;i<ds.H1.length;i++) h1Ms.push(getCandleCloseTime(ds.H1,i,'H1').getTime());
+  const spreadPipsAt=spreadMap?function(barIndex){
+    const v=spreadMap[h1Ms[barIndex]];
+    return (typeof v==='number'&&isFinite(v))?v:null;
+  }:null;
+  if(onProgress) onProgress('Walking five arms over the same bars for '+oPair.replace('_','/')+'...');
+  return aoiCloseRunAllArms(ds.H1,ds.D,ds.H4,cfg,{
+    pair:oPair,timeframe:'H1',
+    windowFromMs:AOI_CLOSE_WINDOW_FROM_MS,windowToMs:AOI_CLOSE_WINDOW_TO_MS,
+    spreadPipsAt:spreadPipsAt,spreadSource:spreadMap?'OANDA_BID_ASK_H1':'UNAVAILABLE'
+  });
+}
+
+let aoiCloseLastRuns=null;
+async function runAoiCloseReplayAll(onProgress,shouldCancel){
+  const runs=[];
+  for(let i=0;i<SCAN_PAIRS.length;i++){
+    if(shouldCancel&&shouldCancel()) break;
+    const oPair=SCAN_PAIRS[i].replace('/','_');
+    const r=await runAoiCloseReplay(oPair,onProgress,shouldCancel);
+    if(r&&!r.error&&!r.cancelled) runs.push(r);
+  }
+  aoiCloseLastRuns=runs;
+  return{runs:runs,aggregate:aoiCloseAggregate(runs,RULES_AOI_CLOSE.config)};
+}
+
+function exportAoiCloseReplay(){
+  if(!aoiCloseLastRuns||!aoiCloseLastRuns.length){
+    if(typeof alert==='function') alert('Run the replay first.');
+    return null;
+  }
+  const pkg=aoiCloseBuildReplayPackage(aoiCloseLastRuns,RULES_AOI_CLOSE.config,{stamp:Date.now()});
+  downloadTextFile('mogo-evidence-'+AOI_CLOSE_STRATEGY_ID+'-REPLAY-'+Date.now()+'.json',
+    'application/json',JSON.stringify(pkg,null,2));
+  return pkg;
+}
+// ══════════════════════════════════════════════════════════════════════════════════════════════
 // TIME-OF-DAY SESSION SEGMENTATION (tod_session_v1) — the first arm derived from peer-reviewed
 // research rather than from a published trading rule
 // ══════════════════════════════════════════════════════════════════════════════════════════════
