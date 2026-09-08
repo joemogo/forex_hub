@@ -242,3 +242,27 @@ therefore the stop and planned R:
 
 Recorded as UNKNOWN rather than inferred, per the project's own rule. No reading is chosen here, and
 this variant is not built until one is.
+
+### 10.8 Resolution of the §10.7 open point
+
+**Recorded 8 September 2026, before any arm code and before the first run.** §10.7 left one point
+UNKNOWN and declared the variant unbuildable until it was settled. It is now settled by operator
+ruling, and is appended here rather than edited into §10.7, so that the open state and its
+resolution both remain on the record.
+
+**First, a correction to §10.7's own statement of the problem.** Readings (a) and (c) are not
+distinct: taking both body edges of three bars and hulling them yields exactly the hull of the three
+body intervals, so they produce an identical band. The choice was two-way, not three-way.
+
+**Ruling: reading (b).** Each qualifying bar contributes exactly **one** price — the body edge
+**nearer the band's current extent** — preserving §10.1's one-price-per-touch shape. The seeding
+order is §10.1(2) unchanged: a newly qualifying body edge together with at least 2 earlier unexpired
+ones, the **tightest** qualifying set winning, ties to the **most edges** then the **earliest**.
+
+**Reason:** bands stay comparable in width to the primary arm, so a divergence between
+`aoi_close_v1_bodytouch` and the primary arm isolates the **touch definition**, which is the only
+reason §10.7 exists. Under the body-hull reading the variant would also carry systematically wider
+bands, wider stops and lower planned R, and any divergence would confound the touch definition with
+a geometry difference.
+
+`aoi_close_v1_bodytouch` is now fully specified and may be built.
