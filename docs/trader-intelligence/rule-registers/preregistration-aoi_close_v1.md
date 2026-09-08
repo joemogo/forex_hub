@@ -113,3 +113,95 @@ Anything else is a **FAIL**. Specifically:
 - It measures **this implementation on OANDA H1 data over 2022–2026 for 12 pairs.** Not Revelio's code, not his data, not his 16 pairs.
 - A null does not prove Revelio's result was noise; it establishes that the stated rules do not carry an edge here, at these costs. Those are different claims and only the second will be supported.
 - A pass does not establish an edge. It establishes that one pre-registered test survived and that a forward test is worth an operator decision.
+---
+
+## 10. Amendments before first run
+
+**Recorded 7 September 2026, before any arm code and before any replay run.** The header rule
+permits exactly this: these are changes made *before* the first run, so no run is discarded and
+nothing is re-run. Each entry states the ruling and the reason it was given. Nothing above this
+section has been edited — where an amendment supersedes an earlier row, that row is left exactly as
+pre-registered and the supersession is stated here instead.
+
+### 10.1 Zone construction — resolves the §3 row 2 circularity
+
+§3 row 1 defined a touch against the zone band; §3 row 2 defined the band from the touching bodies.
+Neither is computable without the other, and §2/§3 supply no seed, no grouping tolerance and no
+linkage rule.
+
+**`alexGAcceptReaction`'s ATR clustering is NOT imported.** It groups *wick* anchors at
+`dailyATR(14) x zoneClusterATRMultiplier`, a multiplier the codebase itself marks EXPERIMENTAL and
+untuned (`index.html`, rule `ALEX_SR_008`, "Zone tightness (no source formula)"). Importing it would
+decide zone membership on wicks while counting touches on bodies, and would rest the whole arm on a
+parameter nobody has justified.
+
+The construction below uses only numbers the source already states — 3 touches, 5 pips, 60 pips —
+plus the swing detector §8 already permits reusing:
+
+1. **Touch candidates are daily swing points**, from `alexGFindSwingPoints(candles, 3)` reused
+   byte-identically — not every daily bar. A **touch** is the swing bar's **body edge on the swing
+   side**: `max(open, close)` for a swing high, `min(open, close)` for a swing low.
+2. **A zone forms** when a newly confirmed swing body edge, together with **at least 2 earlier
+   unexpired** swing body edges, fits in a band of width **<= 60 pips**. If several such sets exist,
+   take the **tightest** (smallest max - min); ties break to the set containing the **most edges**,
+   then to the **earliest**.
+3. **Band = min..max of those edges.** If the width is **< 5 pips**, expand **symmetrically about
+   the midpoint** to 5 pips.
+4. **Zones never overlap.** If a candidate band overlaps an existing unexpired zone, **no new zone
+   is created**: the swing counts as a **touch of the existing zone**, and the existing band **does
+   not change**. First-formed wins.
+5. **Formation time = the confirmation bar of the third touch.** The 3-bar swing lag applies and is
+   disclosed. **Expiry = formation + 2 years.** Later touches do **not** extend expiry — the source
+   runs expiry from formation.
+
+**Reason:** introduces no tunable parameter and no wick/body hybrid. Reading "touched at least three
+times" as **three reactions at the level**, rather than three bars passing through it, is recorded
+here as a **MOGO choice**, not as a source-stated rule.
+
+### 10.2 Clip anchor — resolves the §3 row 2 clip ambiguity
+
+**Moot on the high side.** Under §10.1 a band is created only if its edges already fit inside 60
+pips, so no band is ever clipped down and the "which edge moves" question never arises. On the low
+side, a sub-5-pip band is expanded **symmetrically about the midpoint** to 5 pips, per §10.1(3).
+
+Recorded explicitly: **the 60-pip figure is a formation constraint, not a post-hoc clip.**
+
+### 10.3 Target selection — supersedes §3 row 6
+
+§2 rule 6 says **nearest**; §3 row 6 said **most recent**. **§2.6 is the source and wins. §3 row 6
+is amended and is no longer operative.**
+
+Target = the **nearest-in-price** daily swing point beyond the entry in the trade direction — swing
+high for buys, swing low for sells — from `alexGFindSwingPoints(candles, 3)`, selected among swing
+points **confirmed before the signal bar**. §2.6 then applies unchanged: **planned R < 2 -> skip**;
+**planned R > 4 -> target moved to exactly 4R**.
+
+§3 row 6's *swing definition* survives intact; only its *selection* rule is replaced.
+
+### 10.4 Equity path for P4 — fixes the construction; the criterion is unchanged
+
+**P4's threshold is untouched: max drawdown < 30% at 0.5% HWM sizing.** Only the previously
+unspecified equity path is fixed.
+
+One **shared equity line across all 12 pairs**. Each trade is sized at **0.5% of the high-water mark
+as of its own open**. Concurrent positions across pairs are allowed, one per pair.
+
+The **deciding** drawdown is **daily mark-to-market**: every open position marked at each daily
+close, plus realised P&L, peak-to-trough on that line via **`carryMaxDrawdown` unchanged**. The
+**closed-trade-only** equity drawdown is reported **beside** it, for comparison with the source's
+-28.8%, and **does not decide**.
+
+**Reason:** mark-to-market is the harder test, and it is the drawdown an operator would actually sit
+through. Choosing the more conservative statistic **before seeing any data** is the principled
+direction.
+
+### 10.5 Approach direction on an exact boundary close
+
+`alexGZoneRole` is reused **as-is, with its inclusive boundaries**. A prior close sitting exactly on
+a zone edge therefore reads as `inside`, which under §3 row 3 means **no approach direction and no
+trade**. This is **disclosed** in `replayDisclosures` and is **not special-cased**.
+
+### 10.6 What these amendments do not touch
+
+Every pass/fail criterion in §5 stands exactly as pre-registered: P1, P2, P3 and P4's 30% threshold
+are unchanged, as are all four fail clauses. §6, §7, §8 and §9 are unchanged.
