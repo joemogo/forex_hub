@@ -298,6 +298,31 @@ echo ""
 # has ever seen go red is a decoration, not a check. This selftest injects a representative
 # failure per check and asserts the aggregation property the whole module exists for --
 # UNKNOWN never becomes GREEN. It is bounded, in-process, and touches nothing on disk.
+# The holdout gate decides whether a candidate's result is admissible at all, so a broken
+# gate is worse than no gate -- it launders an explored-on result as a pre-registered one.
+# The selftest asserts the two properties the module exists for: the split is stable when
+# the population grows (so a sample cannot be refreshed until the answer improves), and a
+# spent holdout refuses a second run. The mutation harness below then proves those fixtures
+# can actually fail. Neither file starts with test_, so the registered Python totals are
+# unchanged.
+echo "--- Holdout gate selftest (pre-registration enforcement) ---"
+if ! python3 scripts/holdout_gate.py --selftest; then
+  OVERALL_EXIT=1
+fi
+echo ""
+
+echo "--- Holdout-gate mutation gate (can the fixtures fail?) ---"
+if ! python3 tests/mutate_holdout_gate.py; then
+  OVERALL_EXIT=1
+fi
+echo ""
+
+echo "--- Candidate power gate selftest ---"
+if ! python3 scripts/candidate_power.py --selftest; then
+  OVERALL_EXIT=1
+fi
+echo ""
+
 echo "--- Platform health selftest (failure injection) ---"
 if ! python3 scripts/trader_intelligence/platform_health.py --selftest; then
   OVERALL_EXIT=1
