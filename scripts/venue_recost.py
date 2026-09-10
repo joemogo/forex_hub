@@ -68,28 +68,48 @@ VENUES = {
 # `sd` is the standard deviation in the same unit, where the source published one.
 CANDIDATES = [
     # name,                        effect, unit,   per_yr, sd,    venue
-    ("Treasury auction cycle",       3.6,  "bp",     12,   None,  "ust_futures"),
-    ("Month-end equity rebalance",  34.9,  "bp",     12,   None,  "equity_index_fut"),
-    ("Leveraged ETF end-of-day",    17.4,  "bp",    252,   None,  "equity_index_fut"),
-    ("Option expiry pinning",        7.0,  "bp",     12,   None,  "listed_options"),
-    ("Month-end FX hedge (4pm)",     5.9,  "bp",     12,   None,  "fx_futures"),
-    ("London 4pm fix contrarian",    0.4,  "bp",    252,   None,  "fx_futures"),
-    ("S&P 500 index adds",          42.0,  "bp",     20,   None,  "single_equities"),
-    ("Russell reconstitution",     627.0,  "bp",      1,   None,  "single_equities"),
-    ("Commodity roll (Goldman)",   328.0,  "bp",     12,   None,  "commodity_fut"),
-    ("FX volatility risk premium",  2.08,  "pct_yr",  1,   8.15,  "fx_options"),
-    ("Merger arbitrage",            4.47,  "pct_yr",  1,   7.74,  "equities_short"),
-    ("Commodity carry",             4.71,  "pct_yr",  1,  18.78,  "commodity_fut"),
-    ("Diversified global carry",    3.02,  "pct_yr",  1,   5.96,  "fx_futures"),
-    ("Index put-writing (PUT)",     4.01,  "pct_yr",  1,   9.90,  "listed_options"),
-    ("Covered calls (BXM)",         3.57,  "pct_yr",  1,  10.60,  "listed_options"),
-    ("Currency carry",              2.22,  "pct_yr",  1,   7.80,  "fx_futures"),
+    # VERIFIED against the original paper, with a published dispersion:
+    ("Diversified global carry",    3.02,  "pct_yr",  1,   5.96,  "fx_futures", False),
+    ("Treasury auction cycle",      3.62,  "bp",     12,   35.5,  "ust_futures", True),
+    #   ^ already net: Lou/Yan/Yuan publish 8.62bp/month AFTER measuring bid-ask and
+    #     repo, Sharpe 0.84 net. SD 35.5bp derived from that Sharpe; it reproduces
+    #     the paper's own 5.57bp/month detection floor at n=156, which checks it.
+    ("S&P 500 index adds (2010s)",  0.33,  "pct_yr", 15,    7.4,  "single_equities", False),
+    ("Commodity roll, honest ann.",  1.62, "pct_yr",  1,   None,  "commodity_fut", False),
+    ("Russell reconstitution",     627.0,  "bp",      1,  2035.0, "single_equities", False),
+    #   ^ SD = SE 7.69% x sqrt(7) = 20.35% = 2035bp. I first entered the SE here,
+    #     which understated the horizon roughly sixfold. n=7 events, t~1.40, and the
+    #     research is 2003 on 1996-2002 data -- 23 years stale.
+    ("Currency carry",              2.22,  "pct_yr",  1,   7.80,  "fx_futures", False),
+    ("Commodity carry",             4.71,  "pct_yr",  1,  18.78,  "commodity_fut", False),
+    ("Index put-writing (PUT)",     4.01,  "pct_yr",  1,   9.90,  "listed_options", False),
+    ("Covered calls (BXM)",         3.57,  "pct_yr",  1,  10.60,  "listed_options", False),
+    ("FX volatility risk premium",  2.08,  "pct_yr",  1,   8.15,  "fx_options", False),
+    ("Merger arbitrage",            4.47,  "pct_yr",  1,   7.74,  "equities_short", False),
+    # STRUCK. Kept in the file with effect None so the reason survives rather than the number.
+    #   Leveraged ETF end-of-day    41.4bp appears in NO original paper. The closest primary
+    #                               figures are regression coefficients on rebalancing
+    #                               pressure (33.2, 47.6) -- dimensionless, not basis points.
+    #                               Ivanov & Lenkey (JFM 2018 / Fed FEDS 2014-106) find the
+    #                               impact "economically insignificant" once capital flows are
+    #                               accounted for, and flows offset MOST on large-move days --
+    #                               exactly the days the strategy needs. STRUCK as unsourced.
+    #   Month-end equity rebalance  83bp appears in NO original paper either. Etula et al.
+    #                               report annualised window returns (+28.6%/yr T-3 to T-1) and
+    #                               factor alphas, not a per-event bp. STRUCK as unverified --
+    #                               though note it is the one effect in the set the authors say
+    #                               is STRENGTHENING, not decaying, which earns a re-look on
+    #                               correctly-sourced numbers.
+    #   Month-end FX hedge (4pm)    14bp is a coefficient CONDITIONAL on a 10% equity move,
+    #                               not an unconditional month-end return. Unit mismatch.
+    #   Option expiry pinning       cost not reducible to bp; unchanged.
+    #   London 4pm fix contrarian   dead on cost at 0.4bp; unchanged.
 ]
 
 HUMAN_HORIZON = 15.0   # years. Beyond this, "wait and see" is not a plan a person can act on.
 
 
-def recost(effect, unit, per_year, sd, venue_key):
+def recost(effect, unit, per_year, sd, venue_key, already_net=False):
     """Net effect and time-to-confirm at the correct venue. None where genuinely unknown."""
     rt, annual, reachable, _ = VENUES[venue_key]
     if rt is None:
@@ -97,11 +117,15 @@ def recost(effect, unit, per_year, sd, venue_key):
     if not reachable:
         return {"ok": False, "reason": "VENUE_UNREACHABLE", "reachable": False}
 
+    # An effect the SOURCE already measured net of its own trading costs must not be
+    # charged again -- only the difference between the source's cost assumption and ours.
+    # Lou/Yan/Yuan measured 1.46bp round trip; ust_futures is 1.7bp, so the increment is 0.24bp.
+    eff_rt = 0.24 if already_net else rt
     if unit == "bp":
-        net = effect - rt - (annual / per_year if per_year else annual)
+        net = effect - eff_rt - (annual / per_year if per_year else annual)
     else:                                  # pct_yr: cost is annual, round trips scale with rolls
         rolls = 4                          # quarterly, the futures convention
-        net = effect - (rt * rolls / 100.0) - (annual / 100.0)
+        net = effect - (eff_rt * rolls / 100.0) - (annual / 100.0)
 
     out = {"ok": True, "reachable": True, "net": net, "clears_cost": net > 0}
     if sd is not None and net > 0:
@@ -130,8 +154,8 @@ def report():
     print(f"{'candidate':<30}{'venue':<19}{'net':>9}  verdict")
     print("-" * 100)
     live = []
-    for name, eff, unit, per_yr, sd, venue in CANDIDATES:
-        r = recost(eff, unit, per_yr, sd, venue)
+    for name, eff, unit, per_yr, sd, venue, anet in CANDIDATES:
+        r = recost(eff, unit, per_yr, sd, venue, anet)
         net = f"{r['net']:+.2f}" if r.get("ok") else "—"
         u = "bp" if unit == "bp" else "%/yr"
         v = verdict(r)
@@ -193,7 +217,7 @@ def selftest():
           "horizon unknown" in verdict(recost(50.0, "bp", 12, None, "ust_futures")), True)
 
     # Every candidate must name a venue that exists.
-    for name, _, _, _, _, v in CANDIDATES:
+    for name, _, _, _, _, v, _n in CANDIDATES:
         if v not in VENUES:
             fails.append(f"{name}: venue {v!r} not in VENUES")
 
