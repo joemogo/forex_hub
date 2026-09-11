@@ -323,6 +323,35 @@ if ! python3 scripts/candidate_power.py --selftest; then
 fi
 echo ""
 
+# THE RESEARCH GATES. These decide whether a candidate is admissible at all, so a broken gate
+# is worse than no gate -- it launders an explored-on result as a pre-registered one, or (in
+# portfolio_combine's case) turns four weak effects into one that looks strong. Each selftest is
+# paired with a mutation harness that proves its fixtures can actually fail. None of these files
+# starts with test_, so the registered Python totals are unchanged.
+for g in scripts/candidate_power.py scripts/candidate_frequency.py scripts/holdout_gate.py \
+         scripts/month_end_test.py scripts/bond_carry_test.py scripts/venue_recost.py \
+         scripts/portfolio_combine.py; do
+  echo "--- $(basename "$g") selftest ---"
+  if ! python3 "$g" --selftest; then
+    OVERALL_EXIT=1
+  fi
+  echo ""
+done
+
+# Clear stale bytecode first: a same-byte-length edit restored within the same second leaves the
+# old .pyc loaded and produces FALSE SURVIVORS, which is the one failure mode that would make
+# every "caught" line below meaningless.
+find . -name __pycache__ -type d -exec rm -rf {} + 2>/dev/null || true
+for m in tests/mutate_holdout_gate.py tests/mutate_candidate_frequency.py \
+         tests/mutate_month_end_test.py tests/mutate_bond_carry_test.py \
+         tests/mutate_portfolio_combine.py; do
+  echo "--- $(basename "$m") (can the fixtures fail?) ---"
+  if ! python3 "$m"; then
+    OVERALL_EXIT=1
+  fi
+  echo ""
+done
+
 echo "--- Platform health selftest (failure injection) ---"
 if ! python3 scripts/trader_intelligence/platform_health.py --selftest; then
   OVERALL_EXIT=1
