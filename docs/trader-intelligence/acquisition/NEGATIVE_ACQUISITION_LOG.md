@@ -913,3 +913,104 @@ a candidate has to clear: not merely *"is there an effect?"* but *"is there an e
 survive a retail cost structure?"* **Cost every future candidate before building it**, the way
 `carry feasibility` (v12.66.0) did — that check is the reusable lesson of this whole sequence, and it
 would have killed `tod_session_v1` in an hour instead of a day.
+
+
+---
+
+## Session 2026-09-09 — an arm stopped before it was tested
+
+**A SIXTH CLASS, AND IT IS NOT `TESTED_NULL`.** `STOOD_DOWN_BEFORE_TEST` records an arm stopped
+on a **cost-and-power argument made before the measurement** — not one that was measured and came
+back empty. A `TESTED_NULL` rules something out. This rules out nothing, and filing it as a null
+would put a result in the corpus that was never produced.
+
+### CORRECTION, same day, after actually running the arm
+
+**The first version of this entry said `aoi_close_v1` "produces zero trades". That was wrong, and
+the reasoning built on it was wrong.** The arm was pulled from
+`claude/v12.42.0-exit-fidelity-rebased` and executed in a sandbox. It fires, consistently, and its
+control fires alongside it:
+
+| H1 bars | zones | real arm | shifted control | trades / 1000 bars |
+|---|---|---|---|---|
+| 9,000 | 8 | 4 | 5 | 0.444 |
+| 18,000 | 15 | 7 | 8 | 0.389 |
+| 36,000 | 31 | 29 | 28 | 0.806 |
+| 72,000 | 71 | 37 | 39 | 0.514 |
+| 144,000 | 138 | 64 | 68 | 0.444 |
+
+A stable ~0.44 trades per 1,000 bars, with real and control within a few percent of each other at
+every length — exactly the balance §8's firing-rate gate exists to require.
+
+**All four v170 failures have one cause: the fixture's synthetic walk is too short.** AOI-F1 needs
+≥5 trades and gets 4 on 9,000 bars; at 18,000 it gets 7 and 8 and passes. AOI-1, AOI-1b and AOI-C1
+all need completed trades inside a *prefix*, and 4 trades across the whole series leaves none
+there. Lengthening the walk touches no rule and leaves the pre-registration frozen.
+
+**The second reason in the first version was also too strong.** It called this "a fifth
+chart-pattern arm from a family measured empty". The pooled randomness bound covers *MOGO's ALEX
+implementation's entries*. Revelio's rules are not those — different zone construction, no break
+invalidation, entry on close into an area of interest, a different stop. CLAUDE.md's own re-test
+standard is *"a reconstruction differing in a stated rule, not a parameter tweak"*, and these
+differ in stated rules. And the source is the only candidate in a 58-candidate registry whose
+author ran his own train/test split, which is the exact discipline this project spent the day
+building tooling for.
+
+### The stand-down stands anyway, on a measured reason
+
+`resultR` was measured directly from the arm over 64 trades: **σ = 1.69R** (control 1.53R),
+mean planned R 2.50, win rate 34%.
+
+| | |
+|---|---|
+| test as pre-registered | 12 pairs × H1, 2022-01-01 → 2026-05-31 |
+| firing rate | 0.444 trades / 1,000 H1 bars |
+| **expected n** | **~146 trades** |
+| σ, measured | 1.69R |
+| **detection floor** | **0.274R** |
+| Revelio's implied per-trade edge | ~0.21R gross, 0.16R net of spread |
+| **trades needed to resolve it** | **429** |
+
+**The test as scoped cannot resolve the effect it is looking for.** A null from it would mean
+nothing, and a pass would be indistinguishable from noise.
+
+The clearest demonstration is the arm's own random-walk run, where by construction there is no
+edge: the real arm measured **+0.196R** and the shifted control **−0.024R**, a difference of
+**+0.22R** from noise alone (t = 0.93). Revelio's claimed effect is **+0.21R**. At n=146 the two
+are the same number.
+
+| arm | source class | status | why it was stopped | do not revive without |
+|---|---|---|---|---|
+| `aoi_close_v1` | Revelio Trading, YouTube `HzVSi9ux1NU` / `nFIJ0z8_01w`; `PRACTITIONER_STATED` with an author-run 2016–2021 / 2022–2026 split. Rules fully mechanical. Pre-registration written before any arm code. | built, fires ~0.44 trades/1,000 H1 bars, four fixtures failing on an under-length synthetic walk; **not tested** | the pre-registered scope yields ~146 trades against a 0.274R detection floor, and the effect sought is 0.16R net. Underpowered by roughly 3× | **a scope reaching ~429 trades on independent observations**, or a materially larger claimed effect. Not a fixture fix — that only lets the underpowered test run |
+
+### Why more timeframes do not fix it
+
+The obvious route to 429 trades is Revelio's own scope — 16 pairs × 4 timeframes. But the
+pre-registration records the source saying *"the four TFs take similar trades."* Overlapping trades
+are not independent observations, so stacking timeframes inflates n without lowering the error
+bar. Widening the instrument set is the honest route; the window cannot be extended earlier without
+contaminating Revelio's own out-of-sample period.
+
+### B3 target-selection: no ruling given, deliberately
+
+A ruling in the register reads as a live decision, and a later session that finds it will build
+against it. "Never decided" is the accurate state and should stay legible as that.
+
+### Disposition
+
+- **The arm code stays in `index.html`** — ~1,001 lines, unreachable: no nav entry, no registry
+  entry, nothing calls it. A tombstone comment above the entry point carries this verdict.
+  `regression-baseline-tools.py --verify` must still report 0/64 and 0/4.
+- **`tests/run_v170_aoi_close_tests.js` stays at 29 fixtures**, and the correct fix is to
+  **lengthen the synthetic walk from 9,000 to 18,000 bars** so all four pass. The first version of
+  this entry proposed deleting AOI-1, AOI-1b, AOI-F1 and AOI-C1 and registering at 25. **That was
+  wrong** — those four are good fixtures that were being starved, and deleting them would have
+  removed the look-ahead proof, its positive control, the firing-rate gate and the per-trade
+  spread check. Registering at 29 after the walk fix is the right end state.
+
+**The recorded lesson is not about this arm.** It is that a stand-down was written from a
+second-hand characterisation of a failure rather than from running the code, and the
+characterisation was wrong. Two of the three stated reasons did not survive contact with the arm.
+The conclusion happened to hold, on a reason nobody had measured yet.
+
+*Paper-trading readiness: not assessed.*
