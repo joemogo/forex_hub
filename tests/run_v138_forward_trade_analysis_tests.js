@@ -1,5 +1,12 @@
 #!/usr/bin/env node
 'use strict';
+// RUN_ALL_EXEC: node tests/run_v138_forward_trade_analysis_tests.js
+//
+// Added 2026-09-14 (harness repair). This file is a Node program (require), so without the
+// declaration above the canonical runner fell back to `osascript -l JavaScript`, where
+// `require` is undefined -- it died before executing a single assertion and reported 0
+// fixtures. The declaration only selects the interpreter: no assertion, fixture, expected
+// value, threshold or trading rule is changed by it.
 // Fixtures for scripts/mogo_forward_trade_analysis.js.
 //
 // Every expected figure below is computed BY HAND in this file from packages designed so the

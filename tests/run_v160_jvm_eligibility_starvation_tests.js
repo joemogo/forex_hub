@@ -1,5 +1,12 @@
 #!/usr/bin/env node
 'use strict';
+// RUN_ALL_EXEC: node tests/run_v160_jvm_eligibility_starvation_tests.js
+//
+// Added 2026-09-14 (harness repair). This file is a Node program (require), so without the
+// declaration above the canonical runner fell back to `osascript -l JavaScript`, where
+// `require` is undefined -- it died before executing a single assertion and reported 0
+// fixtures. The declaration only selects the interpreter: no assertion, fixture, expected
+// value, threshold or trading rule is changed by it.
 // ══════════════════════════════════════════════════════════════════════════════════════════════
 // v12.59.0 — JVM COULD NOT TRADE FOR AN HOUR AFTER EVERY RELOAD
 // ══════════════════════════════════════════════════════════════════════════════════════════════
@@ -206,7 +213,7 @@ t('GUARD-2', 'no protected function was touched -- both edited sites are unprote
 let pass = 0;
 results.forEach(function (r) {
   if (r.pass) pass++;
-  console.log((r.pass ? '  PASS  ' : '  FAIL  ') + r.name + '  ' + r.desc);
+  console.log((r.pass ? 'PASS -- ' : 'FAIL -- ') + r.name + ' ' + r.desc);
   if (r.detail) console.log('          ' + r.detail);
 });
 console.log('\n  ' + pass + ' / ' + results.length + ' passed');

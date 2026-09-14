@@ -1,5 +1,12 @@
 #!/usr/bin/env node
 'use strict';
+// RUN_ALL_EXEC: node tests/run_v137_c1_refresh_preflight_tests.js
+//
+// Added 2026-09-14 (harness repair). This file is a Node program (require), so without the
+// declaration above the canonical runner fell back to `osascript -l JavaScript`, where
+// `require` is undefined -- it died before executing a single assertion and reported 0
+// fixtures. The declaration only selects the interpreter: no assertion, fixture, expected
+// value, threshold or trading rule is changed by it.
 // Fixtures for the C1 attestation refresh preflight (scripts/mogo_c1_refresh.js).
 //
 // The preflight's policy half is pure and is exercised here directly with hand-built fact objects,
