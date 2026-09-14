@@ -320,6 +320,15 @@ function makePollRealm(tickImpl) {
   const ctx = {
     console: console, Date: Date, Promise: Promise, setTimeout: setTimeout, JSON: JSON,
     SCAN_PAIRS: ['EUR/USD', 'GBP/USD'],
+    // ALEXG_LIVE_PAIRS is what the guard actually reads (`instrumentsConfigured:
+    // ALEXG_LIVE_PAIRS.length`). The realm seeded only SCAN_PAIRS -- a different production
+    // constant -- so the overlap branch threw ReferenceError: ALEXG_LIVE_PAIRS is not defined.
+    // Production catches that deliberately ("observation must never affect the trading path"),
+    // which is correct and is exactly why the gap presented as a silent loss of the observation
+    // rather than an error: PRE-3 saw nothing recorded and PRE-4 saw no tickIds. Two entries,
+    // same 'XXX/YYY' string shape as the real constant, so instrumentsConfigured is 2 as PRE-3
+    // asserts. Test-realm seed only; no production value, rule or threshold is involved.
+    ALEXG_LIVE_PAIRS: ['EUR/USD', 'GBP/USD'],
     alexGAutoTrading: { enabled: true },
     __ticks: 0, __observations: [],
     generateDecisionEventId: function (p) { return p + '|' + (++ctx.__seq); }, __seq: 0,
