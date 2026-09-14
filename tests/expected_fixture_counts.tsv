@@ -40,7 +40,7 @@ run_v1239_market_data_continuity_tests.js	55
 run_v1239_paper_trading_e2e_tests.js	165
 run_v1239_restart_diagnostics_tests.js	40
 run_v123_tests.js	52
-run_v124_baseline_registry_tests.js	34
+run_v124_baseline_registry_tests.js	35
 run_v125_decision_event_tests.js	40
 run_v126_phase2c_wave1_tests.js	60
 run_v127_alex_v11_release_tests.js	88
@@ -55,3 +55,4 @@ run_v166_tod_session_tests.js	37
 run_v167_carry_feasibility_tests.js	16
 run_v168_dashboard_coverage_note_tests.js	8
 run_v169_carry_backtest_tests.js	28
+run_v170_aoi_close_tests.js	29

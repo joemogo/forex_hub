@@ -294,6 +294,53 @@ if ! bash scripts/mogo_evidence_checkpoint.sh --selftest; then
 fi
 echo ""
 
+# The holdout gate in particular decides whether a candidate's result is admissible at all.
+# Its selftest asserts the two properties the module exists for: the split is stable when the
+# population grows (so a sample cannot be refreshed until the answer improves), and a spent
+# holdout refuses a second run.
+#
+# CONSOLIDATION (2026-09-13), two defects fixed while merging the research-gates line:
+#
+#   1. DOUBLE EXECUTION. holdout_gate.py --selftest, candidate_power.py --selftest and
+#      tests/mutate_holdout_gate.py each had a standalone block here AND an entry in the
+#      loops below, so all three ran TWICE per gate run. A gate executed twice is not a
+#      stronger gate -- it doubles runtime and stops the run meaning one-run-per-gate. The
+#      loops are strict supersets, so the three standalone blocks were removed. Every gate
+#      still runs, now exactly once; verify against the two loop bodies below.
+#
+#   2. AN ORPHANED COMMENT. Inserting these blocks separated the MOGO-023 comment from the
+#      platform-health selftest it describes, leaving it attached to the holdout gate
+#      instead. It has been moved back down to the check it documents.
+#
+# THE RESEARCH GATES. These decide whether a candidate is admissible at all, so a broken gate
+# is worse than no gate -- it launders an explored-on result as a pre-registered one, or (in
+# portfolio_combine's case) turns four weak effects into one that looks strong. Each selftest is
+# paired with a mutation harness that proves its fixtures can actually fail. None of these files
+# starts with test_, so the registered Python totals are unchanged.
+for g in scripts/candidate_power.py scripts/candidate_frequency.py scripts/holdout_gate.py \
+         scripts/month_end_test.py scripts/bond_carry_test.py scripts/venue_recost.py \
+         scripts/portfolio_combine.py; do
+  echo "--- $(basename "$g") selftest ---"
+  if ! python3 "$g" --selftest; then
+    OVERALL_EXIT=1
+  fi
+  echo ""
+done
+
+# Clear stale bytecode first: a same-byte-length edit restored within the same second leaves the
+# old .pyc loaded and produces FALSE SURVIVORS, which is the one failure mode that would make
+# every "caught" line below meaningless.
+find . -name __pycache__ -type d -exec rm -rf {} + 2>/dev/null || true
+for m in tests/mutate_holdout_gate.py tests/mutate_candidate_frequency.py \
+         tests/mutate_month_end_test.py tests/mutate_bond_carry_test.py \
+         tests/mutate_portfolio_combine.py; do
+  echo "--- $(basename "$m") (can the fixtures fail?) ---"
+  if ! python3 "$m"; then
+    OVERALL_EXIT=1
+  fi
+  echo ""
+done
+
 # MOGO-023. The health authority is itself a critical component: a green indicator nobody
 # has ever seen go red is a decoration, not a check. This selftest injects a representative
 # failure per check and asserts the aggregation property the whole module exists for --

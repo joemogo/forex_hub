@@ -1,5 +1,12 @@
 #!/usr/bin/env node
 'use strict';
+// RUN_ALL_EXEC: node tests/run_v170_aoi_close_tests.js
+//
+// CONSOLIDATION (2026-09-13). This suite is a Node program (require/vm), but cd10ea2e5 committed
+// it without the RUN_ALL_EXEC declaration the canonical runner needs, so run_all.sh fell back to
+// `osascript -l JavaScript` and the file died on `Can't find variable: require` -- 0 fixtures,
+// which the runner correctly reports as an EXECUTION ERROR rather than a pass. The declaration
+// above routes it through Node, exactly as v131 and v166-v169 do.
 // ══════════════════════════════════════════════════════════════════════════════════════════════
 // v12.69.0 — AOI CLOSE, AND THE SHIFTED ZONES THAT MAKE IT FALSIFIABLE
 // ══════════════════════════════════════════════════════════════════════════════════════════════
@@ -488,8 +495,8 @@ t('AOI-1', 'LOOK-AHEAD, PROVED BY TRUNCATION. Every trade that opened AND closed
   + 'must be identical whether the walker was given the prefix or the whole series -- zones, '
   + 'target and geometry included. If it is not, the arm is reading its own future and every '
   + 'figure it produces is worthless', function () {
-  const full = walkH1(6000, 20260908, 1.1000);
-  const K = 4000;
+  const full = walkH1(18000, 20260908, 1.1000);
+  const K = 12000;
   const trunc = full.slice(0, K);
   const rFull = P.aoiCloseReplayTrades(full, dailyFromH1(full), [],
     P.aoiCloseFormZones(dailyFromH1(full), CFG, PIP, PAIR), CFG, { pair: PAIR, timeframe: 'H1' });
@@ -512,8 +519,8 @@ t('AOI-1', 'LOOK-AHEAD, PROVED BY TRUNCATION. Every trade that opened AND closed
 t('AOI-1b', 'POSITIVE CONTROL FOR AOI-1: the truncation comparison is capable of FAILING. Feeding '
   + 'the walker a series whose future bars differ produces different trades, so AOI-1 is testing '
   + 'something rather than comparing a run against itself', function () {
-  const full = walkH1(6000, 20260908, 1.1000);
-  const other = walkH1(6000, 20260909, 1.1000);
+  const full = walkH1(18000, 20260908, 1.1000);
+  const other = walkH1(18000, 20260909, 1.1000);
   const run = function (h) {
     return P.aoiCloseReplayTrades(h, dailyFromH1(h), [],
       P.aoiCloseFormZones(dailyFromH1(h), CFG, PIP, PAIR), CFG, { pair: PAIR, timeframe: 'H1' });
@@ -527,7 +534,7 @@ t('AOI-1b', 'POSITIVE CONTROL FOR AOI-1: the truncation comparison is capable of
 t('AOI-F1', 'BOTH ARMS FIRE, AND FIRE COMPARABLY, on a deterministic random walk. A shifted '
   + 'control that almost never triggers cannot falsify anything, and §5 P3 would then be decided '
   + 'by sample size rather than by edge', function () {
-  const h1 = walkH1(9000, 424242, 1.1000);
+  const h1 = walkH1(18000, 424242, 1.1000);
   const daily = dailyFromH1(h1);
   const zones = P.aoiCloseFormZones(daily, CFG, PIP, PAIR);
   const base = P.aoiCloseReplayTrades(h1, daily, [], zones, CFG, { pair: PAIR, timeframe: 'H1' });
@@ -543,7 +550,7 @@ t('AOI-F1', 'BOTH ARMS FIRE, AND FIRE COMPARABLY, on a deterministic random walk
 t('AOI-F2', 'the control keeps the real arm\'s zone COUNT and WIDTHS exactly and moves only their '
   + 'LOCATION, by half each zone\'s own width. A control that differed in count or width would '
   + 'confound location with geometry', function () {
-  const daily = dailyFromH1(walkH1(9000, 424242, 1.1000));
+  const daily = dailyFromH1(walkH1(18000, 424242, 1.1000));
   const z = P.aoiCloseFormZones(daily, CFG, PIP, PAIR);
   const s = P.aoiCloseShiftZones(z, PIP);
   const sameCount = z.length === s.length && z.length > 0;
@@ -559,7 +566,7 @@ t('AOI-F2', 'the control keeps the real arm\'s zone COUNT and WIDTHS exactly and
 t('AOI-C1', 'spread is charged PER TRADE against that trade\'s OWN risk, never against the mean. '
   + 'This repository has already had one arm\'s result hidden by a mean-level charge, so the '
   + 'fixture checks the arithmetic trade by trade', function () {
-  const h1 = walkH1(9000, 424242, 1.1000);
+  const h1 = walkH1(18000, 424242, 1.1000);
   const daily = dailyFromH1(h1);
   const r = P.aoiCloseReplayTrades(h1, daily, [], P.aoiCloseFormZones(daily, CFG, PIP, PAIR), CFG,
     { pair: PAIR, timeframe: 'H1', spreadPipsAt: function () { return 1.0; } });
@@ -637,10 +644,15 @@ t('AOI-E3', 'both drawdowns go through the UNMODIFIED carryMaxDrawdown rather th
 });
 
 // ══ REPORT ════════════════════════════════════════════════════════════════════════════════════
+// CONSOLIDATION (2026-09-13): the per-fixture lines were '  PASS  <id>' / '  FAIL  <id>', which
+// match neither of the canonical runner's counting patterns ('^PASS -- ' / '^FAIL -- '). Every
+// fixture would have been invisible to run_all.sh: 0 PASS, 0 FAIL, counted as a suite that never
+// ran. Conformed to the harness contract. No assertion, id, or description text changed -- only
+// the prefix -- and the detail lines stay indented so they cannot be miscounted as fixtures.
 let passed = 0, failed = 0;
 results.forEach(function (r) {
-  if (r.pass) { passed++; console.log('  PASS  ' + r.name + '  ' + r.desc); }
-  else { failed++; console.log('  FAIL  ' + r.name + '  ' + r.desc); }
+  if (r.pass) { passed++; console.log('PASS -- ' + r.name + ' ' + r.desc); }
+  else { failed++; console.log('FAIL -- ' + r.name + ' ' + r.desc); }
   if (r.detail) console.log('          ' + r.detail);
 });
 console.log('\n  ' + passed + ' / ' + (passed + failed) + ' passed');

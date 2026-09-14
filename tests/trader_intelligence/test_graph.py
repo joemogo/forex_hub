@@ -618,12 +618,118 @@ class TestDuplicateIdDetection(unittest.TestCase):
 # the pre-commit report -- keeps this invariant covered by the test suite too)
 # ---------------------------------------------------------------------------
 
+# A `//` or `/* */` comment stripper that respects string literals, so a URL such as
+# "https://example" is never mistaken for the start of a comment. Returns only code that
+# actually executes -- a commented-out fetch is not runtime coupling.
+def _strip_js_comments(src):
+    out = []
+    i, n = 0, len(src)
+    quote = None
+    while i < n:
+        c = src[i]
+        if quote:
+            out.append(c)
+            if c == "\\" and i + 1 < n:
+                out.append(src[i + 1]); i += 2; continue
+            if c == quote:
+                quote = None
+            i += 1; continue
+        if c in "\"'`":
+            quote = c; out.append(c); i += 1; continue
+        if c == "/" and i + 1 < n and src[i + 1] == "/":
+            while i < n and src[i] != "\n":
+                i += 1
+            continue
+        if c == "/" and i + 1 < n and src[i + 1] == "*":
+            i += 2
+            while i + 1 < n and not (src[i] == "*" and src[i + 1] == "/"):
+                i += 1
+            i += 2; continue
+        out.append(c); i += 1
+    return "".join(out)
+
+
+# Executable coupling means index.html LOADS or READS something from the corpus at runtime.
+# A path sitting in a provenance string or a release note is documentation, not coupling.
+_COUPLING = re.compile(
+    r"""(?: \b(?:fetch|importScripts|require|readFile|readFileSync|loadPath|open)\s*\(\s*[`'"][^`'"]*trader-intelligence
+        |   \bimport\s*\(\s*[`'"][^`'"]*trader-intelligence
+        |   \bnew\s+Worker\s*\(\s*[`'"][^`'"]*trader-intelligence
+        |   <\s*script\b[^>]*\bsrc\s*=\s*[`'"][^`'"]*trader-intelligence
+        |   <\s*link\b[^>]*\bhref\s*=\s*[`'"][^`'"]*trader-intelligence
+        |   \.\s*(?:src|href)\s*=\s*[`'"][^`'"]*trader-intelligence
+        )""",
+    re.VERBOSE | re.IGNORECASE,
+)
+
+
 class TestNoRuntimeCoupling(unittest.TestCase):
-    def test_index_html_never_references_trader_intelligence(self):
-        index_path = os.path.join(REPO_ROOT, "index.html")
-        with open(index_path, "r", encoding="utf-8") as f:
-            content = f.read()
-        self.assertNotIn("trader-intelligence", content)
+    """index.html must not LOAD the trader-intelligence corpus at runtime.
+
+    The original assertion here was `assertNotIn("trader-intelligence", content)` over the
+    whole 2.4 MB file. That is not the invariant: it forbids the SUBSTRING, so a `//` comment
+    citing a pre-registration document, or a provenance string recording which register a rule
+    came from, failed the test exactly as loudly as a real `fetch()` would. It had started
+    failing on six such references -- four line comments, one release-note string and one
+    `replayDisclosures.preregistration` provenance value -- none of which loads anything.
+
+    Deleting or relaxing the test was not an option: the invariant it guards is real, because
+    index.html runs live PAPER operations and must not depend on the research corpus. So the
+    check now looks for executable coupling -- a loader construct whose argument names a
+    trader-intelligence path -- after stripping comments, which by definition cannot execute.
+    Documentation provenance is explicitly preserved, and asserted below so a future change
+    cannot quietly strip the citations that make a rule traceable to its register.
+    """
+
+    def _index(self):
+        with open(os.path.join(REPO_ROOT, "index.html"), "r", encoding="utf-8") as f:
+            return f.read()
+
+    def test_index_html_has_no_runtime_coupling_to_trader_intelligence(self):
+        code = _strip_js_comments(self._index())
+        # NON-VACUITY: the stripper must not have eaten the file. Without this the test would
+        # pass on an empty string, which is the classic way a guard like this stops meaning anything.
+        self.assertGreater(len(code), 1_000_000, "comment stripper returned implausibly little code")
+        hits = _COUPLING.findall(code)
+        self.assertEqual([], hits, "index.html loads the trader-intelligence corpus at runtime: %r" % (hits,))
+
+    def test_positive_control_genuine_runtime_coupling_is_caught(self):
+        """POSITIVE CONTROL. Without this, the test above could pass because the regex never
+        matches anything, and nobody would know. Each of these is real coupling and must fire."""
+        for snippet in (
+            "fetch('docs/trader-intelligence/graph/nodes.json')",
+            "const d = await import('./docs/trader-intelligence/x.js');",
+            "el.src = 'docs/trader-intelligence/reference-data/rates.json';",
+            "<script src=\"docs/trader-intelligence/loader.js\"></script>",
+            "new Worker('docs/trader-intelligence/w.js')",
+            "require('../docs/trader-intelligence/thing')",
+        ):
+            with self.subTest(snippet=snippet):
+                self.assertTrue(_COUPLING.search(_strip_js_comments(snippet)),
+                                "genuine coupling not detected: %s" % snippet)
+
+    def test_negative_control_documentation_references_are_allowed(self):
+        """NEGATIVE CONTROL, and the reason this test was rewritten. Documentation and
+        provenance must NOT trip the guard, or the check regresses to the blunt substring
+        form that failed on comments."""
+        for snippet in (
+            "// docs/trader-intelligence/rule-registers/preregistration-aoi_close_v1.md",
+            "/* see docs/trader-intelligence/reference-data/README.md */",
+            "preregistration:'docs/trader-intelligence/rule-registers/preregistration-aoi_close_v1.md'",
+            "'12.65.0 - first arm from docs/trader-intelligence research'",
+            "// fetch('docs/trader-intelligence/x.json')  <- commented out, does not execute",
+        ):
+            with self.subTest(snippet=snippet):
+                self.assertIsNone(_COUPLING.search(_strip_js_comments(snippet)),
+                                  "documentation reference wrongly flagged: %s" % snippet)
+
+    def test_documentation_provenance_is_still_present(self):
+        """The citations are load-bearing for traceability: a rule in index.html must remain
+        traceable to the register it was pre-registered in. Guard against silently deleting
+        them to make the old assertion pass."""
+        content = self._index()
+        self.assertIn("docs/trader-intelligence/rule-registers/preregistration-aoi_close_v1.md", content)
+        self.assertIn("docs/trader-intelligence/reference-data/README.md", content)
 
 
 if __name__ == "__main__":
