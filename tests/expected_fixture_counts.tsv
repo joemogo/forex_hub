@@ -79,6 +79,6 @@ run_v166_tod_session_tests.js	37
 run_v167_carry_feasibility_tests.js	16
 run_v168_dashboard_coverage_note_tests.js	8
 run_v169_carry_backtest_tests.js	28
-run_v170_aoi_close_tests.js	29
+run_v170_aoi_close_tests.js	33
 run_v171_harness_routing_tests.js	20
 run_v_paper_trading_audit_tests.js	391

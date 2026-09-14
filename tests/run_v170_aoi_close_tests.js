@@ -529,6 +529,130 @@ t('AOI-1b', 'POSITIVE CONTROL FOR AOI-1: the truncation comparison is capable of
   return { pass: a !== b && a.length > 2, detail: 'different bars -> different trades: ' + (a !== b) };
 });
 
+// ══ AS-OF TIME: THE FIELD AOI-1 CAUGHT ═══════════════════════════════════════════════════════
+// AOI-1 failed on exactly one field, zoneTouchCount, and on nothing else: the zone object
+// accumulates touches for the WHOLE series, so the raw array length wrote touches that had not
+// happened yet into a decision record dated earlier. These three hold the repair to the as-of
+// rule directly, rather than leaving it guarded only by the truncation comparison.
+
+t('AOI-1c', 'AS-OF THE SIGNAL BAR. Every recorded zoneTouchCount equals the number of that zone\'s '
+  + 'touches CONFIRMED AT OR BEFORE the signal bar\'s H1 close, recomputed here from the zone '
+  + 'objects rather than trusted. POSITIVE CONTROL: at least one trade must sit on a zone that is '
+  + 'still touched LATER, so the as-of count is STRICTLY smaller than the completed array and the '
+  + 'fixture cannot pass by the two being the same number', function () {
+  const h1 = walkH1(18000, 20260908, 1.1000);
+  const daily = dailyFromH1(h1);
+  const zones = P.aoiCloseFormZones(daily, CFG, PIP, PAIR);
+  const r = P.aoiCloseReplayTrades(h1, daily, [], zones, CFG, { pair: PAIR, timeframe: 'H1' });
+  const byId = {};
+  zones.forEach(function (z) { byId[z.id] = z; });
+  let checked = 0, shrunk = 0, exact = true, resolved = true;
+  r.trades.forEach(function (x) {
+    const z = byId[x.zoneId];
+    if (!z) { resolved = false; return; }
+    const nowMs = P.getCandleCloseTime(h1, x.signalBarIndex, 'H1').getTime();
+    const asOf = z.touches.filter(function (u) { return u.confirmedAtMs <= nowMs; }).length;
+    checked++;
+    if (x.zoneTouchCount !== asOf) exact = false;
+    if (asOf < z.touches.length) shrunk++;
+  });
+  // ASSERT THE TRADE SET IS NON-EMPTY, and that the shrinking case actually occurred.
+  return { pass: checked > 0 && resolved && exact && shrunk > 0,
+    detail: checked + ' trades checked, all equal to the as-of count: ' + exact + '; '
+      + shrunk + ' sat on zones touched again LATER (strictly fewer than the completed array)' };
+});
+
+t('AOI-1d', 'the truncation invariance of AOI-1 holds at MORE THAN ONE cut. A single prefix length '
+  + 'could be a coincidence of where the boundary happened to fall; two independent cuts of the '
+  + 'same series could not', function () {
+  const full = walkH1(18000, 20260908, 1.1000);
+  const run = function (h) {
+    return P.aoiCloseReplayTrades(h, dailyFromH1(h), [],
+      P.aoiCloseFormZones(dailyFromH1(h), CFG, PIP, PAIR), CFG, { pair: PAIR, timeframe: 'H1' });
+  };
+  const rFull = run(full);
+  const parts = [];
+  // Both cuts are chosen to CONTAIN completed trades, and different numbers of them (4 and 6):
+  // a cut with none would trip the non-empty assertion below rather than pass quietly.
+  [11000, 15000].forEach(function (K) {
+    const cut = K - 24;
+    const pick = function (r) {
+      return r.trades.filter(function (x) { return x.exitBarIndex < cut; })
+        .map(function (x) { return JSON.stringify(x); });
+    };
+    const a = pick(rFull), b = pick(run(full.slice(0, K)));
+    // ASSERT NON-EMPTY per cut, or a prefix with no completed trades passes vacuously.
+    parts.push({ K: K, n: a.length,
+      ok: a.length > 0 && a.length === b.length && a.every(function (s, i) { return s === b[i]; }) });
+  });
+  return { pass: parts.every(function (x) { return x.ok; }),
+    detail: parts.map(function (x) { return 'K=' + x.K + ': ' + x.n + ' trades, identical ' + x.ok; }).join('; ') };
+});
+
+t('AOI-1e', 'NO FUTURE TOUCH CAN LEAK. Zones whose touches are all confirmed AFTER the series must '
+  + 'record zoneTouchCount 0 -- not the completed array length, and not a fallback to it when the '
+  + 'as-of filter comes back empty. Nothing downstream of the count reads touches, so these zones '
+  + 'still signal and still trade, which is what makes the assertion reachable', function () {
+  const h1 = walkH1(18000, 20260908, 1.1000);
+  const daily = dailyFromH1(h1);
+  const zones = P.aoiCloseFormZones(daily, CFG, PIP, PAIR);
+  const FUTURE = P.getCandleCloseTime(h1, h1.length - 1, 'H1').getTime() + 10 * 365 * 86400000;
+  const future = zones.map(function (z) {
+    return Object.assign({}, z, { touches: z.touches.map(function (u) {
+      return Object.assign({}, u, { confirmedAtMs: FUTURE });
+    }) });
+  });
+  const r = P.aoiCloseReplayTrades(h1, daily, [], future, CFG, { pair: PAIR, timeframe: 'H1' });
+  // The completed arrays are non-trivial, so 0 and "the array length" are different answers.
+  const carried = zones.length > 0 && zones.every(function (z) { return z.touches.length >= CFG.minTouches; });
+  const allZero = r.trades.length > 0 && r.trades.every(function (x) { return x.zoneTouchCount === 0; });
+  return { pass: carried && allZero,
+    detail: r.trades.length + ' trades on zones whose touches are all in the future; every '
+      + 'zoneTouchCount 0: ' + allZero + ' (completed arrays carry >= ' + CFG.minTouches + ' touches)' };
+});
+
+t('AOI-1f', 'THE BOUNDARY IS THE SIGNAL BAR\'S CLOSE, NOT THE ENTRY BAR\'S. Entry is one H1 bar '
+  + 'later, so a touch confirmed inside that one-bar window is knowable by entry but NOT at the '
+  + 'moment the decision was taken. Real daily touches essentially never land in a particular '
+  + 'one-hour window, so this fixture PLACES one there for every trade -- without it an entry-bar '
+  + 'clock is indistinguishable from the correct one on this data, which is exactly how a wrong '
+  + 'clock would survive unnoticed', function () {
+  const h1 = walkH1(18000, 20260908, 1.1000);
+  const daily = dailyFromH1(h1);
+  const zones = P.aoiCloseFormZones(daily, CFG, PIP, PAIR);
+  const base = P.aoiCloseReplayTrades(h1, daily, [], zones, CFG, { pair: PAIR, timeframe: 'H1' });
+  // One synthetic touch per trade, stamped at that trade's ENTRY bar close: strictly after its own
+  // signal bar close. Touches are read by nothing except this count, so the trade set is unchanged.
+  const extra = {};
+  base.trades.forEach(function (x) {
+    (extra[x.zoneId] = extra[x.zoneId] || []).push(P.getCandleCloseTime(h1, x.entryBarIndex, 'H1').getTime());
+  });
+  const aug = zones.map(function (z) {
+    return Object.assign({}, z, { touches: z.touches.concat((extra[z.id] || []).map(function (ms) {
+      return { barIndex: -1, price: (z.low + z.high) / 2, edge: 'SYNTHETIC',
+        swingSide: 'high', confirmedAtMs: ms, role: 'LATER_TOUCH' };
+    })) });
+  });
+  const r = P.aoiCloseReplayTrades(h1, daily, [], aug, CFG, { pair: PAIR, timeframe: 'H1' });
+  const byId = {};
+  aug.forEach(function (z) { byId[z.id] = z; });
+  let exact = true, discriminating = 0;
+  r.trades.forEach(function (x) {
+    const z = byId[x.zoneId];
+    if (!z) { exact = false; return; }
+    const nowMs = P.getCandleCloseTime(h1, x.signalBarIndex, 'H1').getTime();
+    const entryMs = P.getCandleCloseTime(h1, x.entryBarIndex, 'H1').getTime();
+    const asOf = z.touches.filter(function (u) { return u.confirmedAtMs <= nowMs; }).length;
+    const atEntry = z.touches.filter(function (u) { return u.confirmedAtMs <= entryMs; }).length;
+    if (x.zoneTouchCount !== asOf) exact = false;
+    // the window is genuinely occupied: an entry-bar clock would report a DIFFERENT number here.
+    if (atEntry > asOf) discriminating++;
+  });
+  return { pass: r.trades.length > 0 && exact && discriminating > 0 && r.trades.length === base.trades.length,
+    detail: r.trades.length + ' trades; ' + discriminating + ' carry a touch inside the '
+      + 'signal-to-entry window that the recorded count correctly EXCLUDES' };
+});
+
 // ══ FIRING RATE -- WITHOUT THIS THE CONTROL IS THEATRE ════════════════════════════════════════
 
 t('AOI-F1', 'BOTH ARMS FIRE, AND FIRE COMPARABLY, on a deterministic random walk. A shifted '

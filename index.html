@@ -24768,7 +24768,12 @@ function aoiCloseReplayTrades(h1,daily,h4,zones,cfg,opts){
       pair:pair,timeframe:tf,
       zoneId:sig.zone.id,zoneLow:sig.zone.low,zoneHigh:sig.zone.high,
       zoneWidthPips:sig.zone.widthPips,zoneShifted:!!sig.zone.shifted,
-      zoneFormationMs:sig.zone.formationMs,zoneTouchCount:(sig.zone.touches||[]).length,
+      zoneFormationMs:sig.zone.formationMs,
+      // AS-OF THE SIGNAL BAR. The zone object accumulates touches for the WHOLE series, so the
+      // raw length records touches that had not happened yet at nowMs -- look-ahead written
+      // straight into the decision record, and the sole field AOI-1's truncation caught.
+      // nowMs is the signal bar's H1 close: the last moment this decision could have known.
+      zoneTouchCount:(sig.zone.touches||[]).filter(function(__t){ return __t.confirmedAtMs<=nowMs; }).length,
       approachSide:sig.approachSide,priorClose:sig.priorClose,qualifyingClose:sig.qualifyingClose,
       direction:g.direction,entry:entry,stop:g.stop,target:g.target,
       farEdge:g.farEdge,stopBasis:g.stopBasis,
