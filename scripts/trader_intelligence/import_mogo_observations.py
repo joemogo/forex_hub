@@ -295,12 +295,35 @@ def build_sources(now, package_glob=None, sources_dir=None, observations_dir=Non
                     "packageCount": sum(1 for p in packages
                                         if p.get("captureBasis") == basis),
                     "importedBy": "import_mogo_observations",
+                    **engine_artifacts([p for p in packages if p.get("captureBasis") == basis]),
                 },
                 "schemaVersion": ec.SCHEMA_VERSION,
                 "createdAt": stamp,
                 "updatedAt": stamp,
             }
     return sources
+
+
+def engine_artifacts(packages):
+    """Engine-provenance aggregate for one source group: which exact engine artefacts
+    (`engineProvenance.scriptSha256`, stamped by index.html since the provenance binding)
+    produced its packages, and how many packages carry none. EMPTY when no package in the group
+    carries a provenance -- so a group captured before the binding imports byte-identically to
+    before, and no existing source record is rewritten. Descriptive, not a reference: which
+    commit an artefact came from is scripts/engine_provenance.py's question, never inferred here.
+    """
+    counts, without = {}, 0
+    for p in packages:
+        ep = p.get("engineProvenance")
+        art = ep.get("scriptSha256") if isinstance(ep, dict) else None
+        if isinstance(art, str) and len(art) == 64:
+            counts[art] = counts.get(art, 0) + 1
+        else:
+            without += 1
+    if not counts:
+        return {}
+    return {"engineArtifacts": [{"scriptSha256": k, "packageCount": counts[k]} for k in sorted(counts)],
+            "packagesWithoutEngineArtifact": without}
 
 
 def map_outcome_value(field, value):

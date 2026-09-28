@@ -16415,6 +16415,44 @@ const EVIDENCE_HASH_ALGORITHM='SHA-256';
 // Fixture H6 enforces this by asserting the corresponding vocabulary appears nowhere in this
 // layer -- which is why this comment states the rule without using any of the banned tokens.
 const EVIDENCE_HASH_SCOPE='INTEGRITY_ONLY_NOT_AUTHENTICITY';
+// ══ ENGINE PROVENANCE (engine-provenance binding, 2026-09-28) ══════════════════════════════════
+// APP_VERSION does not identify a build: several different engines have shipped under one version
+// string. So every NEW evidence package also records the exact engine ARTEFACT that produced it:
+// the SHA-256 of this page's own inline engine script text (UTF-8, as the HTML parser hands it to
+// the DOM), captured synchronously while that script is executing -- the only moment
+// document.currentScript names it. Offline, scripts/engine_provenance.py hashes the same text out
+// of any commit's index.html and so maps the artefact to the commit(s) that contain it. The page
+// cannot know its own commit, and says so rather than guessing. The live configuration is hashed
+// per package (it can change at runtime). Observation only: nothing reads these fields back, no
+// strategy decision depends on them, and a package captured before this release simply lacks them.
+const MOGO_ENGINE_SCRIPT_TEXT=(function(){
+  try{
+    const el=(typeof document!=='undefined'&&document)?document.currentScript:null;
+    return el&&typeof el.textContent==='string'&&el.textContent.length?el.textContent:null;
+  }catch(e){ return null; }
+})();
+const MOGO_ENGINE_PROVENANCE_METHOD='SHA256_UTF8_INLINE_ENGINE_SCRIPT_TEXT';
+let mogoEngineScriptShaPromise=null;
+function mogoEngineScriptSha(){
+  if(!mogoEngineScriptShaPromise){
+    mogoEngineScriptShaPromise=(MOGO_ENGINE_SCRIPT_TEXT==null)?Promise.resolve(null)
+      :evidenceContentHash(MOGO_ENGINE_SCRIPT_TEXT).catch(function(){ return null; });
+  }
+  return mogoEngineScriptShaPromise;
+}
+async function mogoEngineProvenance(){
+  const scriptSha256=await mogoEngineScriptSha();
+  let configSha256=null;
+  try{
+    configSha256=await evidenceContentHash(evidenceCanonValue(
+      {alexG:RULES_ALEXG.config,alexGV11:RULES_ALEXG_V11.v11Config},[]));
+  }catch(e){ configSha256=null; }
+  return{method:MOGO_ENGINE_PROVENANCE_METHOD,
+    scriptSha256:scriptSha256,scriptProvenance:scriptSha256?'OBSERVED':'UNAVAILABLE',
+    configSha256:configSha256,configScope:['RULES_ALEXG.config','RULES_ALEXG_V11.v11Config'],
+    configCanonicalization:EVIDENCE_CANON_VERSION,configProvenance:configSha256?'OBSERVED':'UNAVAILABLE',
+    sourceCommit:null,sourceCommitProvenance:'NOT_KNOWABLE_IN_BROWSER'};
+}
 const EVIDENCE_HASH_CLAIM_TEXT='Content integrity verified (SHA-256). This detects alteration only -- it is not authenticity, not identity verification, and not protection against an attacker able to replace both the package and its hash.';
 const EVIDENCE_DB_NAME='mogo_evidence';
 // v2 (MOGO-013): adds the `observations` store. The bump is deliberate and is the reason
@@ -16702,6 +16740,8 @@ async function evidenceContentHash(canonicalString){
 // stored. NEVER falls back to alexGStableHash: a weak digest sitting in a field labelled SHA-256
 // would be a false integrity claim, which is worse than an honest absence.
 async function evidenceFinalizePackage(pkg){
+  // Engine provenance is stamped BEFORE the hash, so the content hash covers it.
+  if(pkg&&typeof pkg==='object'&&!('engineProvenance' in pkg)) pkg.engineProvenance=await mogoEngineProvenance();
   const canonical=evidenceCanonicalize(pkg);
   const hash=await evidenceContentHash(canonical);
   pkg.contentHash=hash;
@@ -18867,6 +18907,18 @@ function evidenceValidatePackage(pkg){
   const errors=[];
   if(!pkg||typeof pkg!=='object'||Array.isArray(pkg)) return{valid:false,errors:['package is not an object']};
   if(pkg.packageSchemaVersion!==EVIDENCE_PACKAGE_SCHEMA_VERSION) errors.push('unsupported packageSchemaVersion: '+pkg.packageSchemaVersion);
+  // Engine provenance: validated PRESENT-ONLY -- every package captured before it existed omits it.
+  if('engineProvenance' in pkg){
+    const ep=pkg.engineProvenance, hex=/^[0-9a-f]{64}$/;
+    if(!ep||typeof ep!=='object'||Array.isArray(ep)) errors.push('engineProvenance must be an object');
+    else{
+      if(ep.method!==MOGO_ENGINE_PROVENANCE_METHOD) errors.push('engineProvenance.method unsupported: '+ep.method);
+      if(ep.scriptSha256!==null&&!hex.test(String(ep.scriptSha256))) errors.push('engineProvenance.scriptSha256 must be 64 lowercase hex or null');
+      if(ep.configSha256!==null&&!hex.test(String(ep.configSha256))) errors.push('engineProvenance.configSha256 must be 64 lowercase hex or null');
+      if((ep.scriptSha256===null)!==(ep.scriptProvenance==='UNAVAILABLE')) errors.push('engineProvenance.scriptProvenance disagrees with scriptSha256');
+      if(ep.sourceCommit!==null) errors.push('engineProvenance.sourceCommit must be null: a page cannot know its commit');
+    }
+  }
   if(!pkg.packageId) errors.push('missing packageId');
   if(!pkg.createdAt) errors.push('missing createdAt');
   if(!pkg.identity||typeof pkg.identity!=='object') errors.push('missing identity block');
