@@ -11,6 +11,24 @@ instead — this file is for things that are working exactly as currently design
 **Rule for future releases:** update this file whenever a release closes one of these gaps, or
 opens a new one that should be disclosed here rather than silently shipped.
 
+## ALEX zone state: the legacy `localStorage` copy is retained, and the zone byte-trim still runs (v12.69.0)
+
+**Status:** open — two **operator decisions**, deliberately not taken by the release that created them.
+
+v12.69.0 moved ALEX zone state to IndexedDB. Two things it did *not* do:
+
+1. **The legacy `fxhub_alexg_zones` copy (5.76 MB on the operator instance) is never removed.** After a
+   verified migration it is a stale snapshot. It keeps occupying most of `localStorage`, so the
+   remaining keys (setups, ledger, journal, config) still share a nearly full ~5–10 MB ceiling and
+   can still hit `QUOTA_EXCEEDED`. Removing it is an evidence-preservation decision, not a cleanup.
+2. **The v12.64.0 zone byte-trim (`evidenceTrimZonesToBudget`, 2.5 MB) is unchanged and still
+   active.** Its only justification was the `localStorage` ceiling, which zone state no longer
+   counts against. Disabling it would preserve older zones, but that changes which zones exist and
+   so can change which setups qualify — a strategy-state decision, not a storage one.
+
+Also disclosed: if IndexedDB is unreachable on a profile that **never** migrated, zone saves stay on
+the legacy `localStorage` path and can still fail exactly as before v12.69.0.
+
 ## ~~Incomplete candle history is treated as complete~~ — RESOLVED in v12.8.3
 
 **Status:** ✅ **Resolved** by the Market Data Completeness Contract

@@ -55,3 +55,4 @@ run_v166_tod_session_tests.js	37
 run_v167_carry_feasibility_tests.js	16
 run_v168_dashboard_coverage_note_tests.js	8
 run_v169_carry_backtest_tests.js	28
+run_v1269_zone_persistence_tests.js	19

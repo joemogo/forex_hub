@@ -58,7 +58,8 @@ Fully isolated from every JVM key above — see [ADR-002](adr/ADR-002-isolated-s
 | `fxhub_alexg_account_version` | `alexGAccountKnownVersion` | `saveAlexGAccountGuarded()` (v12.3.2) | Monotonic counter guarding `fxhub_alexg_account` against a stale/concurrent-tab overwrite — mirrors `fxhub_paper_version`, scoped to the account only (not the journal/auto/zone/setup keys below), for the same reason JVM's own guard excludes those. |
 | `fxhub_alexg_journal` | `alexGJournalEntries` | `saveAlexGAccountGuarded()` only, called only from `commitAlexGLedger()` (v12.3.2) — **never** by `saveAlexGRest()`/`saveAlexG()`, which no longer touch this key at all | Written as part of the same atomic account+version+journal commit as `fxhub_alexg_account` (v12.3.2 Final Ledger Atomicity Review) — never as a separate, independently-failable write. |
 | `fxhub_alexg_auto` | `alexGAutoTrading` | `saveAlexGRest()` | |
-| `fxhub_alexg_zones` | `alexGZoneState` | `saveAlexGRest()` | |
+| `fxhub_alexg_zones` | `alexGZoneState` | **Legacy (v12.69.0).** Read once by `loadAlexGSaved()` and used as the migration source; written by `saveAlexGRest()` only on the fallback path when IndexedDB is unavailable and the zones were never migrated | Zone state now lives in IndexedDB (`mogo_evidence` → `meta`, key `alexg_zones`, below). This copy is never written or removed once migrated, so after migration it is a **stale snapshot**; its removal is an operator decision. |
+| `fxhub_alexg_zones_location` | *(marker)* | `alexGLoadZonesDurable()` after a verified migration, or on the first IndexedDB load | `'indexeddb'` once zone state has moved. Consulted only when IndexedDB is unreachable: if set, zone saves are BLOCKED for the session rather than written to the stale legacy copy. ~50 bytes. |
 | `fxhub_alexg_setups` | `alexGSetupState` | `saveAlexGRest()` | |
 | `fxhub_alexg_exit_monitor` | *(none — write-only)* | `alexGCheckLivePositions()` | **Observability mirror, never read back by the engine (MOGO-022 B-21).** Per-tick exit state (`lastExitCheckTimestamp`, MAE/MFE) is mutated every tick but reaches disk only when another position opens or closes, so a healthy monitor and a dead one were indistinguishable on disk. This reports that state; it does not record it. The authoritative cursor stays in `alexGAccount`, where it self-heals on reload — reading this key back would make an over-advance permanent and is pinned against by fixture XMIRROR-3. |
 
@@ -90,11 +91,14 @@ Fully isolated from every JVM key above — see [ADR-002](adr/ADR-002-isolated-s
 
 The only non-`localStorage` browser storage MOGO uses. It is **written automatically with no user
 action** on every ALEX trade close, from the approved post-loop seam in `alexGCheckLivePositions`.
+Since v12.69.0 it also holds the ALEX zone state, which is **working state, not evidence** — it
+moved here only because it outgrew the `localStorage` ceiling.
 
 | Object store | Key path | Holds | Written by | Deleted by |
 |---|---|---|---|---|
 | `packages` | `packageId` | Evidence Package v1 records. Unique index `bySourceTradeId` structurally enforces one package per trade | `evidencePutPackage()` via `add()` — **never `put()`**, so an existing package can never be silently overwritten | **Nothing. Packages are never automatically deleted.** |
 | `meta` | `key` | Per-strategy, per-UTC-day package sequence counters (`seq\|<strategyId>\|<YYYYMMDD>`) | `evidenceAllocateSequence()` in its own committed `readwrite` transaction | Nothing |
+| `meta` (key `alexg_zones`, v12.69.0) | `key` | ALEX zone state — `{key, json, savedAt, source, appVersion}`, where `json` is exactly the string `JSON.stringify(alexGZoneState)` | `alexGLoadZonesDurable()` (migration, verified by read-back) and `alexGPersistZones()` via `alexGZonesDrain()` (one write in flight, latest state wins). Refused until the startup load settles, and while BLOCKED | Nothing in this layer. The v12.64.0 zone byte-trim still edits the in-memory state it is saved from |
 
 **The one permitted write-back to an existing package** is `evidenceUpdateExportState()`, which
 records the outcome of an export. The content hash deliberately excludes the `export` block, so

@@ -2262,9 +2262,10 @@ const ALL_PAIRS=[
 // Bump by 1.0 for a major update (new feature/tab), by 0.1 for a small patch/fix.
 // This shows in the header next to the logo and on the Diagnostics tab, so you can
 // glance at the live site and instantly confirm which build actually deployed.
-const APP_VERSION='12.68.1';
-const APP_VERSION_DATE='07 Sep 2026';
+const APP_VERSION='12.69.0';
+const APP_VERSION_DATE='02 Oct 2026';
 const APP_VERSION_LOG=[
+  '12.69.0 - ALEX ZONE STATE MOVES TO INDEXEDDB (persistence-only correction; zero protected-function and zero protected-constant drift, 64/64 and 4/4 byte-identical; no rule, threshold, gate, sizing, execution or zone-content change). THE DEFECT: saveAlexGRest wrote the whole ALEX zone state (5.76 MB measured on the operator instance) to localStorage on every engine write. localStorage has its own ~5-10 MB per-origin ceiling, separate from the origin quota IndexedDB draws on, so Diagnostics recorded repeated QUOTA_EXCEEDED on localStorage.setItem while the origin estimate read under 2% used. And because zones are written before setups and declined setups in one try block, every failed zone write ALSO silently skipped those two keys. THE FIX: zone state is kept as one record (key alexg_zones) in the EXISTING mogo_evidence meta object store -- no IndexedDB schema bump. The JSON is the same JSON; only where it is kept changes. Nothing is trimmed, evicted or rewritten by this release. DATA PROTECTION: (1) STARTUP BARRIER -- until alexGLoadZonesDurable() settles, every zone save is refused, and connect() now awaits it before migrateJournalEntryIds()/initAll(), so an unreconciled in-memory state can never overwrite the durable copy. (2) The legacy fxhub_alexg_zones localStorage copy is READ for migration and never written or removed; a migration counts only when the IndexedDB record reads back byte-identical, otherwise the legacy path stays in use exactly as before. (3) Fail closed, as INC-001: an unreadable IndexedDB record, IndexedDB unreachable after the new fxhub_alexg_zones_location marker says the data moved, or a loader error BLOCKS zone saves for the session with an engine error; an unreadable legacy key is not migrated. (4) A 15 s timeout means an IndexedDB open that never answers cannot stop the app starting. EXISTING FUNCTIONS TOUCHED: saveAlexGRest (one line -- the zone write now calls alexGPersistZones) and connect (one line -- the load sequence awaits the durable zone load). Neither is protected. loadAlexGSaved, loadStoredKey, persistStorageKey and every trim/eviction function (evidenceTrimZonesToBudget, evidenceEvictBuffers, evidenceEnforceBufferLimits, the byte budgets) are byte-identical: the v12.64.0 zone byte-trim is UNCHANGED and still active. NOT DONE, deliberately: the 5.76 MB legacy copy stays in localStorage until the operator decides to remove it, so other keys still share a nearly full localStorage. VERIFIED: tests/run_v1269_zone_persistence_tests.js, 19 fixtures, 12/12 mutations killed; and in a real headless Chrome on an isolated localhost origin with disposable profiles and synthetic data, 9/9 -- byte-for-byte migration (sha256 match), legacy copy byte-identical and never written, reload reads IndexedDB, zero localStorage zone writes on later saves, and injected IndexedDB read, write and migration-write failures.',
   '12.68.1 - THE VERDICT LINE OVERSTATED ITS OWN PASS (display and gate correction; zero protected drift; no change to any measurement). The first carry backtest run returned +21.35% over 22.5 years, +0.86% a year, against a 40.1% worst fall -- and the panel printed \'Meets the pre-registered conditions.\' IT DID NOT. The pre-registration says in as many words that a positive mean with a 30% drawdown is a fail, and the verdict checked only the other three conditions. A pass condition that lives only in prose is not a pass condition. maxDrawdownLimit is now config, carryCompareArms returns drawdownAcceptable, the verdict requires it, and the panel names it. A NULL drawdown does NOT pass. CTRL-5 reproduces the operator run exactly and asserts it FAILS. SECOND DEFECT, FOUND BY THE SAME RUN: the Years box sized its request in CALENDAR days while daily bars exist only on trading days, so 15 years fetched ~22.5. Harmless to the arithmetic -- more history is still real history -- but an input that misreports its own range is a control nobody can reason about. The sizing moved out of the async driver into the pure carryBarsForYears specifically so a fixture could reach it; a mutation of it had SURVIVED because the driver needs fetch and no fixture could drive it. TESTING: 28 fixtures (5 new), 27 mutations, 27 caught, 0 survived. WHAT THE RUN ACTUALLY FOUND, recorded because it is the point: carry is real -- +43.07 points of accrued carry against only -12.73 from price, and the reversed control lost 54% -- but OANDA kept about 36% of the gross carry, roughly 1.09%/yr of a 3.01%/yr effect. Over the period the broker cut (24.6 points) EXCEEDED the strategy total return (21.35%). Paper-trading readiness: not assessed.',
   '12.68.0 - CARRY BACKTEST: THE FIRST ARM THAT PREDICTS NOTHING (new research arm; zero protected-function and zero protected-constant drift; read-only; NOT authorized to paper trade). The four chart-pattern arms all tried to predict direction from past prices and all four produced entries indistinguishable from random. This one predicts nothing: it collects an interest-rate difference and accepts whatever the price does. It is a RISK PREMIUM, not an inefficiency, so it is SUPPOSED to lose badly sometimes -- a backtest of this showing no bad periods has a bug. WHY IT COULD BE BUILT AT ALL: v12.66.0 established OANDA markup does not eat the whole differential, and the missing piece was historical rates, which OANDA does not publish. BIS central bank policy rates (CBPOL, data.bis.org) fill it -- 40+ economies, daily, back to the 1980s, unrestricted use with attribution. Stored as CHANGE POINTS ONLY since a policy rate is a step function: 20 years of ten G10 currencies in 9.9 KB, small enough to embed. TWO CHECKS ON THAT DATA, not assumptions: the BIS file writes missing values as NaN, which float() parses and which fails every comparison, so a naive change test ended CAD, GBP and NOK at their first gap; and the gap these rates imply reproduces the gap OANDA implies to a MEDIAN OF 0.10 PERCENTAGE POINTS across 14 instruments, worst 0.68 (NZD/CHF). PRE-REGISTERED BEFORE ANY RESULT WAS SEEN: total return is carry PLUS price change after markup, never carry alone (carry alone is what made short USD/TRY look like 21% a year while the lira fell far enough to cancel it); maximum drawdown is reported BESIDE the return; and a REVERSED CONTROL holds the same pairs the other way, because if both arms make money the result is a currency trend and carry explains nothing. THE BASKET IS SELECTED FROM THE RATES IN FORCE ON EACH REBALANCE DATE, never today\'s -- choosing from today and running over history picks the currencies that turned out to keep paying, the most flattering look-ahead available. The markup is charged on BOTH sides, since OANDA rates decompose as long = d - m/2 and short = -d - m/2. Carry accrues on CALENDAR days, not bars, or weekends under-accrue by 2/7. TESTING: 22 fixtures, 20 mutations, 20 caught, 0 survived. TWO FIXTURES FAILED TO FAIL and were rebuilt: the ranking test used three pairs whose carry gaps were identical, so sorting ascending or descending gave the same answer; and the position cap never bound because only two candidates cleared the carry floor. Paper-trading readiness: not assessed.',
   '12.67.0 - THE DASHBOARD SAID 0% AND DID NOT SAY 0% OF WHAT (display-only; zero protected-function and zero protected-constant drift; no rule, threshold, gate, sizing or execution change; renderDashboard is not a protected function). WHAT WAS INVESTIGATED: the JVM tile read 0% win rate and -$214.06 while a standing open item claimed the preserved evidence showed 1W/1L. Preserved evidence holds THREE closed JVM records -- a +$200 EUR/USD win and two real losses of -$112.32 and -$101.74 -- and the arithmetic gap between -$14.06 and the displayed -$214.06 is exactly the size of the win. THE WIN IS A SEEDED RECORD AND THE QUARANTINE IS CORRECT: entry 13:11:15.571Z, exit 13:11:15.575Z -- FOUR MILLISECONDS to a 2R target -- with round-number geometry throughout (entry 1.085, stop 1.083, target 1.089, pnl exactly 200), no isDeveloperTrade and no tradeSource field where the genuine losses carry both, and a 13-digit positionId where the engine mints 16. TI_TRADE_ID_ENGINE_MINTED caught it correctly. So the dashboard figures were RIGHT and the standing open item was itself the error, having counted a seeded record as a win. THE REAL DEFECT IS THAT NOTHING SAID SO. The tile rendered a bare 0% computed on a filtered set with no indication a third record existed or why it was excluded, and that silence sent two separate investigations hunting a reporting bug that did not exist. dashCoverageNote is a new pure function stating the denominator every figure rests on -- \'2 closed\' normally, \'2 closed - 1 excluded\' with a tooltip naming the reason when something was quarantined. It NEVER states a count it was not given: an unknown denominator renders as no claim at all rather than a fabricated \'0 closed\', because 0% of two trades and 0% of forty are different claims. Only one tradeIntegrityReport call now serves both the P&L netting and the count. TESTING: 8 fixtures, 9 mutations, 9 caught, 0 survived, run against index.html itself. Paper-trading readiness: not assessed.',
@@ -3837,6 +3838,169 @@ function recordAlexGEngineError(msg,meta){
   alexGEngineErrors.unshift(entry);
   alexGEngineErrors=alexGEngineErrors.slice(0,50);
 }
+// ══ fxhub_alexg_zones -> IndexedDB (persistence only; no trading behaviour change) ═══════════
+// THE DEFECT. The whole ALEX zone state (5.76 MB measured on the operator instance) was written
+// to localStorage on every engine write. localStorage has its own ~5-10 MB per-origin ceiling,
+// separate from the origin quota IndexedDB draws on -- so Diagnostics recorded repeated
+// QUOTA_EXCEEDED on setItem while the origin estimate read under 2% used. Zones are written before
+// setups and declined setups in saveAlexGRest's one try block, so every failed zone write also
+// silently skipped those two keys.
+//
+// THE FIX. Zone state lives in one record of the EXISTING mogo_evidence `meta` store (no schema
+// bump). Zone CONTENT is never altered here -- nothing is trimmed, evicted or rewritten; only
+// where the same JSON is kept changes.
+//
+// DATA PROTECTION, in order of importance:
+//  1. STARTUP BARRIER. Until alexGLoadZonesDurable() settles, mode is PENDING and every zone save
+//     is refused -- an in-memory state that has not yet been reconciled with the durable copy can
+//     never overwrite it. connect() awaits the load before migrateJournalEntryIds()/initAll().
+//  2. The legacy localStorage copy is READ for migration and is never written or removed by this
+//     code. A migration counts only once the IndexedDB record reads back byte-identical.
+//  3. Fail closed, as INC-001: an unreadable IndexedDB record, or IndexedDB unreachable after the
+//     marker says the data moved there, BLOCKS zone saves for the session rather than writing a
+//     state that may be stale over the real one. An unreadable legacy key is not migrated.
+//  4. IndexedDB unreachable and never migrated: the legacy localStorage path, unchanged.
+const ALEXG_ZONES_LS_KEY='fxhub_alexg_zones';
+const ALEXG_ZONES_IDB_KEY='alexg_zones';                 // keyPath value in the `meta` store
+const ALEXG_ZONES_LOCATION_KEY='fxhub_alexg_zones_location';
+const ALEXG_ZONES_LOAD_TIMEOUT_MS=15000;
+// mode: PENDING (barrier) | INDEXEDDB | LOCALSTORAGE (legacy fallback) | BLOCKED
+let alexGZonesStore={mode:'PENDING',source:null,reason:null,loadedAt:null,lastSavedAt:null,lastSavedBytes:null,writeFailures:0};
+let alexGZonesPendingJson=null;
+let alexGZonesWriteInFlight=false;
+function alexGZonesReadLocationMarker(){
+  try{ return localStorage.getItem(ALEXG_ZONES_LOCATION_KEY); }catch(e){ return null; }
+}
+function alexGZonesWriteLocationMarker(){
+  // ~50 bytes. If even this fails the IndexedDB record still wins on the next load; the marker
+  // only matters when IndexedDB is unreachable.
+  try{ localStorage.setItem(ALEXG_ZONES_LOCATION_KEY,'indexeddb'); }catch(e){}
+}
+async function alexGZonesIdbGet(){
+  const db=await evidenceOpenDb();
+  const tx=db.transaction([EVIDENCE_STORE_META],'readonly');
+  const rec=await evidenceReq(tx.objectStore(EVIDENCE_STORE_META).get(ALEXG_ZONES_IDB_KEY));
+  return rec||null;
+}
+async function alexGZonesIdbPut(json,source){
+  const db=await evidenceOpenDb();
+  const tx=db.transaction([EVIDENCE_STORE_META],'readwrite');
+  tx.objectStore(EVIDENCE_STORE_META).put({key:ALEXG_ZONES_IDB_KEY,json:json,
+    savedAt:new Date().toISOString(),source:source,appVersion:(typeof APP_VERSION!=='undefined'?APP_VERSION:null)});
+  await evidenceTxDone(tx);
+}
+function alexGZonesWithTimeout(p,ms){
+  return new Promise(function(resolve,reject){
+    const timer=setTimeout(function(){ reject(new Error('IndexedDB did not answer within '+ms+'ms')); },ms);
+    p.then(function(v){ clearTimeout(timer); resolve(v); },function(e){ clearTimeout(timer); reject(e); });
+  });
+}
+function alexGZonesBlock(reason){
+  alexGZonesStore.mode='BLOCKED'; alexGZonesStore.reason=reason;
+  try{ recordAlexGEngineError('ALEX ZONE STATE BLOCKED: '+reason+' Zone changes will NOT be saved this session, so the stored copy is preserved. Reload; if it persists, check Diagnostics.'); }catch(e){}
+}
+// Never rejects. Settles the barrier exactly once.
+async function alexGLoadZonesDurable(){
+  try{
+    if(alexGZonesStore.mode!=='PENDING') return alexGZonesStore;
+    const marker=alexGZonesReadLocationMarker();
+    let rec=null;
+    try{
+      if(typeof indexedDB==='undefined'||!indexedDB) throw new Error('IndexedDB is not available in this context');
+      rec=await alexGZonesWithTimeout(alexGZonesIdbGet(),ALEXG_ZONES_LOAD_TIMEOUT_MS);
+    }catch(e){
+      const why=(e&&e.message)?e.message:String(e);
+      if(marker==='indexeddb'){
+        alexGZonesBlock('zone state lives in IndexedDB but IndexedDB could not be read ('+why+').');
+      }else{
+        alexGZonesStore.mode='LOCALSTORAGE'; alexGZonesStore.source='LOCALSTORAGE';
+        alexGZonesStore.reason='IndexedDB unavailable ('+why+'); legacy localStorage path in use.';
+      }
+      try{ evidenceRecordWriteFailure('alexg-zones-load',e); }catch(e2){}
+      return alexGZonesStore;
+    }
+    if(rec){
+      let parsed;
+      try{
+        parsed=JSON.parse(rec.json);
+        if(!parsed||typeof parsed!=='object'||Array.isArray(parsed)) throw new Error('not a zone-state object');
+      }catch(e){
+        alexGZonesBlock('the IndexedDB zone record exists but could not be read ('+((e&&e.message)||e)+').');
+        return alexGZonesStore;
+      }
+      alexGZoneState=parsed;
+      alexGZonesStore.mode='INDEXEDDB'; alexGZonesStore.source='INDEXEDDB';
+      alexGZonesStore.loadedAt=new Date().toISOString(); alexGZonesStore.reason=null;
+      if(marker!=='indexeddb') alexGZonesWriteLocationMarker();
+      return alexGZonesStore;
+    }
+    // No durable record yet: migrate the legacy copy -- unless it was present but unreadable, in
+    // which case the in-memory state is a default and must not shadow the real data (INC-001).
+    if(storageKeyBlockedFromWrite(ALEXG_ZONES_LS_KEY)){
+      alexGZonesStore.mode='LOCALSTORAGE'; alexGZonesStore.source='LOCALSTORAGE';
+      alexGZonesStore.reason='legacy key unreadable; not migrated and not overwritten.';
+      return alexGZonesStore;
+    }
+    if(marker==='indexeddb'){
+      try{ recordAlexGEngineError('ALEX zone record missing from IndexedDB although it had been migrated; re-migrating from the legacy localStorage copy, which may be older.'); }catch(e){}
+    }
+    const json=JSON.stringify(alexGZoneState);
+    try{
+      await alexGZonesIdbPut(json,'MIGRATED_FROM_LOCALSTORAGE');
+      const back=await alexGZonesIdbGet();
+      if(!back||back.json!==json) throw new Error('migration read-back did not match the legacy copy');
+    }catch(e){
+      alexGZonesStore.mode='LOCALSTORAGE'; alexGZonesStore.source='LOCALSTORAGE';
+      alexGZonesStore.reason='migration to IndexedDB failed ('+((e&&e.message)||e)+'); legacy copy untouched.';
+      try{ evidenceRecordWriteFailure('alexg-zones-migrate',e); }catch(e2){}
+      return alexGZonesStore;
+    }
+    alexGZonesWriteLocationMarker();
+    alexGZonesStore.mode='INDEXEDDB'; alexGZonesStore.source='MIGRATED_FROM_LOCALSTORAGE';
+    alexGZonesStore.loadedAt=new Date().toISOString(); alexGZonesStore.reason=null;
+    alexGZonesStore.lastSavedAt=alexGZonesStore.loadedAt; alexGZonesStore.lastSavedBytes=json.length*2;
+    return alexGZonesStore;
+  }catch(fatal){
+    // A defect in this loader must not stop the app starting, and must not unlock writes.
+    alexGZonesBlock('zone loader error ('+((fatal&&fatal.message)||fatal)+').');
+    return alexGZonesStore;
+  }
+}
+// Synchronous and never throws past persistStorageKey's own legacy behaviour. Returns whether the
+// write was accepted (queued for IndexedDB, or written to localStorage).
+function alexGPersistZones(json){
+  const mode=alexGZonesStore.mode;
+  if(mode==='INDEXEDDB'){ alexGZonesPendingJson=json; alexGZonesDrain(); return true; }
+  if(mode==='LOCALSTORAGE') return persistStorageKey(ALEXG_ZONES_LS_KEY,json);
+  return false;                                           // PENDING (barrier) or BLOCKED
+}
+// One write in flight; only the LATEST queued state is written next, so writes land in order and
+// a burst of saves costs one or two puts rather than one per call.
+function alexGZonesDrain(){
+  if(alexGZonesWriteInFlight) return;
+  alexGZonesWriteInFlight=true;
+  (async function(){
+    while(alexGZonesPendingJson!=null){
+      const json=alexGZonesPendingJson; alexGZonesPendingJson=null;
+      try{
+        await alexGZonesIdbPut(json,'SAVE');
+        alexGZonesStore.lastSavedAt=new Date().toISOString(); alexGZonesStore.lastSavedBytes=json.length*2;
+      }catch(e){
+        alexGZonesStore.writeFailures++;
+        try{ evidenceRecordWriteFailure('alexg-zones-indexeddb',e); }catch(e2){}
+      }
+    }
+  })().then(function(){
+    alexGZonesWriteInFlight=false;
+    if(alexGZonesPendingJson!=null) alexGZonesDrain();
+  });
+}
+// Resolves once every queued zone write has settled (used by fixtures and diagnostics).
+async function alexGZonesFlush(){
+  for(let i=0;i<1000&&(alexGZonesWriteInFlight||alexGZonesPendingJson!=null);i++){
+    await new Promise(function(r){ setTimeout(r,0); });
+  }
+}
 // saveAlexGRest() -- everything saveAlexG() used to write EXCEPT the account+journal (now part
 // of the atomic unit above): auto/zone/setup state only. Unguarded, called from non-account-
 // mutating places (auto-trading toggle, zone/setup engine writes, the one-time journalEntryId
@@ -3855,7 +4019,8 @@ function saveAlexGRest(){
     // v12.8.1 INC-001: persistStorageKey() refuses any key that was present but unreadable at
     // load time -- writing an in-memory default over real stored data is the incident itself.
     persistStorageKey('fxhub_alexg_auto',JSON.stringify(alexGAutoTrading));
-    persistStorageKey('fxhub_alexg_zones',JSON.stringify(alexGZoneState));
+    // Zones go to IndexedDB once the startup barrier has settled -- see alexGPersistZones().
+    alexGPersistZones(JSON.stringify(alexGZoneState));
     persistStorageKey('fxhub_alexg_setups',JSON.stringify(alexGSetupState));
     // v12.51.0: the declined setups, persisted for the same reason the taken ones are.
     persistStorageKey('fxhub_alexg_declined',JSON.stringify(alexGDeclinedSetups));
@@ -8138,7 +8303,7 @@ async function connect(){
     setTimeout(()=>{
       document.getElementById('setupScreen').style.display='none';
       document.getElementById('mainApp').style.display='block';
-      loadSaved();loadAlexGSaved();loadAlexV2Saved();migrateJournalEntryIds();initAll(); // v10.0: one-time idempotent journalEntryId backfill, after both journal stores are loaded, before the first render; ALEX_SCORE_V2 (research) load added additively, same pattern as loadAlexGSaved()
+      loadSaved();loadAlexGSaved();loadAlexV2Saved();alexGLoadZonesDurable().then(function(){migrateJournalEntryIds();initAll();}); // v10.0: one-time idempotent journalEntryId backfill, after both journal stores are loaded, before the first render; ALEX_SCORE_V2 (research) load added additively, same pattern as loadAlexGSaved()
     },800);
   }catch(e){
     errEl.style.background='var(--red-dim)';errEl.style.color='var(--red)';errEl.style.borderColor='rgba(239,83,80,.3)';

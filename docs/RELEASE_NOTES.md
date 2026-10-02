@@ -13,6 +13,49 @@ its change actually affects.
 
 ---
 
+## v12.69.0 — ALEX zone state moves to IndexedDB
+
+**Persistence-only correction.** Zero protected drift (64 functions, 4 constants byte-identical). No
+rule, threshold, gate, sizing, execution or zone-content change.
+
+### Why
+
+`saveAlexGRest()` wrote the whole ALEX zone state — **5.76 MB** on the operator instance — to
+`localStorage` on every engine write. `localStorage` has its own ~5–10 MB per-origin ceiling,
+separate from the origin quota IndexedDB uses, so Diagnostics showed repeated `QUOTA_EXCEEDED` on
+`localStorage.setItem` while the origin estimate read under 2% used. Zones are written before setups
+and declined setups in one `try` block, so every failed zone write **also skipped those two keys**.
+
+### What changed
+
+- Zone state is one record (`alexg_zones`) in the existing `mogo_evidence` → `meta` store. Same JSON,
+  new location; no IndexedDB schema bump.
+- **Startup barrier:** zone saves are refused until `alexGLoadZonesDurable()` settles, and `connect()`
+  awaits it before `migrateJournalEntryIds()` / `initAll()`.
+- **Legacy copy preserved:** `fxhub_alexg_zones` is read for migration and never written or removed.
+  A migration counts only when the IndexedDB record reads back byte-identical.
+- **Fail closed:** an unreadable IndexedDB record, IndexedDB unreachable after the new
+  `fxhub_alexg_zones_location` marker says the data moved, or a loader error blocks zone saves for the
+  session, with an engine error. A 15 s timeout keeps a silent IndexedDB from stopping startup.
+
+**Existing functions touched:** `saveAlexGRest` (one line) and `connect` (one line); neither is
+protected. The v12.64.0 zone byte-trim and every eviction function are byte-identical and still
+active.
+
+### Verification
+
+`tests/run_v1269_zone_persistence_tests.js` — 19 fixtures, 12/12 mutations killed. Real headless
+Chrome on an isolated localhost origin, disposable profiles, synthetic data — 9/9: byte-for-byte
+migration (sha256 match), legacy copy unchanged, reload reads IndexedDB, zero `localStorage` zone
+writes afterwards, and injected IndexedDB read, write and migration-write failures.
+
+### Not done
+
+The 5.76 MB legacy copy stays in `localStorage` until the operator decides to remove it — see
+[KNOWN_ISSUES.md](KNOWN_ISSUES.md).
+
+---
+
 ## v12.9.0 — Replay run identity & evidence capture
 
 **Turns replay from a disposable in-memory preview into citable evidence.** Zero protected drift
