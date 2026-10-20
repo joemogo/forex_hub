@@ -30,6 +30,7 @@ sys.path.insert(0, os.path.join(REPO_ROOT, "scripts", "trader_intelligence"))
 import import_mogo_observations as imp    # noqa: E402
 import inspect                            # noqa: E402
 import validate_evidence as ve            # noqa: E402
+import balance_reconcile as br            # noqa: E402
 
 imo = imp
 FIXED_NOW = datetime.datetime(2026, 8, 21, tzinfo=datetime.timezone.utc)
@@ -945,6 +946,15 @@ class TestForwardEvidenceCoverageIsDisclosed(unittest.TestCase):
         preserved trades that closed inside this trade's lifetime. Anyone
         reconstructing an equity curve by chaining these fields trade-by-trade would
         get a wrong answer, which is why this is pinned rather than left implicit.
+
+        3. "Inside this trade's lifetime" means PROCESSED by the ledger inside it.
+           v12.42.0 moved the market exit into `closedAt` for new packages, and a
+           batched catch-up (EUR/CHF + AUD/JPY, 2026-10-14 11:11Z) applied them in the
+           reverse of market-exit order. Ordering by `closedAt` then failed TWO records,
+           each by the other's P&L. The rule now lives in balance_reconcile.py and
+           bounds the processing instant instead of guessing it; its synthetic fixtures
+           and mutation gate are tests/trader_intelligence/test_balance_reconcile.py and
+           mutate_balance_reconcile.py.
         """
         obs, sources = to.load_observations(), to.load_sources()
         forward = [r for r in to.select_population(obs, sources, to.FORWARD).values()
@@ -952,36 +962,11 @@ class TestForwardEvidenceCoverageIsDisclosed(unittest.TestCase):
                                    r.get("accountBalanceAfter"), r.get("pnl"))
                    and r.get("openedAt") and r.get("closedAt")]
         self.assertTrue(forward)
-        earliest_close = min(r["closedAt"] for r in forward)
-
-        checked = 0
-        for record in forward:
-            # Only trades whose whole lifetime lies inside the preserved window can
-            # be reconciled: for anything opened before the first preserved close, an
-            # UNPRESERVED earlier trade may have moved the balance (backlog B-22).
-            if record["openedAt"] < earliest_close:
-                continue
-            residual = (record["accountBalanceAfter"]
-                        - record["accountBalanceBefore"] - record["pnl"])
-            contributors = [other["pnl"] for other in forward if other is not record
-                            and record["openedAt"] < other["closedAt"]
-                            < record["closedAt"]]
-            concurrent = sum(contributors)
-            # Each pnl is stored rounded to a cent, so a sum of k of them can drift
-            # by up to half a cent per term. The tolerance scales with the number of
-            # terms rather than being loosened globally -- one record here missed a
-            # flat 2-place check by exactly 0.01 across 2 contributors. Real
-            # corruption is orders of magnitude larger, and the mutation fixtures
-            # (a 50.00 shift, a flipped sign) confirm this still discriminates.
-            tolerance = 0.005 * (len(contributors) + 2)
-            self.assertAlmostEqual(
-                residual, concurrent, delta=tolerance,
-                msg="%s: residual %.2f is not explained by concurrent closes %.2f "
-                    "(%d contributors, tolerance %.3f)"
-                    % (record["observationId"], residual, concurrent,
-                       len(contributors), tolerance))
-            checked += 1
-        self.assertGreater(checked, 10,
+        result = br.reconcile(forward)
+        self.assertEqual(result["failures"], [],
+                         "%d record(s) not explained by concurrent closes: %r"
+                         % (len(result["failures"]), result["failures"]))
+        self.assertGreater(result["checked"], 10,
                            "too few fully-covered trades to be meaningful")
 
     def test_the_account_really_does_run_concurrent_positions(self):
@@ -997,6 +982,42 @@ class TestForwardEvidenceCoverageIsDisclosed(unittest.TestCase):
         self.assertGreater(overlap, 1,
                            "no concurrent positions found; revisit the model")
 
+
+
+class TestTheImporterRecordsWhatClosedAtMeans(unittest.TestCase):
+    """v12.42.0 changed what a package's `exitTimestamp` -- and so the record's
+    `closedAt` -- means, and said so in `exitTimestampBasis`. The importer dropped that
+    statement, so two records with different meanings looked identical and the balance
+    reconciliation ordered a batched catch-up by the wrong clock. The basis and the
+    capture time are copied, never defaulted."""
+
+    def v1242_package(self):
+        pkg = package()
+        pkg["createdAt"] = "2026-10-14T11:11:26.020Z"
+        pkg["objects"]["outcomes"][0].update(
+            exitTimestamp="2026-10-13T21:05:00.000Z", exitTimestampBasis="exit_detected_at")
+        return pkg
+
+    def test_the_basis_is_copied_from_the_package(self):
+        record, _ = imp.observation_from_package(self.v1242_package(), NOW, {}, SOURCE)
+        self.assertEqual(record.get("closedAtBasis"), "exit_detected_at")
+
+    def test_capturedAt_is_the_package_capture_time_not_the_exit(self):
+        record, _ = imp.observation_from_package(self.v1242_package(), NOW, {}, SOURCE)
+        self.assertEqual(record.get("capturedAt"), "2026-10-14T11:11:26.020Z")
+        self.assertEqual(record.get("closedAt"), "2026-10-13T21:05:00.000Z")
+
+    def test_a_package_without_a_basis_gets_none_rather_than_a_default(self):
+        """Positive control. A pre-v12.42.0 package states no basis, and the record must
+        not acquire one -- a defaulted basis is an invented statement about the clock."""
+        record, _ = imp.observation_from_package(package(), NOW, {}, SOURCE)
+        self.assertNotIn("closedAtBasis", record)
+
+    def test_the_minted_record_reconciles_under_its_own_basis(self):
+        """End to end: what the importer mints is what balance_reconcile reads."""
+        record, _ = imp.observation_from_package(self.v1242_package(), NOW, {}, SOURCE)
+        lo, hi = br.processing_bounds(record)
+        self.assertLess(lo, hi, "a bounded basis must yield a real interval")
 
 
 class TestTheImporterMintsWhatTheWitnessWillCheck(unittest.TestCase):

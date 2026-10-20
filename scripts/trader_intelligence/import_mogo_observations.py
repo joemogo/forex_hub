@@ -75,10 +75,15 @@ POSITION_MAP = (
 )
 OUTCOME_MAP = (
     ("exitPrice", "exitPrice"),
+    # WHAT `exitTimestamp` MEANS DEPENDS ON THE PACKAGE, and the record says which: see
+    # `closedAtBasis` in observation_from_package(). Before v12.42.0 it was the moment the
+    # close was RECORDED (the ledger's processing stamp). From v12.42.0 (D4) the package
+    # prefers `exitDetectedAt` -- the MARKET exit -- and names that choice in
+    # `exitTimestampBasis: exit_detected_at`; the processing stamp is no longer carried.
     ("closedAt", "exitTimestamp"),
-    # THE TRUE MARKET EXIT, which the corpus was discarding. `exitTimestamp` is the
-    # moment the close was RECORDED; for an exit reconstructed from candles that is
-    # when the re-walk noticed it. Every package in the store carries
+    # THE TRUE MARKET EXIT, which the corpus was discarding. For an exit reconstructed
+    # from candles under the pre-v12.42.0 meaning, `exitTimestamp` is when the re-walk
+    # noticed it. Every package in the store carries
     # exitDetectionSource `historical_candle`, and on 6 of 29 the recorded exit is
     # more than an hour after the true one -- worst case 351.8 hours, which turned a
     # 216.1h holding period into an apparent 567.9h. Nothing is inferred here: the
@@ -477,6 +482,13 @@ def observation_from_package(package, now, counters=None, source=None):
         sourcePackageId=package.get("packageId"),
         # The GLOBAL key. See already_imported() for why the package id is not one.
         sourceContentHash=package.get("contentHash"),
+        # What `closedAt` means on THIS record (the package's own statement, copied, never
+        # defaulted), and the package capture time -- an upper bound on when the ledger
+        # applied the close, which is what balance_reconcile needs once `closedAt` is a
+        # market exit. Minted here rather than through OUTCOME_MAP so the widening backfill
+        # never rewrites a preserved record that predates either field.
+        closedAtBasis=outcome.get("exitTimestampBasis"),
+        capturedAt=package.get("createdAt"),
         notes="captureBasis=%s sourceType=%s" % (basis, source_type),
     )
     return record, None

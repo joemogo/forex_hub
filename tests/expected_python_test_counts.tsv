@@ -22,6 +22,7 @@ tests.trader_intelligence.test_answer_intake	59
 tests.trader_intelligence.test_answer_intake_preview	60
 tests.trader_intelligence.test_answer_intake_reevaluation	40
 tests.trader_intelligence.test_backup_source_artifacts	36
+tests.trader_intelligence.test_balance_reconcile	21
 tests.trader_intelligence.test_candidate_search	58
 tests.trader_intelligence.test_decision_difference	34
 tests.trader_intelligence.test_exception_triage	32
@@ -31,7 +32,7 @@ tests.trader_intelligence.test_forward_novelty	19
 tests.trader_intelligence.test_graph	66
 tests.trader_intelligence.test_hypothesis_testability	19
 tests.trader_intelligence.test_identity_manifest	41
-tests.trader_intelligence.test_import_mogo_observations	120
+tests.trader_intelligence.test_import_mogo_observations	124
 tests.trader_intelligence.test_lean_import	47
 tests.trader_intelligence.test_lean_preflight	22
 tests.trader_intelligence.test_lean_synthetic_smoke	49

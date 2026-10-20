@@ -114,6 +114,11 @@ OBSERVABLE_FIELDS = (
     # apparent holding period 567.9h against a true 216.1h. `marketExitAt` carries
     # the candle the exit actually occurred on, so a holding period can be computed
     # honestly. Both are kept: neither is a correction of the other.
+    # EXCEPTION, from v12.42.0 (D4): a record carrying `closedAtBasis:
+    # "exit_detected_at"` has the MARKET exit in `closedAt`, because the package no
+    # longer carries the recorded moment. Read `closedAt` through `closedAtBasis`;
+    # absent means the original "recorded" meaning. `capturedAt` (package capture time)
+    # then bounds the recorded moment from above -- see balance_reconcile.py.
     "marketExitAt", "exitDetectionSource",
     "outcome", "decisionTaken", "declineReason",
 )
