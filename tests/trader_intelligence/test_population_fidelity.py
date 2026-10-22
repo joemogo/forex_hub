@@ -495,3 +495,174 @@ class TestCoverageBiasIsReportedNotConcluded(unittest.TestCase):
         self.assertEqual(with_recon["byPopulation"]["FORWARD"],
                          without["byPopulation"]["FORWARD"],
                          "reporting coverage changed the forward statistics")
+
+
+# The eight LIVE_CLOSE closes preserved in checkpoint 20261014T115219Z (extractor: 8 recovered,
+# 8 verified), frozen as literals so the fixture never decays with the corpus. Every one carries
+# closedAtBasis "exit_detected_at": closedAt is the MARKET exit -- seven of the eight on an exact
+# minute -- and capturedAt is the package capture time. Same records as
+# test_balance_reconcile.CATCH_UP; (observationId, openedAt, closedAt, capturedAt).
+BOUNDED = "exit_detected_at"
+CHECKPOINT_20261014 = (
+    ("20260921_1", "2026-09-21T01:02:03.963Z", "2026-09-21T16:55:00.000Z", "2026-09-21T16:55:49.449Z"),
+    ("20260923_1", "2026-09-22T16:03:09.561Z", "2026-09-23T08:48:00.000Z", "2026-09-23T10:34:02.577Z"),
+    ("20261005_1", "2026-09-30T03:18:28.866Z", "2026-10-05T11:19:00.000Z", "2026-10-05T11:19:37.647Z"),
+    ("20261007_1", "2026-10-07T18:01:21.862Z", "2026-10-07T21:05:00.000Z", "2026-10-07T21:05:29.417Z"),
+    ("20261008_1", "2026-10-07T21:00:32.516Z", "2026-10-08T00:46:20.195Z", "2026-10-08T00:46:20.410Z"),
+    ("20261012_1", "2026-10-12T13:01:45.722Z", "2026-10-12T14:57:00.000Z", "2026-10-12T14:57:55.875Z"),
+    ("20261014_1", "2026-09-29T17:01:53.159Z", "2026-10-14T07:22:00.000Z", "2026-10-14T11:11:25.974Z"),
+    ("20261014_2", "2026-10-13T05:47:28.890Z", "2026-10-13T21:05:00.000Z", "2026-10-14T11:11:26.020Z"),
+)
+
+
+def bounded_forward(obs_id, opened, closed, captured, basis=BOUNDED, source_id="EVSRC|FWD|1"):
+    record = observation(obs_id, source_id, -1.0, opened=opened, stamp=closed)
+    record["closedAtBasis"] = basis
+    record["capturedAt"] = captured
+    return record
+
+
+def checkpoint_records(**overrides):
+    records = {}
+    for obs_id, opened, closed, captured in CHECKPOINT_20261014:
+        records["CKPT|" + obs_id] = bounded_forward("CKPT|" + obs_id, opened, closed, captured,
+                                                   **overrides)
+    return records
+
+
+def replay_on_the_grid():
+    return {"TOBS|REPLAY|%d" % i: observation("TOBS|REPLAY|%d" % i, "EVSRC|REPLAY|1", -1.0,
+                                              opened="2026-08-0%dT09:00:00.000Z" % i,
+                                              stamp="2026-08-0%dT13:00:00.000Z" % i)
+            for i in range(1, 4)}
+
+
+def quantization(records, sources=SOURCES):
+    report = pf.compare(records, sources, "alex_g_sr_v1")
+    return pf.REPLAY_IS_BAR_QUANTIZED in {f["code"] for f in report["findings"]}, report
+
+
+class TestAMarketExitCloseStampIsNotTheEngineClock(unittest.TestCase):
+    """R-3 (MOGO-IMPORT-SCOPE-2026-10-20.md): from v12.42.0 a forward closedAt can be the
+    minute-aligned MARKET exit. The finding is about the engine's clock, which capturedAt
+    carries; reading the market exit as that clock withdrew a true finding."""
+
+    def test_the_fixture_really_is_minute_aligned_in_closedAt(self):
+        # Non-vacuous: the regression only means something if closedAt is on the grid.
+        grid = pf.timestamp_granularity([c for _i, _o, c, _p in CHECKPOINT_20261014])
+        self.assertEqual(grid["exactMinute"], 7)
+        self.assertEqual(grid["subSecond"], 1)
+
+    def test_POSITIVE_CONTROL_minute_aligned_market_exits_do_not_erase_the_finding(self):
+        records = replay_on_the_grid()
+        records.update(checkpoint_records())
+        fired, report = quantization(records)
+        self.assertTrue(fired)
+        self.assertEqual(report["byPopulation"]["FORWARD"]["timestampGranularity"],
+                         {"exactHour": 0, "exactMinute": 0, "exactSecond": 0, "subSecond": 16})
+
+    def test_MECHANISM_CONTROL_counting_the_market_exit_withdraws_the_finding(self):
+        """The pre-fix computation, reproduced by declaring closedAt an exact processing stamp:
+        it must suppress the finding, or the positive control above proves nothing."""
+        records = replay_on_the_grid()
+        records.update(checkpoint_records(basis=None))
+        fired, report = quantization(records)
+        self.assertFalse(fired)
+        self.assertEqual(report["byPopulation"]["FORWARD"]["timestampGranularity"]["exactMinute"], 7)
+
+    def test_a_genuinely_quantized_forward_capture_is_still_detected(self):
+        """capturedAt on the bar grid is a forward clock that looks like replay -- exactly the
+        contamination the ALL-sub-second guard exists to catch. It must still withhold."""
+        records = replay_on_the_grid()
+        records.update(checkpoint_records())
+        records["CKPT|20261014_2"]["capturedAt"] = "2026-10-14T12:00:00.000Z"
+        fired, report = quantization(records)
+        self.assertFalse(fired)
+        self.assertEqual(report["byPopulation"]["FORWARD"]["timestampGranularity"]["exactHour"], 1)
+
+    def test_an_exact_basis_still_reads_closedAt(self):
+        records = replay_on_the_grid()
+        records["F"] = bounded_forward("F", "2026-10-01T10:11:12.345Z",
+                                       "2026-10-01T11:00:00.000Z", "2026-10-01T11:00:41.321Z",
+                                       basis="closed_at_fallback")
+        fired, report = quantization(records)
+        self.assertFalse(fired, "an exact-basis closedAt IS the engine clock; capturedAt must "
+                                "not paper over a grid-aligned one")
+        self.assertEqual(report["byPopulation"]["FORWARD"]["timestampGranularity"]["exactHour"], 1)
+
+    def test_replay_keeps_its_own_clock_even_with_a_bounded_basis(self):
+        """A replay record's capturedAt is the wall time the replay RAN. Substituting it would
+        make the bar grid look continuous and erase the finding from the replay side."""
+        records = replay_on_the_grid()
+        for record in records.values():
+            record["closedAtBasis"] = BOUNDED
+            record["capturedAt"] = "2026-10-20T08:15:42.118Z"
+        records.update(checkpoint_records())
+        fired, report = quantization(records)
+        self.assertTrue(fired)
+        self.assertEqual(report["byPopulation"]["HISTORICAL"]["timestampGranularity"]["subSecond"], 0)
+
+    def test_a_record_without_closedAt_contributes_no_close_stamp(self):
+        record = bounded_forward("F", "2026-10-01T10:11:12.345Z", None, None)
+        record["closedAt"] = None          # observation() would otherwise default one
+        self.assertIsNone(pf.processing_clock_stamp(record))
+
+
+class TestUninterpretableCloseTimingIsRefused(unittest.TestCase):
+    """Never counted, because timestamp_granularity files any string not ending in .000Z as
+    sub-second: a garbage capturedAt would be a silent pass for the finding."""
+
+    def refused(self, **change):
+        records = replay_on_the_grid()
+        records.update(checkpoint_records())
+        records["CKPT|20261014_2"].update(change)
+        with self.assertRaises(to.ObservationRefused) as ctx:
+            pf.compare(records, SOURCES, "alex_g_sr_v1")
+        self.assertIn("CKPT|20261014_2", str(ctx.exception))
+
+    def test_an_unrecognised_basis_is_refused(self):
+        self.refused(closedAtBasis="exit_candle_start")
+
+    def test_a_bounded_basis_without_capturedAt_is_refused(self):
+        self.refused(capturedAt=None)
+
+    def test_an_unparseable_capturedAt_is_refused(self):
+        self.refused(capturedAt="not-a-timestamp")
+
+    def test_a_capture_before_the_market_exit_is_refused(self):
+        self.refused(capturedAt="2026-10-13T21:04:59.999Z")
+
+    def test_POSITIVE_CONTROL_the_unmodified_fixture_is_not_refused(self):
+        records = replay_on_the_grid()
+        records.update(checkpoint_records())
+        pf.compare(records, SOURCES, "alex_g_sr_v1")
+
+
+class TestTheCheckpointRecordsOnTheRealCorpus(unittest.TestCase):
+    """The 8-package import, in memory against the real corpus: the finding the corpus
+    supports today must survive. Asserts the RELATION (still present after adding the eight),
+    not a count."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.observations = to.load_observations()
+        cls.sources = to.load_sources()
+        cls.before = pf.compare(cls.observations, cls.sources, "alex_g_sr_v1")
+        sources = dict(cls.sources)
+        sources["EVSRC|CKPT|20261014"] = source("EVSRC|CKPT|20261014", "paper_trade")
+        merged = dict(cls.observations)
+        added = checkpoint_records(source_id="EVSRC|CKPT|20261014")
+        cls.assertion_input_non_empty = bool(added)
+        merged.update(added)
+        cls.after = pf.compare(merged, sources, "alex_g_sr_v1")
+
+    def test_the_finding_holds_before_and_after_the_eight_are_added(self):
+        self.assertTrue(self.assertion_input_non_empty)
+        for label, report in (("before", self.before), ("after", self.after)):
+            with self.subTest(label=label):
+                self.assertIn(pf.REPLAY_IS_BAR_QUANTIZED,
+                              {f["code"] for f in report["findings"]})
+
+    def test_the_eight_were_actually_counted_as_forward(self):
+        self.assertEqual(self.after["byPopulation"]["FORWARD"]["n"],
+                         self.before["byPopulation"]["FORWARD"]["n"] + 8)

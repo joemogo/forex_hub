@@ -38,6 +38,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import trade_observation as to      # noqa: E402
+import balance_reconcile as br      # noqa: E402
 
 SCHEMA_VERSION = "mogo.population-fidelity.v1"
 LANE = "RESEARCH"
@@ -112,14 +113,56 @@ def _refuse(message):
     raise to.ObservationRefused(message)
 
 
-def population_stats(records):
-    """Descriptive only. No comparison, no verdict."""
+def processing_clock_stamp(record):
+    """The close stamp that carries the ENGINE's clock for a forward record, or None.
+
+    Before v12.42.0 `closedAt` was the ledger's processing stamp -- sub-second wall time --
+    and REPLAY_IS_BAR_QUANTIZED compared that clock against replay's bar grid. From v12.42.0
+    (D4) a record with `closedAtBasis == "exit_detected_at"` carries the detected MARKET exit
+    in `closedAt`, stamped on the minute/candle grid, and the processing stamp is no longer in
+    the package. Counting that `closedAt` here made eight genuine forward closes read as
+    grid-aligned and withdrew the finding (MOGO-IMPORT-SCOPE-2026-10-20.md R-3): the fills did
+    not change, the meaning of the field did. `capturedAt` (the package capture time, the
+    post-tick sweep's wall clock and the upper bound on processing) is that engine clock.
+
+    The basis vocabulary and its validation are balance_reconcile's, so the two readers of
+    `closedAt` cannot disagree about what a basis means. Uninterpretable timing is REFUSED,
+    never counted: an unrecognised basis, a bounded basis without a parseable `capturedAt`, or
+    a capture before the exit. Counting such a stamp would let `timestamp_granularity` file
+    anything not ending in `.000Z` as sub-second -- a silent pass.
+
+    A record with no `closedAt` contributes no close stamp, exactly as before.
+    """
+    if not record.get("closedAt"):
+        return None
+    try:
+        br.processing_bounds(record)
+    except ValueError as exc:
+        _refuse("%s: cannot tell which clock this close was stamped on (%s); refusing to "
+                "count it toward timestamp granularity" % (record.get("observationId"), exc))
+    if record.get("closedAtBasis") in br.EXACT_BASES:
+        return record["closedAt"]
+    return record["capturedAt"]
+
+
+def population_stats(records, processing_clock=False):
+    """Descriptive only. No comparison, no verdict.
+
+    `processing_clock` is set for the FORWARD population only: its close stamps are read
+    through processing_clock_stamp(). Replay is NOT, because a replay record's `closedAt` IS
+    the replay clock under the measurement, and its `capturedAt` is the wall time the replay
+    ran -- substituting it would make the bar grid look continuous.
+    """
     r_multiples = [r["rMultiple"] for r in records if r.get("rMultiple") is not None]
     outcomes = {}
     for record in records:
         outcome = record.get("outcome")
         outcomes[outcome] = outcomes.get(outcome, 0) + 1
     closed = sorted(r["closedAt"] for r in records if r.get("closedAt"))
+    if processing_clock:
+        close_stamps = [processing_clock_stamp(r) for r in records]
+    else:
+        close_stamps = [r.get("closedAt") for r in records]
     stats = {
         "n": len(records),
         "byOutcome": outcomes,
@@ -133,8 +176,8 @@ def population_stats(records):
         "unknownFieldTotal": sum(len(r.get("unknowns") or []) for r in records),
         "riskPctOfBalance": sorted({round(v, 4) for v in risk_pct_of_balance(records)}),
         "timestampGranularity": timestamp_granularity(
-            [r[field] for r in records for field in ("openedAt", "closedAt")
-             if r.get(field)]),
+            [stamp for r, close in zip(records, close_stamps)
+             for stamp in (r.get("openedAt"), close) if stamp]),
     }
     return stats
 
@@ -160,7 +203,8 @@ def compare(observations, sources, strategy_id):
             continue
         grouped.setdefault(to.observation_population(record, sources), []).append(record)
 
-    by_population = {name: population_stats(rows) for name, rows in grouped.items()}
+    by_population = {name: population_stats(rows, processing_clock=(name == to.FORWARD))
+                     for name, rows in grouped.items()}
     historical = by_population.get(to.HISTORICAL)
     forward = by_population.get(to.FORWARD)
 
