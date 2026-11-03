@@ -806,18 +806,92 @@ class TestNothingIsRetroactive(unittest.TestCase):
                 self.assertNotIn(field, written["unknowns"])
 
 
+#: Literal, not to.EXECUTION_KINDS / to.BROKER_FILL_FOR_KIND, so widening the
+#: validator's constants cannot widen what this corpus check accepts.
+CORPUS_EXECUTION_KINDS = ("SIMULATED", "UNKNOWN")
+CORPUS_BROKER_FILLS = ("NONE", "UNKNOWN")
+
+
+def corpus_r6_violations(record):
+    """B-1: what a corpus record may carry, as a relationship rather than a snapshot.
+
+    The original assertion was "no record carries an R-6 field". That held only until
+    the first R-6 import. The property it stood for is narrower and permanent:
+      * a record WITHOUT executionProvenance (written before R-6) carries no R-6 field
+        and no R-6 unknown -- nothing was added retroactively;
+      * a record WITH it is SIMULATED or UNKNOWN, claims no broker fill, and is not
+        execution-verified.
+    """
+    problems = []
+    if "executionProvenance" not in record:
+        for field in NEW_RECORD_FIELDS:
+            if field in record:
+                problems.append("pre-R-6 record carries %r" % (field,))
+            if field in (record.get("unknowns") or []):
+                problems.append("pre-R-6 record lists %r as unknown" % (field,))
+        return problems
+    prov = record["executionProvenance"]
+    if not isinstance(prov, dict):
+        return ["executionProvenance is not an object"]
+    if prov.get("executionKind") not in CORPUS_EXECUTION_KINDS:
+        problems.append("executionKind %r" % (prov.get("executionKind"),))
+    if prov.get("brokerFill") not in CORPUS_BROKER_FILLS:
+        problems.append("brokerFill %r" % (prov.get("brokerFill"),))
+    if prov.get("executionVerified") is not False:
+        problems.append("executionVerified %r" % (prov.get("executionVerified"),))
+    return problems
+
+
 class TestThePreservedCorpusIsUntouched(unittest.TestCase):
     """REAL corpus, read-only. Relationships only: no count is pinned."""
 
-    def test_no_preserved_record_carries_an_R6_field_and_all_still_validate(self):
+    def test_R6_fields_ride_only_with_provenance_and_every_record_validates(self):
         observations = to.load_observations()
         self.assertGreater(len(observations), 0)
+        # Positive control: the pre-R-6 population exists, so its branch is not vacuous.
+        pre_r6 = [i for i, r in observations.items() if "executionProvenance" not in r]
+        self.assertGreater(len(pre_r6), 0)
         for observation_id, record in observations.items():
             with self.subTest(observation=observation_id):
                 to.validate_observation(record)
-                for field in NEW_RECORD_FIELDS + ("executionProvenance",):
-                    self.assertNotIn(field, record)
-                    self.assertNotIn(field, record.get("unknowns") or [])
+                self.assertEqual(corpus_r6_violations(record), [])
+
+    def test_an_R6_field_injected_into_a_pre_R6_record_is_caught(self):
+        observations = to.load_observations()
+        base = next(r for r in observations.values() if "executionProvenance" not in r)
+        self.assertEqual(corpus_r6_violations(base), [])          # positive control
+        for field in NEW_RECORD_FIELDS:
+            with self.subTest(field=field, where="record"):
+                record = copy.deepcopy(base)
+                record[field] = 0
+                self.assertNotEqual(corpus_r6_violations(record), [])
+            with self.subTest(field=field, where="unknowns"):
+                record = copy.deepcopy(base)
+                record["unknowns"] = list(record.get("unknowns") or []) + [field]
+                self.assertNotEqual(corpus_r6_violations(record), [])
+
+    def test_malformed_or_broker_provenance_is_still_caught(self):
+        record = mint(pkg(GAP_A))
+        to.validate_observation(record)                           # positive control
+        self.assertEqual(corpus_r6_violations(record), [])
+        mutations = {
+            "kind_broker": lambda p: p.__setitem__("executionKind", "BROKER"),
+            "fill_filled": lambda p: p.__setitem__("brokerFill", "FILLED"),
+            "verified_true": lambda p: p.__setitem__("executionVerified", True),
+        }
+        for name, mutate in mutations.items():
+            with self.subTest(mutation=name):
+                bad = copy.deepcopy(record)
+                mutate(bad["executionProvenance"])
+                self.assertNotEqual(corpus_r6_violations(bad), [])
+                with self.assertRaises(to.ObservationRefused):
+                    to.validate_observation(bad)
+        with self.subTest(mutation="not_an_object"):
+            bad = copy.deepcopy(record)
+            bad["executionProvenance"] = "SIMULATED"
+            self.assertNotEqual(corpus_r6_violations(bad), [])
+            with self.assertRaises(to.ObservationRefused):
+                to.validate_observation(bad)
 
 
 class TestTheSchemaDocumentsTheRecord(unittest.TestCase):
