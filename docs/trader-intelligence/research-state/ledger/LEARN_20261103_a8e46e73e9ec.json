@@ -1,0 +1,95 @@
+{
+  "adjudicates": false,
+  "assimilatedAt": "2026-11-03T19:27:43Z",
+  "changedState": {
+    "byPopulation.FORWARD.byOutcome.Loss": {
+      "after": 32,
+      "before": 25
+    },
+    "byPopulation.FORWARD.byOutcome.Win": {
+      "after": 9,
+      "before": 8
+    },
+    "byPopulation.FORWARD.meanR": {
+      "after": -0.347128,
+      "before": -0.278437
+    },
+    "byPopulation.FORWARD.n": {
+      "after": 41,
+      "before": 33
+    },
+    "byPopulation.FORWARD.rMultipleCount": {
+      "after": 41,
+      "before": 33
+    },
+    "byPopulation.FORWARD.unknownFieldCounts.exitGapPips": {
+      "after": 1,
+      "before": null
+    },
+    "byPopulation.FORWARD.unknownFieldCounts.exitGapR": {
+      "after": 1,
+      "before": null
+    },
+    "byPopulation.FORWARD.unknownFieldCounts.exitModeledExecutablePrice": {
+      "after": 1,
+      "before": null
+    },
+    "byPopulation.FORWARD.unknownFieldCounts.exitPriceBasis": {
+      "after": 1,
+      "before": null
+    },
+    "byPopulation.FORWARD.unknownFieldCounts.exitQuoteAsk": {
+      "after": 7,
+      "before": null
+    },
+    "byPopulation.FORWARD.unknownFieldCounts.exitQuoteBid": {
+      "after": 7,
+      "before": null
+    },
+    "byPopulation.FORWARD.unknownFieldCounts.exitQuoteSpreadPips": {
+      "after": 7,
+      "before": null
+    },
+    "byPopulation.FORWARD.unknownFieldCounts.marketExitAt": {
+      "after": 10,
+      "before": 9
+    },
+    "byPopulation.FORWARD.winCount": {
+      "after": 9,
+      "before": 8
+    },
+    "byPopulation.FORWARD.winShareOfPreserved": {
+      "after": 0.219512,
+      "before": 0.242424
+    },
+    "byStrategyAndPopulation.alex_g_sr_v1|FORWARD": {
+      "after": 39,
+      "before": 31
+    },
+    "observationTotal": {
+      "after": 271,
+      "before": 263
+    }
+  },
+  "corpusChanged": true,
+  "corpusFingerprintAfter": "a8e46e73e9ececc078354ac9fc13503c9721d30ee3650b0afa21a83a84b1de38",
+  "corpusFingerprintBefore": "dd689859376dcc19772d9ab949ea647e8f416959d52ab7dddfe74007067ff4ad",
+  "generated": true,
+  "lane": "RESEARCH",
+  "learningKinds": [
+    "A_UPDATES_DESCRIPTIVE_STATISTICS",
+    "B_CHANGES_COMPARISON_COHORT",
+    "I_WINNER_LOSER_EVIDENCE",
+    "H_REVEALS_EVIDENCE_DEFICIENCY",
+    "F_LEAVES_HYPOTHESES_UNCHANGED"
+  ],
+  "legitimateConclusion": "Forward observations: 41. Descriptive statistics over the PRESERVED forward subset moved. No hypothesis changed verdict: the corpus still holds no trade evidence for any human trader, which is what blocks them.",
+  "nonConclusion": [
+    "Forward statistics describe the PRESERVED subset, not the account: the oldest closes minted no evidence package (backlog B-22).",
+    "Nothing here is evidence about any human trader. `alex_g_sr_v1` is MOGO's implementation of a published method, not the person who published it.",
+    "A change in descriptive statistics is not a finding about strategy performance; no strategy rule is altered by any observation."
+  ],
+  "observationTotalAfter": 271,
+  "observationTotalBefore": 263,
+  "schemaVersion": "mogo.research-assimilation.v1"
+}

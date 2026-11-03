@@ -4,21 +4,28 @@
     "FORWARD": {
       "bestR": 2.055506,
       "byOutcome": {
-        "Loss": 25,
-        "Win": 8
+        "Loss": 32,
+        "Win": 9
       },
-      "meanR": -0.278437,
-      "n": 33,
-      "rMultipleCount": 33,
+      "meanR": -0.347128,
+      "n": 41,
+      "rMultipleCount": 41,
       "unknownFieldCounts": {
         "accountBalanceAfter": 2,
         "accountBalanceBefore": 2,
         "exitDetectionSource": 2,
-        "marketExitAt": 9,
+        "exitGapPips": 1,
+        "exitGapR": 1,
+        "exitModeledExecutablePrice": 1,
+        "exitPriceBasis": 1,
+        "exitQuoteAsk": 7,
+        "exitQuoteBid": 7,
+        "exitQuoteSpreadPips": 7,
+        "marketExitAt": 10,
         "timeframe": 2
       },
-      "winCount": 8,
-      "winShareOfPreserved": 0.242424,
+      "winCount": 9,
+      "winShareOfPreserved": 0.219512,
       "worstR": -1.117834
     },
     "HISTORICAL": {
@@ -57,12 +64,12 @@
     }
   },
   "byStrategyAndPopulation": {
-    "alex_g_sr_v1|FORWARD": 31,
+    "alex_g_sr_v1|FORWARD": 39,
     "alex_g_sr_v1|HISTORICAL": 221,
     "alex_g_sr_v1|RECONSTRUCTED": 9,
     "current_strategy|FORWARD": 2
   },
-  "corpusFingerprint": "dd689859376dcc19772d9ab949ea647e8f416959d52ab7dddfe74007067ff4ad",
+  "corpusFingerprint": "a8e46e73e9ececc078354ac9fc13503c9721d30ee3650b0afa21a83a84b1de38",
   "fidelity": {
     "alex_g_sr_v1": {
       "agreements": [
@@ -110,6 +117,6 @@
     "total": 641
   },
   "lane": "RESEARCH",
-  "observationTotal": 263,
+  "observationTotal": 271,
   "schemaVersion": "mogo.research-assimilation.v1"
 }
