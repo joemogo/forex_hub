@@ -121,7 +121,73 @@ OBSERVABLE_FIELDS = (
     # then bounds the recorded moment from above -- see balance_reconcile.py.
     "marketExitAt", "exitDetectionSource",
     "outcome", "decisionTaken", "declineReason",
+    # R-6 EXECUTION EVIDENCE (v12.42.0 D2 and later). These say what the exit
+    # PRICE is, which `exitPrice` alone cannot. MOGO never sends a broker order,
+    # so no MOGO record carries a broker fill. Each value means something
+    # different, and the names keep them apart:
+    #   exitPrice                   the simulator's BOOKED exit. On a candle exit
+    #                               this is the trigger level, under the frozen
+    #                               fixed-R convention, EVEN WHEN the market opened
+    #                               beyond it. It is not a market fill.
+    #   exitPriceBasis              the engine's statement of which case applied:
+    #                               "trigger_level" (no gap) | "candle_open_gap".
+    #   exitTriggerLevel            the stop or target level that fired.
+    #   exitModeledExecutablePrice  the engine's MODEL of what the market could
+    #                               have filled: the exit M1 candle's open on the
+    #                               closing side, clamped at the trigger. A model,
+    #                               not a quote and not a fill. The package field is
+    #                               `exitExecutablePrice`; it is renamed so it cannot
+    #                               be read as an executed price.
+    #   exitGapPips / exitGapR      |modeled - trigger|, as the engine measured it.
+    #   exitQuoteBid/Ask/SpreadPips an OBSERVED live quote at the exit (live
+    #                               snapshot exits only).
+    #   recordedResultR             the ledger's fixed-R label; it may differ from
+    #                               rMultiple, which is computed from the price.
+    # Absent means UNKNOWN. In particular, a record with no exitPriceBasis does not
+    # mean "no gap": pre-v12.42 engines never measured one.
+    "exitPriceBasis", "exitTriggerLevel", "exitModeledExecutablePrice",
+    "exitGapPips", "exitGapR",
+    "exitQuoteBid", "exitQuoteAsk", "exitQuoteSpreadPips",
+    "recordedResultR",
 )
+
+# ---------------------------------------------------------------------------
+# Execution provenance (R-6): what KIND of execution a record's outcome is
+# ---------------------------------------------------------------------------
+#
+# A record-level statement, not an observable field. It exists because "the stop
+# price" and "the fill price" were indistinguishable in the corpus: a gap exit
+# booked at the trigger looked exactly like a clean fill there.
+#
+# MOGO is a simulator. Verified in code at mogo-main 23d7b5b8f: every POST goes to
+# api.anthropic.com, every OANDA call is a GET for pricing, candles, instruments or
+# the account, and no order, trade or transaction endpoint exists. So a MOGO
+# record can be SIMULATED, or UNKNOWN when its package does not state its mode.
+# It can NEVER be broker-filled or execution-verified, and the validator refuses
+# any record claiming otherwise.
+EXECUTION_KINDS = ("SIMULATED", "UNKNOWN")
+#: executionKind -> the only brokerFill value it permits.
+BROKER_FILL_FOR_KIND = {"SIMULATED": "NONE", "UNKNOWN": "UNKNOWN"}
+#: executionKind -> the only outcomeBasis value it permits.
+OUTCOME_BASIS_FOR_KIND = {"SIMULATED": "SIMULATOR_BOOKED", "UNKNOWN": "UNKNOWN"}
+#: What each value MEANS on a SIMULATED record. Fixed, not caller-chosen: a role is
+#: a property of the field, so a record cannot relabel its booked exit as a fill.
+FIELD_ROLES = {
+    "exitPrice": "SIMULATOR_BOOKED",
+    "pnl": "SIMULATOR_BOOKED",
+    "rMultiple": "SIMULATOR_BOOKED",
+    "accountBalanceAfter": "SIMULATOR_BOOKED",
+    "recordedResultR": "SIMULATOR_BOOKED",
+    "exitTriggerLevel": "ENGINE_TRIGGER_LEVEL",
+    "exitModeledExecutablePrice": "ENGINE_MODELED_NOT_A_FILL",
+    "exitGapPips": "ENGINE_MODELED_NOT_A_FILL",
+    "exitGapR": "ENGINE_MODELED_NOT_A_FILL",
+    "exitQuoteBid": "OBSERVED_QUOTE",
+    "exitQuoteAsk": "OBSERVED_QUOTE",
+    "exitQuoteSpreadPips": "OBSERVED_QUOTE",
+}
+EXECUTION_PROVENANCE_KEYS = ("executionKind", "brokerFill", "executionVerified",
+                             "outcomeBasis", "packageMode", "fieldRoles", "basis")
 
 
 class ObservationRefused(ec.EvidenceValidationError):
@@ -239,7 +305,92 @@ def validate_observation(record):
                     "INFERRED. Only an inference carries an inference reason."
                     % (field, how))
 
+    _validate_execution_provenance(record)
     return record
+
+
+def _validate_execution_provenance(record):
+    """R-6. No MOGO record may claim a broker fill or a verified execution.
+
+    Two layers. First, a MOGO record may carry no broker-named key anywhere at top
+    level: no such evidence exists, so any such key is a fabrication. Second, the
+    `executionProvenance` block, when present, must be internally consistent and
+    must use the fixed role table, so a booked exit can never be relabelled as
+    executed. The block is optional because the 263 records written before R-6 do
+    not carry it, and they are never rewritten to add it.
+    """
+    if record.get("actor") == "MOGO":
+        for key in record:
+            if "broker" in key.lower():
+                _refuse("MOGO record carries %r. MOGO places no broker orders, so no "
+                        "MOGO record can carry broker execution evidence." % (key,))
+
+    if "executionProvenance" not in record:
+        return
+    prov = record["executionProvenance"]
+    if record.get("actor") != "MOGO":
+        _refuse("executionProvenance is defined only for MOGO records.")
+    if not isinstance(prov, dict) or tuple(sorted(prov)) != tuple(
+            sorted(EXECUTION_PROVENANCE_KEYS)):
+        _refuse("executionProvenance must be an object with exactly the keys %s"
+                % (list(EXECUTION_PROVENANCE_KEYS),))
+    kind = prov["executionKind"]
+    if kind not in EXECUTION_KINDS:
+        _refuse("executionProvenance.executionKind %r must be one of %s. MOGO has no "
+                "broker path, so no other kind can be true."
+                % (kind, list(EXECUTION_KINDS)))
+    if prov["brokerFill"] != BROKER_FILL_FOR_KIND[kind]:
+        _refuse("executionProvenance.brokerFill %r is impossible for executionKind "
+                "%r (only %r). MOGO places no broker orders."
+                % (prov["brokerFill"], kind, BROKER_FILL_FOR_KIND[kind]))
+    if prov["executionVerified"] is not False:
+        _refuse("executionProvenance.executionVerified must be false: nothing in a "
+                "MOGO record verifies an execution.")
+    if prov["outcomeBasis"] != OUTCOME_BASIS_FOR_KIND[kind]:
+        _refuse("executionProvenance.outcomeBasis %r is impossible for executionKind "
+                "%r (only %r)." % (prov["outcomeBasis"], kind,
+                                   OUTCOME_BASIS_FOR_KIND[kind]))
+    if not isinstance(prov["basis"], str) or not prov["basis"].strip():
+        _refuse("executionProvenance.basis must state why the kind is known.")
+    roles = prov["fieldRoles"]
+    if not isinstance(roles, dict):
+        _refuse("executionProvenance.fieldRoles must be an object.")
+    if kind == "UNKNOWN" and roles:
+        _refuse("an UNKNOWN execution kind cannot assign value roles; that would "
+                "claim knowledge the package does not state.")
+    for field, role in roles.items():
+        if field not in FIELD_ROLES:
+            _refuse("fieldRoles names %r, which has no defined role." % (field,))
+        if role != FIELD_ROLES[field]:
+            _refuse("fieldRoles[%r] = %r, but that field's role is fixed as %r. A "
+                    "role is a property of the field, not something a record "
+                    "chooses." % (field, role, FIELD_ROLES[field]))
+        if record.get(field) is None:
+            _refuse("fieldRoles names %r, but the record has no value for it." % (field,))
+    if kind == "SIMULATED":
+        for field in FIELD_ROLES:
+            if record.get(field) is not None and field not in roles:
+                _refuse("%r is recorded but has no role in fieldRoles. On a simulated "
+                        "record every booked, modelled or quoted value must say "
+                        "which of those it is." % (field,))
+
+
+def execution_verified_pnl(observations):
+    """REFUSES. There is no broker-execution-verified P&L in this corpus.
+
+    This is the explicit answer to "what was the execution-verified P&L?", given
+    as a refusal rather than left for a caller to compute by summing `pnl`. Every
+    MOGO `pnl` is SIMULATOR_BOOKED. On the two R-6 gap trades it also differs from
+    the engine's own modelled-fill figure, by 5.10 and 22.38. Summing such values
+    and calling the total "realized execution" is the claim R-6 exists to prevent.
+    The validator makes a broker-confirmed MOGO record impossible to write, so
+    nothing could ever qualify.
+    """
+    count = len(observations or {})
+    _refuse("execution-verified P&L is unavailable: %d record(s) supplied, and no "
+            "MOGO record carries a broker fill (executionProvenance.brokerFill is "
+            "NONE or UNKNOWN by construction). Report booked simulator P&L as "
+            "booked simulator P&L." % (count,))
 
 
 def build_observation(actor, sourceId, instrument, fields, classification,

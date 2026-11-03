@@ -24,6 +24,13 @@ Every field is copied from the package or left UNKNOWN. Specifically:
     make, and offering one would be inventing provenance the package does not carry.
   * A package missing its position or outcome object is SKIPPED with a reason, not
     partially imported. A half-imported decision compares as though it were whole.
+  * A BOOKED EXIT IS NEVER PRESENTED AS A FILL (R-6). MOGO is a simulator, and no
+    record it produces is broker-filled. Since v12.42.0 a gap exit is booked at the
+    trigger level, with the engine's modelled market price recorded beside it. Both
+    are carried, under names that keep them apart (EXECUTION_MAP), and every record
+    states its executionProvenance. A package whose execution evidence is
+    inconsistent HALTS the run (ExecutionEvidenceRefused); it is never skipped,
+    because skipping would quietly remove the worst-executed trades.
 
 DRY RUN BY DEFAULT. Writing 222 records into a corpus is a corpus change; this
 prints what it would create and exits unless `--write` is passed explicitly.
@@ -35,6 +42,7 @@ import datetime
 import glob as globmod
 import hashlib
 import json
+import math
 import os
 import re
 import sys
@@ -102,6 +110,198 @@ OUTCOME_MAP = (
     # and is deliberately NOT mapped here.
     ("rMultiple", "realizedR"),
 )
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# R-6: EXECUTION EVIDENCE. What the exit price IS.
+#
+# Since v12.42.0 (D2) a candle exit records three different prices: the booked
+# price (the trigger level, under the frozen fixed-R convention), the engine's
+# MODEL of what the market could have filled (the exit candle's open on the
+# closing side), and the gap between the two. Before R-6 this importer dropped
+# all but the first. On the two 2026-10 gap exits (EUR/CHF PKG|…|20261014|2,
+# CAD/CHF PKG|…|20261007|1) a corpus record would then have shown a clean -1R
+# fill at the stop, while the market opened 0.053R and 0.224R beyond it.
+#
+# DELIBERATELY NOT IN OUTCOME_MAP. backfill_mapped_fields() iterates OUTCOME_MAP
+# over every preserved record. Mapping these fields there would append nine
+# `unknowns` entries to each of the 263 existing records the next time a backfill
+# ran. R-6 changes no existing record; that widening is a separate operator
+# decision. This follows the same precedent as closedAtBasis and capturedAt.
+#
+# Values are copied unchanged; the only edit is a name. An absent value becomes
+# an explicit UNKNOWN. Nothing is defaulted to 0 or to "trigger_level".
+EXECUTION_MAP = (
+    ("exitPriceBasis", "exitPriceBasis"),
+    ("exitTriggerLevel", "exitTriggerLevel"),
+    ("exitModeledExecutablePrice", "exitExecutablePrice"),
+    ("exitGapPips", "exitGapPips"),
+    ("exitGapR", "exitGapR"),
+    ("exitQuoteBid", "exitBid"),
+    ("exitQuoteAsk", "exitAsk"),
+    ("exitQuoteSpreadPips", "exitSpreadPips"),
+    ("recordedResultR", "recordedResultR"),
+)
+
+#: The only exit-price bases the engine emits (index.html alexGCheckLivePositions).
+EXIT_PRICE_BASES = ("trigger_level", "candle_open_gap")
+#: The only package modes the engine emits (index.html package validator). Both are
+#: MOGO's own simulation; neither involves a broker.
+SIMULATED_MODES = ("LIVE_PAPER", "REPLAY")
+#: Why SIMULATED is known, stated on every record that claims it.
+SIMULATED_BASIS = ("identity.mode=%s; MOGO places no broker orders (no order, trade or "
+                   "transaction endpoint in index.html at mogo-main 23d7b5b8f; R-6 "
+                   "execution-evidence review)")
+#: Relative tolerance for gap figures re-derived from prices. The engine and this
+#: module both compute in IEEE doubles from the same inputs, so agreement is
+#: normally exact; this tolerance only absorbs harmless last-bit differences.
+GAP_REL_TOL = 1e-6
+
+
+class ExecutionEvidenceRefused(ec.EvidenceValidationError):
+    """A package's execution evidence is inconsistent or unsupported.
+
+    RAISED, not returned as a skip, so it halts the WHOLE run. A skip would let the
+    other packages import, which is a partial import keyed on an evidence defect,
+    and the population would quietly lose exactly the trades whose execution was
+    worst. convert_all() writes nothing, so a refusal leaves the corpus untouched.
+
+    Deliberately NOT a subclass of trade_observation.ObservationRefused. main()'s
+    write loop catches that class per record, and must never swallow this one.
+    """
+
+
+def _pip_size(instrument):
+    """Exactly index.html's pipSize(): 0.01 for any JPY pair, else 0.0001."""
+    return 0.01 if "JPY" in str(instrument) else 0.0001
+
+
+def _finite_number(value):
+    return (not isinstance(value, bool) and isinstance(value, (int, float))
+            and math.isfinite(value))
+
+
+def check_execution_evidence(package):
+    """The seven R-6 consistency checks. Raises ExecutionEvidenceRefused; else None.
+
+    These read the PACKAGE, not the minted record, so what is checked is exactly
+    what the engine stated. A package with no execution evidence at all passes:
+    its fields are recorded as UNKNOWN, which is the truth.
+    """
+    position = ((package.get("objects") or {}).get("positions") or [{}])[0]
+    outcome = ((package.get("objects") or {}).get("outcomes") or [{}])[0]
+    pid = package.get("packageId")
+    basis = outcome.get("exitPriceBasis")
+    executable = outcome.get("exitExecutablePrice")
+    gap_pips = outcome.get("exitGapPips")
+    gap_r = outcome.get("exitGapR")
+    trigger = outcome.get("exitTriggerLevel")
+
+    def refuse(rule, message):
+        raise ExecutionEvidenceRefused("R6-%s %s: %s" % (rule, pid, message))
+
+    # (1) A basis must be a supported one, and gap evidence cannot appear without one.
+    if basis is None:
+        stray = [k for k in ("exitExecutablePrice", "exitGapPips", "exitGapR")
+                 if outcome.get(k) is not None]
+        if stray:
+            refuse(1, "gap evidence %s present with no exitPriceBasis" % stray)
+        return
+    if basis not in EXIT_PRICE_BASES:
+        refuse(1, "unsupported exitPriceBasis %r (supported: %s)"
+               % (basis, list(EXIT_PRICE_BASES)))
+
+    # (6) Only the historical-candle path measures a gap.
+    if outcome.get("exitDetectionSource") != "historical_candle":
+        refuse(6, "exitPriceBasis %r on exitDetectionSource %r; only "
+               "historical_candle exits carry one"
+               % (basis, outcome.get("exitDetectionSource")))
+
+    # (2) Every figure needed to check the basis must be a finite number.
+    for name, value in (("exitExecutablePrice", executable), ("exitGapPips", gap_pips),
+                        ("exitGapR", gap_r), ("exitTriggerLevel", trigger)):
+        if not _finite_number(value):
+            refuse(2, "%s is %r; a %s exit needs it as a finite number"
+                   % (name, value, basis))
+    if basis == "candle_open_gap" and (gap_pips <= 0 or gap_r <= 0
+                                       or executable == trigger):
+        refuse(2, "candle_open_gap with a non-positive gap (pips=%r, R=%r)"
+               % (gap_pips, gap_r))
+
+    # (4) No gap means no gap: zero gap, and the modelled price IS the trigger.
+    if basis == "trigger_level" and (gap_pips != 0 or gap_r != 0
+                                     or executable != trigger):
+        refuse(4, "trigger_level but gap pips=%r R=%r, executable=%r vs trigger=%r"
+               % (gap_pips, gap_r, executable, trigger))
+
+    # (7) The booking is the trigger. If an engine ever booked the modelled price
+    # instead, every gap figure below would describe a different trade.
+    if outcome.get("exitPrice") != trigger:
+        refuse(7, "booked exitPrice %r is not exitTriggerLevel %r"
+               % (outcome.get("exitPrice"), trigger))
+
+    # (3) The modelled price lies on the side of the trigger that the engine's clamp
+    # permits. For a stop that is beyond it, against the position. For a target it
+    # is beyond it IN the position's favour: the engine takes max(open, target) on a
+    # buy, so a gap through a target is legitimately favourable.
+    direction = position.get("direction")
+    if direction not in ("buy", "sell"):
+        refuse(3, "direction %r; cannot orient the gap" % (direction,))
+    sign = 1 if direction == "buy" else -1
+    # The engine's riskPips uses pos.stop, the CURRENT stop (index.html:6788);
+    # policy NONE_BY_DESIGN keeps it equal to originalStop, which is the fallback.
+    stop = (position.get("currentStop") if _finite_number(position.get("currentStop"))
+            else position.get("originalStop"))
+    reason = outcome.get("exitReasonCode")
+    if reason == "Loss" and trigger == stop:
+        if sign * (executable - trigger) > 0:
+            refuse(3, "stop exit modelled FAVOURABLY (executable %r beyond stop %r "
+                   "in the position's favour)" % (executable, trigger))
+    elif reason == "Win" and trigger == position.get("target"):
+        if sign * (executable - trigger) < 0:
+            refuse(3, "target exit modelled short of the target (executable %r vs "
+                   "target %r)" % (executable, trigger))
+    else:
+        refuse(3, "exitReasonCode %r with trigger %r matches neither the stop %r nor "
+               "the target %r" % (reason, trigger, stop, position.get("target")))
+
+    # (5) The stated gap agrees with the stated prices.
+    entry = position.get("entryPrice")
+    if not (_finite_number(entry) and _finite_number(stop)) or entry == stop:
+        refuse(5, "entry %r / stop %r cannot give a risk distance" % (entry, stop))
+    pip = _pip_size(position.get("instrument"))
+    expected_pips = abs(executable - trigger) / pip
+    expected_r = expected_pips / (abs(entry - stop) / pip)
+    if not (math.isclose(gap_pips, expected_pips, rel_tol=GAP_REL_TOL, abs_tol=1e-9)
+            and math.isclose(gap_r, expected_r, rel_tol=GAP_REL_TOL, abs_tol=1e-9)):
+        refuse(5, "stated gap %r pips / %r R; the prices give %r / %r"
+               % (gap_pips, gap_r, expected_pips, expected_r))
+
+
+def execution_provenance(package, record_fields):
+    """The record-level executionProvenance statement. Raises on an unsupported mode.
+
+    The kind comes from the package's own identity.mode, never from the capture
+    basis or a default. A package that states no mode is UNKNOWN, not assumed
+    simulated. A mode this module does not know is refused outright, because a
+    future mode might be a real execution path, and labelling it SIMULATED would
+    be the opposite error.
+    """
+    mode = (package.get("identity") or {}).get("mode")
+    if mode is None:
+        return {"executionKind": "UNKNOWN", "brokerFill": "UNKNOWN",
+                "executionVerified": False, "outcomeBasis": "UNKNOWN",
+                "packageMode": None, "fieldRoles": {},
+                "basis": "package states no identity.mode"}
+    if mode not in SIMULATED_MODES:
+        raise ExecutionEvidenceRefused(
+            "R6-MODE %s: identity.mode %r is not a known simulator mode %s"
+            % (package.get("packageId"), mode, list(SIMULATED_MODES)))
+    roles = {f: r for f, r in to.FIELD_ROLES.items() if record_fields.get(f) is not None}
+    return {"executionKind": "SIMULATED", "brokerFill": "NONE",
+            "executionVerified": False, "outcomeBasis": "SIMULATOR_BOOKED",
+            "packageMode": mode, "fieldRoles": roles,
+            "basis": SIMULATED_BASIS % mode}
 
 
 _FAMILY_GLOB = os.path.join(REPO_ROOT, "docs", "trader-intelligence", "traders",
@@ -454,6 +654,21 @@ def observation_from_package(package, now, counters=None, source=None):
             fields[target_field] = value
             classification[target_field] = "DIRECTLY_OBSERVED"
 
+    # R-6. Checked BEFORE anything is mapped from it, and raised, so an inconsistent
+    # package halts the run instead of being imported without its gap.
+    check_execution_evidence(package)
+    for target_field, source_key in EXECUTION_MAP:
+        value = outcome.get(source_key)
+        if value is None:
+            unknowns.append(target_field)
+        else:
+            fields[target_field] = value
+            # DIRECTLY_OBSERVED in this module's one sense: copied unchanged from
+            # MOGO's own record. What the value MEANS (booked, modelled or quoted)
+            # is stated in executionProvenance.fieldRoles, never by this label.
+            classification[target_field] = "DIRECTLY_OBSERVED"
+    provenance = execution_provenance(package, fields)
+
     if fields.get("instrument") is None:
         return None, "NO_INSTRUMENT"
 
@@ -489,6 +704,8 @@ def observation_from_package(package, now, counters=None, source=None):
         # never rewrites a preserved record that predates either field.
         closedAtBasis=outcome.get("exitTimestampBasis"),
         capturedAt=package.get("createdAt"),
+        # R-6: simulator-booked, never broker-filled. See execution_provenance().
+        executionProvenance=provenance,
         notes="captureBasis=%s sourceType=%s" % (basis, source_type),
     )
     return record, None

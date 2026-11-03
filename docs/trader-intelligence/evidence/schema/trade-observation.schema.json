@@ -125,6 +125,75 @@
       ],
       "default": null
     },
+    "exitPriceBasis": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "trigger_level",
+        "candle_open_gap",
+        null
+      ],
+      "default": null,
+      "description": "R-6. The engine's statement of how the BOOKED exitPrice relates to the market, on a historical-candle exit (v12.42.0 D2 and later). trigger_level: the exit candle traded through the trigger, and the booked price is the trigger. candle_open_gap: the candle OPENED beyond the trigger, so the booked trigger price is one the market never traded; see exitModeledExecutablePrice. Absent or null means UNKNOWN, never 'no gap': pre-v12.42 engines and live-snapshot exits do not state one."
+    },
+    "exitTriggerLevel": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "default": null,
+      "description": "R-6. The stop or target level that fired. On a historical-candle exit the booked exitPrice equals it, under the frozen fixed-R convention."
+    },
+    "exitModeledExecutablePrice": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "default": null,
+      "description": "R-6. The engine's MODEL of the price the market could have filled: the open of the exit M1 candle on the closing side, clamped at the trigger. A model, NOT a quote and NOT a fill; MOGO places no broker orders. Copied from the package field exitExecutablePrice, and renamed so it cannot be read as an executed price."
+    },
+    "exitGapPips": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "default": null,
+      "description": "R-6. |exitModeledExecutablePrice - exitTriggerLevel| in pips, as the engine stated it. 0 is a measured zero (exitPriceBasis trigger_level). Absent is UNKNOWN."
+    },
+    "exitGapR": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "default": null,
+      "description": "R-6. exitGapPips / risk pips, as the engine stated it. Engine-modelled; never booked and never subtracted from pnl."
+    },
+    "exitQuoteBid": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "default": null,
+      "description": "R-6. The live bid OBSERVED at a live-snapshot exit (package exitBid). An observed quote, not a fill."
+    },
+    "exitQuoteAsk": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "default": null,
+      "description": "R-6. The live ask OBSERVED at a live-snapshot exit (package exitAsk). An observed quote, not a fill."
+    },
+    "exitQuoteSpreadPips": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "default": null,
+      "description": "R-6. The spread of that observed quote, in pips (package exitSpreadPips)."
+    },
     "positionSize": {
       "type": [
         "number",
@@ -153,6 +222,14 @@
       ],
       "default": null
     },
+    "recordedResultR": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "default": null,
+      "description": "R-6. The ledger's fixed-R result label (package recordedResultR: -1 or plannedRR). It can differ from rMultiple, which is computed from the booked price. On a live-snapshot exit rMultiple includes the slippage and this label does not."
+    },
     "accountBalanceBefore": {
       "type": [
         "number",
@@ -180,6 +257,22 @@
         "null"
       ],
       "default": null
+    },
+    "closedAtBasis": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "default": null,
+      "description": "What closedAt means on this record, copied from the package's exitTimestampBasis. exit_detected_at (v12.42.0 D4): the minute-aligned MARKET exit. Absent: the original meaning, the moment the close was RECORDED. Minted since R-3; documented here at R-6."
+    },
+    "capturedAt": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "default": null,
+      "description": "The package capture time (package createdAt): an upper bound on when the ledger applied the close. Minted since R-3; documented here at R-6."
     },
     "outcome": {
       "type": [
@@ -322,6 +415,67 @@
       ],
       "default": null,
       "description": "How the exit was detected -- e.g. historical_candle (reconstructed on a re-walk) or live_snapshot. Recorded because it determines whether closedAt can be read as a market time at all."
+    },
+    "executionProvenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "executionKind",
+        "brokerFill",
+        "executionVerified",
+        "outcomeBasis",
+        "packageMode",
+        "fieldRoles",
+        "basis"
+      ],
+      "description": "R-6. What KIND of execution this record's outcome is. MOGO-only. MOGO is a simulator: it places no broker orders, so no MOGO record is broker-filled or execution-verified, and trade_observation refuses any that claims to be. Booked figures (exitPrice, pnl, rMultiple, accountBalanceAfter) are SIMULATOR_BOOKED. They are never 'realized execution', and trade_observation.execution_verified_pnl() refuses to aggregate them as such. Absent on records written before R-6.",
+      "properties": {
+        "executionKind": {
+          "enum": [
+            "SIMULATED",
+            "UNKNOWN"
+          ],
+          "description": "SIMULATED when the package states identity.mode LIVE_PAPER or REPLAY. UNKNOWN when it states no mode. Any other mode is refused at import."
+        },
+        "brokerFill": {
+          "enum": [
+            "NONE",
+            "UNKNOWN"
+          ],
+          "description": "NONE for SIMULATED, UNKNOWN for UNKNOWN. No other value is permitted."
+        },
+        "executionVerified": {
+          "const": false
+        },
+        "outcomeBasis": {
+          "enum": [
+            "SIMULATOR_BOOKED",
+            "UNKNOWN"
+          ]
+        },
+        "packageMode": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "fieldRoles": {
+          "type": "object",
+          "additionalProperties": {
+            "enum": [
+              "SIMULATOR_BOOKED",
+              "ENGINE_TRIGGER_LEVEL",
+              "ENGINE_MODELED_NOT_A_FILL",
+              "OBSERVED_QUOTE"
+            ]
+          },
+          "description": "For each recorded booked, modelled or quoted value, which of those it is. The roles are fixed per field (trade_observation.FIELD_ROLES). Empty when executionKind is UNKNOWN."
+        },
+        "basis": {
+          "type": "string",
+          "description": "Why the kind is known."
+        }
+      }
     }
   }
 }
