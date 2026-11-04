@@ -189,6 +189,12 @@ if ! node tests/mutate_v1241_exit_provenance.js; then
   OVERALL_EXIT=1
 fi
 
+# Broker-practice executor mutation gate: every safety guard in execution/oanda_practice/,
+# deleted, must turn tests/execution/test_oanda_practice.py red. Offline; opens no socket.
+if ! python3 tests/execution/mutate_oanda_practice.py; then
+  OVERALL_EXIT=1
+fi
+
 if ! node tests/mutate_v166_tod_session.js; then
   OVERALL_EXIT=1
 fi
@@ -217,8 +223,9 @@ echo ""
 # discovery is not importable here (the test packages have no __init__ chain from
 # the repo root), so the modules are enumerated from the filesystem instead of
 # being listed by hand, and a new suite file is picked up automatically.
-echo "--- Python research suites (trader intelligence) ---"
-PY_MODULES="$(find tests/trader_intelligence -name 'test_*.py' \
+echo "--- Python suites (trader intelligence, broker-practice execution) ---"
+# Roots must match SUITE_ROOTS in tests/count_python_tests.py.
+PY_MODULES="$(find tests/trader_intelligence tests/execution -name 'test_*.py' \
   | sed 's#/#.#g; s#\.py$##' | sort)"
 PY_COUNT="$(printf '%s\n' "$PY_MODULES" | grep -c .)"
 if [ "$PY_COUNT" -eq 0 ]; then
