@@ -307,6 +307,19 @@ class TestProtectionIsVerifiedAtTheBroker(Base):
         self.ex.reconcile()
         self.assertTrue(any(h.startswith("TRADE_MISSING_AT_BROKER") for h in self.halts()))
 
+    def test_two_close_fills_for_one_trade_halt_and_book_nothing(self):
+        auth = self.open_protected()
+        tid = self.pos(auth)["trade_id"]
+        self.fake.trigger_stop(tid)
+        first = [t for t in self.fake.transactions if t.get("reason") == "STOP_LOSS_ORDER"][0]
+        second = dict(first, id=self.fake._id(), accountBalance=first["accountBalance"],
+                      pl="0.0000", financing="0.0000", commission="0.0000")
+        self.fake.transactions.append(second)        # a second fill claiming to close the same trade
+        self.ex.reconcile()
+        self.assertTrue(any(h.startswith("MULTIPLE_CLOSE_FILLS %s" % tid) for h in self.halts()))
+        self.assertEqual(self.pos(auth)["state"], jn.PROTECTED)          # nothing booked
+        self.assertRefused("HALT_ACTIVE", self.ex.submit, make_auth(authorizationId="AUTH-20261104-0001"))
+
     def test_a_closed_trade_without_close_evidence_halts(self):
         auth = self.open_protected()
         trade = self.fake.trades.pop()

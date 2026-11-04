@@ -141,6 +141,7 @@ MUTANTS = [
     ("X9 open trade + close fill halts", [(E, "                if any(closing_entry(t, pos[\"trade_id\"])[0] for t in txns if t.get(\"type\") == \"ORDER_FILL\"):", "                if False:")]),
     ("X10 rewritten transaction halts", [(E, "        if rewritten:\n", "        if False:\n")]),
     ("X11 only an open position closes", [(E, "        if pos is None or pos[\"state\"] not in jn.POSITION_OPEN_STATES:", "        if pos is None:")]),
+    ("X13 multiple close fills halt", [(E, "        if len(closes) != 1:\n            return self._halt(report, \"MULTIPLE_CLOSE_FILLS", "        if False:\n            return self._halt(report, \"MULTIPLE_CLOSE_FILLS")]),
     ("X12 unprotected position halts", [(E, "            if stop_id is None:\n                return self._halt", "            if False:\n                return self._halt")]),
     # kill
     ("K1 missing state dir reads engaged", [(K, " or not os.path.isdir(os.path.dirname(self.path))", "")]),
