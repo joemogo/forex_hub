@@ -13,9 +13,9 @@ was created (REJECTED). Every other shape -- a 5xx, a 429, an unparseable body,
 a fill missing its trade, a fill for different units -- is UNCERTAIN, because
 treating it as "nothing happened" is how an order gets placed twice.
 
-M1 does not interpret fills beyond identity, price and units: realized P&L,
-financing, closes and balance reconciliation are M2 (close_trade and the
-accounting methods are declared here and refuse until then).
+M2 adds the position side: trade details, a contiguous transaction history,
+and closing. A close is classified with the same asymmetry: CLOSED only on an
+ORDER_FILL whose tradesClosed entry names our trade for its full units.
 """
 from decimal import Decimal, InvalidOperation
 
@@ -37,12 +37,31 @@ class Quote(object):
 
 
 class AccountSummary(object):
-    __slots__ = ("account_id", "currency", "last_transaction_id", "open_trade_count", "raw")
+    __slots__ = ("account_id", "currency", "last_transaction_id", "open_trade_count", "balance", "raw")
 
-    def __init__(self, account_id, currency, last_transaction_id, open_trade_count, raw):
+    def __init__(self, account_id, currency, last_transaction_id, open_trade_count, raw, balance=None):
         self.account_id, self.currency = account_id, currency
         self.last_transaction_id, self.open_trade_count = last_transaction_id, open_trade_count
-        self.raw = raw
+        self.balance, self.raw = balance, raw
+
+
+class TradeState(object):
+    """A broker trade as GET trades/{id} reports it."""
+    __slots__ = ("trade_id", "state", "instrument", "open_price", "current_units",
+                 "stop_order", "raw")
+
+    def __init__(self, trade_id, state, instrument, open_price, current_units, stop_order, raw):
+        self.trade_id, self.state, self.instrument = trade_id, state, instrument
+        self.open_price, self.current_units = open_price, current_units
+        self.stop_order, self.raw = stop_order, raw
+
+
+class TransactionWindow(object):
+    """Every transaction after `since`, proven contiguous up to `last_id`."""
+    __slots__ = ("since", "last_id", "transactions", "raw")
+
+    def __init__(self, since, last_id, transactions, raw):
+        self.since, self.last_id, self.transactions, self.raw = since, last_id, transactions, raw
 
 
 class SubmitOutcome(object):
@@ -55,7 +74,7 @@ class SubmitOutcome(object):
 
 
 class BrokerAdapter(object):
-    """Interface. M1 uses the first five; M2 implements the last two."""
+    """Interface. Kept narrow: these eight calls are the whole broker surface."""
 
     def account_summary(self):
         raise NotImplementedError
@@ -72,11 +91,14 @@ class BrokerAdapter(object):
     def resolve_client_order(self, client_id, since_transaction_id, expected_units):
         raise NotImplementedError
 
-    def close_trade(self, trade_id):
-        raise NotImplementedError("M2: closing is not implemented in M1")
+    def trade(self, trade_id):
+        raise NotImplementedError
 
-    def transactions_for_accounting(self, since_transaction_id):
-        raise NotImplementedError("M2: accounting is not implemented in M1")
+    def transactions_since(self, since_transaction_id):
+        raise NotImplementedError
+
+    def close_trade(self, trade_id, expected_trade_units):
+        raise NotImplementedError
 
 
 def _decimal(value):
@@ -100,7 +122,10 @@ def _read(transport, operation, **params):
 
 
 def classify_fill(fill, expected_client_id, expected_units, raw):
-    """FILLED only on complete evidence; anything less is UNCERTAIN with a reason."""
+    """FILLED only on complete evidence; anything less is UNCERTAIN with a reason.
+
+    expected_units is SIGNED (negative for a sell), as OANDA reports tradeOpened.units.
+    """
     opened = fill.get("tradeOpened") if isinstance(fill, dict) else None
     if not isinstance(opened, dict) or not opened.get("tradeID"):
         return SubmitOutcome(UNCERTAIN, reason="FILL_WITHOUT_TRADE_OPENED", raw=raw)
@@ -128,10 +153,13 @@ class OandaPracticeAdapter(BrokerAdapter):
             raise BrokerReadFailed("ACCOUNT_SUMMARY has no account object")
         last = response.data.get("lastTransactionID") or account.get("lastTransactionID")
         count = account.get("openTradeCount")
+        balance = _decimal(account.get("balance"))
         if not isinstance(account.get("currency"), str) or not isinstance(last, str) \
-                or not isinstance(count, int):
-            raise BrokerReadFailed("ACCOUNT_SUMMARY is missing currency, lastTransactionID or openTradeCount")
-        return AccountSummary(account.get("id"), account["currency"], last, count, response.body)
+                or not isinstance(count, int) or balance is None:
+            raise BrokerReadFailed("ACCOUNT_SUMMARY is missing currency, balance, lastTransactionID "
+                                   "or openTradeCount")
+        return AccountSummary(account.get("id"), account["currency"], last, count, response.body,
+                              balance=balance)
 
     def quote(self, instrument):
         response = _read(self._t, "PRICING", instrument=instrument)
@@ -226,3 +254,99 @@ class OandaPracticeAdapter(BrokerAdapter):
         if state == "CANCELLED":
             return SubmitOutcome(CANCELLED, reason="RESOLVED_CANCELLED", order_id=order.get("id"), raw=raw)
         return SubmitOutcome(UNCERTAIN, reason="ORDER_STATE_%s" % state, raw=raw)
+
+    # ---- M2: the position side -------------------------------------------------------
+    def trade(self, trade_id):
+        """The trade, or None when the broker says it does not exist (404)."""
+        try:
+            response = self._t.request("TRADE_DETAILS", trade_id=trade_id)
+        except (SendUncertain, NotSent) as exc:
+            raise BrokerReadFailed("TRADE_DETAILS failed: %s" % exc)
+        if response.status == 404:
+            return None
+        if response.status != 200 or not isinstance(response.data, dict) \
+                or not isinstance(response.data.get("trade"), dict):
+            raise BrokerReadFailed("TRADE_DETAILS returned HTTP %s" % response.status)
+        t = response.data["trade"]
+        units = _decimal(t.get("currentUnits"))
+        price = _decimal(t.get("price"))
+        if t.get("id") != trade_id or t.get("state") not in ("OPEN", "CLOSED", "CLOSE_WHEN_TRADEABLE") \
+                or units is None or price is None:
+            raise BrokerReadFailed("TRADE_DETAILS is missing id, state, price or currentUnits")
+        stop = t.get("stopLossOrder")
+        stop_order = None
+        if isinstance(stop, dict):
+            stop_order = {"id": stop.get("id"), "state": stop.get("state"),
+                          "price": _decimal(stop.get("price")), "tradeID": stop.get("tradeID")}
+        return TradeState(trade_id, t["state"], t.get("instrument"), price, units, stop_order,
+                          response.body)
+
+    def transactions_since(self, since_transaction_id):
+        """All transactions after `since`, or BrokerReadFailed if the history is not contiguous.
+
+        A gap (a page limit, a dropped transaction) would let a balance-changing event
+        go unseen, so an incomplete window is refused rather than reconciled.
+        """
+        response = _read(self._t, "TRANSACTIONS_SINCE", transaction_id=since_transaction_id)
+        txns = response.data.get("transactions")
+        last = response.data.get("lastTransactionID")
+        if not isinstance(txns, list) or not isinstance(last, str) or not last.isdigit():
+            raise BrokerReadFailed("TRANSACTIONS_SINCE has no transactions list or lastTransactionID")
+        ids = []
+        for t in txns:
+            tid = t.get("id") if isinstance(t, dict) else None
+            if not isinstance(tid, str) or not tid.isdigit():
+                raise BrokerReadFailed("TRANSACTIONS_SINCE carries a transaction without an id")
+            ids.append(int(tid))
+        expected = list(range(int(since_transaction_id) + 1, int(last) + 1))
+        if ids != expected:
+            raise BrokerReadFailed("INCOMPLETE_TRANSACTION_HISTORY: ids %s.. do not run "
+                                   "contiguously from %s to %s" % (ids[:3], since_transaction_id, last))
+        return TransactionWindow(since_transaction_id, last, txns, response.body)
+
+    def close_trade(self, trade_id, expected_trade_units):
+        """Close ALL of one trade. Raises NotSent if provably unsent; otherwise an outcome."""
+        try:
+            response = self._t.request("CLOSE_TRADE", body={"units": "ALL"}, trade_id=trade_id)
+        except SendUncertain as exc:
+            return SubmitOutcome(UNCERTAIN, reason="SEND_UNCERTAIN:" + str(exc))
+        data, raw = response.data, response.body
+        if response.status == 200 and isinstance(data, dict):
+            fill = data.get("orderFillTransaction")
+            if isinstance(fill, dict):
+                return classify_close_fill(fill, trade_id, expected_trade_units, raw)
+            cancel = data.get("orderCancelTransaction")
+            if isinstance(cancel, dict):
+                return SubmitOutcome(CANCELLED, reason=cancel.get("reason") or "UNSTATED", raw=raw)
+            return SubmitOutcome(UNCERTAIN, reason="CLOSE_WITHOUT_FILL_OR_CANCEL", raw=raw)
+        if response.status in DEFINITIVE_NO_ORDER_STATUSES:
+            reason = data.get("errorCode") if isinstance(data, dict) else None
+            return SubmitOutcome(REJECTED, reason=reason or "HTTP_%d" % response.status, raw=raw)
+        return SubmitOutcome(UNCERTAIN, reason="HTTP_%d" % response.status, raw=raw)
+
+
+def closing_entry(fill, trade_id):
+    """(kind, entry) for our trade in a fill: 'CLOSED', 'REDUCED' or (None, None)."""
+    for kind, key in (("CLOSED", "tradesClosed"), ("REDUCED", "tradeReduced")):
+        entries = fill.get(key)
+        entries = [entries] if isinstance(entries, dict) else (entries or [])
+        for entry in entries:
+            if isinstance(entry, dict) and entry.get("tradeID") == trade_id:
+                return kind, entry
+    return None, None
+
+
+def classify_close_fill(fill, trade_id, expected_trade_units, raw):
+    """CLOSED only when the fill closes our trade for its full units, with price and P&L."""
+    kind, entry = closing_entry(fill, trade_id)
+    if kind is None:
+        return SubmitOutcome(UNCERTAIN, reason="CLOSE_FILL_DOES_NOT_NAME_OUR_TRADE", raw=raw)
+    if kind == "REDUCED":
+        return SubmitOutcome(UNCERTAIN, reason="PARTIAL_CLOSE", raw=raw)
+    units, price = _decimal(entry.get("units")), _decimal(entry.get("price"))
+    if units is None or price is None or _decimal(entry.get("realizedPL")) is None:
+        return SubmitOutcome(UNCERTAIN, reason="CLOSE_FILL_MISSING_UNITS_PRICE_OR_PL", raw=raw)
+    if units != -Decimal(expected_trade_units):
+        return SubmitOutcome(UNCERTAIN, reason="CLOSE_UNITS_MISMATCH", raw=raw)
+    return SubmitOutcome("CLOSED", reason=fill.get("reason"), order_id=fill.get("orderID"),
+                         trade_id=trade_id, fill_price=price, fill_units=units, raw=raw)

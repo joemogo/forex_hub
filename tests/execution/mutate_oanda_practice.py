@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
-"""Mutation gate for the M1 practice executor: every guard, deleted, must turn the suite red.
+"""Mutation gate for the practice executor (M1 + M2): every guard, deleted, must turn the suites red.
 
 Each mutant replaces one exact snippet (which must occur exactly once) in one
 file of execution/oanda_practice/, clears __pycache__, runs
-tests/execution/test_oanda_practice.py, and requires a non-zero exit. The file is
+tests/execution/test_oanda_practice.py and test_oanda_practice_m2.py, and requires a non-zero exit. The file is
 restored in a finally block, and the run ends by checking every source file's
 bytes against the hashes taken before the first mutant.
 
-The two DEFENCE-IN-DEPTH pairs (a check made both in submit() and again inside
-the journal's atomic reserve()) are mutated TOGETHER as well as singly: removing
-one layer alone is caught by the other by design, so the single mutants are
-listed in EXPECTED_SURVIVORS and the paired mutants must die.
+The DEFENCE-IN-DEPTH pairs (a check made both in submit() and again inside the
+journal's atomic reserve()) are mutated TOGETHER, and the paired mutants must
+die. Their single layers are also run, as information only: one layer alone may
+be caught by the other by design, so a single-layer survivor is not a failure.
 
     python3 tests/execution/mutate_oanda_practice.py
 """
@@ -23,10 +23,10 @@ import sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.abspath(os.path.join(HERE, "..", ".."))
 PKG = os.path.join(REPO, "execution", "oanda_practice")
-SUITE = os.path.join(HERE, "test_oanda_practice.py")
+SUITES = ["tests.execution.test_oanda_practice", "tests.execution.test_oanda_practice_m2"]
 
-T, C, A, R, J, E, D, K = ("transport.py", "config.py", "authorization.py", "risk.py",
-                          "journal.py", "executor.py", "adapter.py", "kill.py")
+T, C, A, R, J, E, D, K, N = ("transport.py", "config.py", "authorization.py", "risk.py",
+                             "journal.py", "executor.py", "adapter.py", "kill.py", "accounting.py")
 
 MUTANTS = [
     # transport
@@ -34,7 +34,8 @@ MUTANTS = [
     ("T2 operation allow-list", [(T, "if operation not in OPERATIONS:\n", "if False:\n")]),
     ("T3 parameter shapes", [(T, "if not isinstance(value, str) or not _PARAM_SHAPES[name].match(value):", "if not isinstance(value, str):")]),
     ("T4 caller cannot set account", [(T, "        if \"account\" in params:\n            raise TransportRefused(\"the account is fixed by configuration\")\n", "")]),
-    ("T5 kill at send time", [(T, "if is_write and self._kill is not None and self._kill.engaged():", "if False:")]),
+    ("T5 kill at send time", [(T, "if OPERATIONS[operation][3] and self._kill is not None and self._kill.engaged():", "if False:")]),
+    ("T8 a close is not kill-gated", [(T, '"CLOSE_TRADE": ("PUT", "/v3/accounts/{account}/trades/{trade_id}/close", True, False),', '"CLOSE_TRADE": ("PUT", "/v3/accounts/{account}/trades/{trade_id}/close", True, True),')]),
     ("T6 send failure is UNCERTAIN", [(T, "raise SendUncertain(\"%s: %s\" % (operation, type(exc).__name__))", "raise NotSent(\"x\")")]),
     ("T7 default opener sends nothing", [(T, "        raise NotSent(\"network access is disabled in M1\")", "        return 200, b\"{}\"")]),
     # config
@@ -84,7 +85,7 @@ MUTANTS = [
     ("E8 mandatory stop check", [(E, "    if not stop.get(\"price\"):\n", "    if False:\n")]),
     ("E9 stop in the request", [(E, "        \"stopLossOnFill\": {\"price\": str(auth.stop_loss_price), \"timeInForce\": \"GTC\"},\n", "")]),
     ("E10 FOK", [(E, "\"timeInForce\": \"FOK\",", "\"timeInForce\": \"GTC\",")]),
-    ("E11 write-ahead reserve", [(E, "            self.journal.reserve(auth, auth.signed_units, bound, account.last_transaction_id,\n                                 request_bytes, [account.raw, quote.raw])", "            pass")]),
+    ("E11 write-ahead reserve", [(E, "            self.journal.reserve(auth, auth.signed_units, bound, account.last_transaction_id,\n                                 request_bytes, [account.raw, quote.raw], balance_before=account.balance)", "            pass")]),
     ("E12 unknown MOGO trade halts", [(E, "                self.journal.halt(reason)\n", "")]),
     ("E13 NotSent is ABORTED_BEFORE_SEND", [(E, "            self.journal.transition(auth.intent_id, jn.ABORTED_BEFORE_SEND, reason=\"NOT_SENT:\" + str(exc))", "            self.journal.transition(auth.intent_id, jn.UNCERTAIN, reason=\"x\")")]),
     ("E15 authorization reuse in submit gate", [(E, "        if self.journal.authorization_used(auth_id):\n", "        if False:\n")]),
@@ -101,6 +102,46 @@ MUTANTS = [
     ("D9 lookup returns our order", [(D, "        if (order.get(\"clientExtensions\") or {}).get(\"id\") != client_id:", "        if False:")]),
     ("D10 pending is not resolved", [(D, "        return SubmitOutcome(UNCERTAIN, reason=\"ORDER_STATE_%s\" % state, raw=raw)", "        return SubmitOutcome(\"ABSENT\", raw=raw)")]),
     ("D11 quote needs a time", [(D, "or when is None \\\n", "or False \\\n")]),
+    ("E16 SELL compares signed units (M1 fix)", [(E, "submit_market_order(body, auth.client_order_id, auth.signed_units)", "submit_market_order(body, auth.client_order_id, auth.units)")]),
+    # ---- M2 ----
+    # accounting
+    ("N1 realized vs fill prices", [(N, "    if abs(realized - (exit_price - entry_price) * Decimal(signed_units)) > half_unit:", "    if False:")]),
+    ("N2 tolerance is half a reported unit", [(N, "    half_unit = Decimal(1).scaleb(realized.as_tuple().exponent) / 2", "    half_unit = Decimal(1).scaleb(realized.as_tuple().exponent) * 5")]),
+    ("N3 fill pl equals trade realizedPL", [(N, "    if _dec(close.get(\"pl\")) != realized:", "    if False:")]),
+    ("N4 foreign balance activity", [(N, "        if not ours:\n            codes.append(\"FOREIGN_BALANCE_ACTIVITY_%s\"", "        if False:\n            codes.append(\"FOREIGN_BALANCE_ACTIVITY_%s\"")]),
+    ("N5 unsupported transactions", [(N, "            if txn.get(\"type\") not in BALANCE_NEUTRAL_TYPES and not ours:", "            if False:")]),
+    ("N6 balance continuity", [(N, "        if running != stated:", "        if False:")]),
+    ("N7 summary balance", [(N, "    elif summary_balance != running:", "    elif False:")]),
+    ("N8 summary and window aligned", [(N, "    if summary_last_id != window_last_id:", "    if False:")]),
+    ("N9 exactly one entry fill", [(N, "    if len(entry) != 1:", "    if False:")]),
+    ("N10 exactly one full close", [(N, "    if len(closes) != 1 or closing_entry(closes[0], trade_id)[0] != \"CLOSED\":", "    if len(closes) != 1:")]),
+    ("N11 sign of commission", [(N, "            - parts.get(\"commission\", zero) - parts.get(\"guaranteedExecutionFee\", zero))", "            + parts.get(\"commission\", zero) - parts.get(\"guaranteedExecutionFee\", zero))")]),
+    ("N12 a fill states every component", [(N, "    if txn.get(\"type\") == \"ORDER_FILL\" and not {\"pl\", \"financing\", \"commission\"} <= set(parts):", "    if False:")]),
+    ("N13 net decomposes", [(N, "    if net != realized + financing - commission - fees:", "    if False:")]),
+    # journal (positions)
+    ("J9 positions never deleted", [(J, "        for table in (\"intents\", \"positions\"):", "        for table in (\"intents\",):")]),
+    ("J10 broker transactions append-only", [(J, "_APPEND_ONLY = (\"events\", \"raw\", \"refusals\", \"halts\", \"broker_transactions\")", "_APPEND_ONLY = (\"events\", \"raw\", \"refusals\", \"halts\")")]),
+    ("J11 position transition validation", [(J, "            if to_state not in POSITION_TRANSITIONS.get(row[\"state\"], ()):", "            if False:")]),
+    ("J12 only RECONCILED releases exposure", [(J, "\"WHERE i.state IN (%s) AND (p.state IS NULL OR p.state != ?)\"", "\"WHERE i.state IN (%s) AND (p.state IS NULL OR p.state NOT IN (?, 'CLOSED'))\"")]),
+    ("J13 rewritten transaction detected", [(J, "            elif row[0] != digest:", "            elif False:")]),
+    ("J14 balance before recorded", [(J, "                 None if balance_before is None else str(balance_before)))", "                 None))")]),
+    # adapter (positions)
+    ("D12 contiguous history", [(D, "        if ids != expected:", "        if False:")]),
+    ("D13 partial close is not a close", [(D, "    if kind == \"REDUCED\":", "    if False:")]),
+    ("D14 close units must match", [(D, "    if units != -Decimal(expected_trade_units):", "    if False:")]),
+    # executor (positions)
+    ("X1 stop at the authorised price", [(E, "        if not stop or stop.get(\"state\") != \"PENDING\" or stop.get(\"price\") != want \\", "        if not stop or stop.get(\"state\") != \"PENDING\" \\")]),
+    ("X2 stop must be PENDING", [(E, "        if not stop or stop.get(\"state\") != \"PENDING\" or stop.get(\"price\") != want \\", "        if not stop or stop.get(\"price\") != want \\")]),
+    ("X3 stop corroborated by its transaction", [(E, "        return stop.get(\"id\") if len(created) == 1 else None", "        return stop.get(\"id\")")]),
+    ("X4 units unchanged", [(E, "            if trade.current_units != Decimal(pos[\"signed_units\"]):", "            if False:")]),
+    ("X5 trade missing at broker", [(E, "        if trade is None:\n            return self._halt", "        if False:\n            return self._halt")]),
+    ("X6 closed needs close evidence", [(E, "        if not closes:\n", "        if False:\n")]),
+    ("X7 accounting gates RECONCILED", [(E, "        if not result.ok:\n", "        if False:\n")]),
+    ("X8 close is write-ahead", [(E, "        self.journal.transition_position(intent_id, jn.CLOSING, reason=\"CLOSE_REQUESTED\", raw=request,", "        (lambda *a, **k: None)(intent_id, jn.CLOSING, reason=\"CLOSE_REQUESTED\", raw=request,")]),
+    ("X9 open trade + close fill halts", [(E, "                if any(closing_entry(t, pos[\"trade_id\"])[0] for t in txns if t.get(\"type\") == \"ORDER_FILL\"):", "                if False:")]),
+    ("X10 rewritten transaction halts", [(E, "        if rewritten:\n", "        if False:\n")]),
+    ("X11 only an open position closes", [(E, "        if pos is None or pos[\"state\"] not in jn.POSITION_OPEN_STATES:", "        if pos is None:")]),
+    ("X12 unprotected position halts", [(E, "            if stop_id is None:\n                return self._halt", "            if False:\n                return self._halt")]),
     # kill
     ("K1 missing state dir reads engaged", [(K, " or not os.path.isdir(os.path.dirname(self.path))", "")]),
     ("K2 release needs confirm", [(K, "        if confirm is not True:\n", "        if False:\n")]),
@@ -113,8 +154,8 @@ MUTANTS = [
     ("P3 halt: submit gate + reserve", [(E, "        if self.journal.active_halts():\n", "        if False:\n"), (J, "            if self.active_halts():\n", "            if False:\n")]),
 ]
 
-#: Single layers of a defence-in-depth pair: expected to survive alone (their pair must die).
-EXPECTED_SURVIVORS = {
+#: Single layers of a defence-in-depth pair: informational (their pair must die).
+SINGLE_LAYERS = {
     "S1 open-exposure in risk only": [(R, "    if journal_open_exposure:\n", "    if False:\n")],
     "S3 halt in submit gate only": [(E, "        if self.journal.active_halts():\n", "        if False:\n")],
 }
@@ -135,7 +176,7 @@ def snapshot():
 
 def run_suite():
     clear_pycache()
-    return subprocess.run([sys.executable, "-m", "unittest", SUITE], cwd=REPO,
+    return subprocess.run([sys.executable, "-m", "unittest"] + SUITES, cwd=REPO,
                           capture_output=True, text=True).returncode
 
 
@@ -170,12 +211,11 @@ def main():
         bucket = unapplied if rc is None else (killed if rc != 0 else survived)
         bucket.append(name)
         print("%-9s %s" % ({None: "UNAPPLIED"}.get(rc, "KILLED" if rc else "SURVIVED"), name))
-    unexpected_kills = []
-    for name, edits in EXPECTED_SURVIVORS.items():
+    for name, edits in SINGLE_LAYERS.items():
         rc = apply_and_run(edits)
         if rc is None:
             unapplied.append(name)
-        print("%-9s %s (expected: the other layer catches it)" % ("survived" if rc == 0 else "killed", name))
+        print("%-9s %s (single layer, informational)" % ("survived" if rc == 0 else "killed", name))
     after = snapshot()
     restored = before == after
     print("RESULT: %d/%d killed, %d survived, %d unapplied; sources restored: %s"

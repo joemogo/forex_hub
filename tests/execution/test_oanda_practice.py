@@ -90,6 +90,11 @@ def tearDownModule():
 
 
 # ---- fixtures -----------------------------------------------------------------
+def read_text(path):
+    with open(path, encoding="utf-8") as handle:
+        return handle.read()
+
+
 def auth_data(**over):
     data = {"authorizationId": "AUTH-20261103-0001", "mode": "BROKER_PRACTICE", "accountId": ACCOUNT,
             "instrument": "EUR_USD", "direction": "BUY", "units": 1000, "stopLossPrice": "1.09800",
@@ -158,7 +163,7 @@ class TestTheNetworkGuard(Harness):
         files = [os.path.join(dp, f) for dp, _, fs in os.walk(EXEC_DIR) for f in fs if f.endswith(".py")]
         self.assertGreater(len(files), 5)
         for path in files:
-            tree = ast.parse(open(path, encoding="utf-8").read())
+            tree = ast.parse(read_text(path))
             for node in ast.walk(tree):
                 names = []
                 if isinstance(node, ast.Import):
@@ -186,9 +191,13 @@ class TestOnlyThePracticeHostIsReachable(Harness):
         t = tp.Transport(self.config, opener=self.fake)
         params = {"PRICING": {"instrument": "EUR_USD"},
                   "ORDER_BY_CLIENT_ID": {"client_id": "MOGO-0123456789abcdef"},
-                  "TRANSACTIONS_SINCE": {"transaction_id": "100"}}
+                  "TRANSACTIONS_SINCE": {"transaction_id": "100"},
+                  "TRADE_DETAILS": {"trade_id": "102"}, "CLOSE_TRADE": {"trade_id": "102"}}
         self.assertEqual(set(tp.OPERATIONS), {"ACCOUNT_SUMMARY", "PRICING", "OPEN_TRADES",
-                                              "ORDER_BY_CLIENT_ID", "TRANSACTIONS_SINCE", "CREATE_ORDER"})
+                                              "ORDER_BY_CLIENT_ID", "TRANSACTIONS_SINCE", "CREATE_ORDER",
+                                              "TRADE_DETAILS", "CLOSE_TRADE"})
+        # Exactly one operation may OPEN exposure, so it is the only one the kill switch gates.
+        self.assertEqual([op for op, spec in tp.OPERATIONS.items() if spec[3]], ["CREATE_ORDER"])
         for op in tp.OPERATIONS:
             with self.subTest(op=op):
                 _m, url, _w = t.url_for(op, **params.get(op, {}))
@@ -201,7 +210,7 @@ class TestOnlyThePracticeHostIsReachable(Harness):
         self.assertGreater(len(files), 5)
         for path in files:
             with self.subTest(file=os.path.relpath(path, REPO_ROOT)):
-                self.assertNotIn(LIVE_MARKER, open(path, encoding="utf-8").read().lower())
+                self.assertNotIn(LIVE_MARKER, read_text(path).lower())
 
     def test_config_cannot_set_a_host_or_environment_or_name_the_live_family(self):
         cfg.config_from_mapping({"accountId": ACCOUNT, "token": TOKEN})          # positive control
@@ -374,7 +383,8 @@ class TestTheOrderLifecycle(Harness):
         self.assertIn(("POST", jn.SUBMITTING), seen)            # SUBMITTING was on disk before the send
         self.assertEqual((row["state"], row["fill_units"], row["fill_price"]), (jn.FILLED, "1000", "1.10010"))
         self.assertTrue(row["broker_trade_id"])
-        self.assertEqual([e["to_state"] for e in self.ex.journal.events(auth.intent_id)], [jn.SUBMITTING, jn.FILLED])
+        self.assertEqual([e["to_state"] for e in self.ex.journal.events(auth.intent_id)],
+                         [jn.SUBMITTING, jn.FILLED, jn.OPEN_UNVERIFIED])           # M2: the fill opens a position
         order = json.loads(self.ex.journal._db.execute("SELECT bytes FROM raw WHERE sha256=?",
                                                        (row["request_sha256"],)).fetchone()[0])["order"]
         self.assertEqual((order["type"], order["timeInForce"], order["positionFill"]), ("MARKET", "FOK", "OPEN_ONLY"))
@@ -660,7 +670,7 @@ class TestJournalAndModes(Harness):
         for dp, _, fs in os.walk(EXEC_DIR):
             for f in fs:
                 if f.endswith(".py"):
-                    text = open(os.path.join(dp, f), encoding="utf-8").read()
+                    text = read_text(os.path.join(dp, f))
                     with self.subTest(file=f):
                         for needle in ("trader_intelligence", "trade_observation", "index.html",
                                        "import_mogo_observations"):
@@ -695,7 +705,8 @@ class TestTheTokenNeverLeaks(Harness):
             print(repr(self.config), str(self.config.token), "%s" % self.config.token)
         self.assertTrue(errors)                                                     # failures were exercised
         self.assertTrue(any("Bearer " + TOKEN == h["Authorization"] for h in self.fake.seen_headers))
-        db_bytes = open(os.path.join(self.dir, "journal.sqlite3"), "rb").read()
+        with open(os.path.join(self.dir, "journal.sqlite3"), "rb") as handle:
+            db_bytes = handle.read()
         for name, blob in (("stdout/stderr", captured.getvalue()), ("exceptions", "".join(errors)),
                            ("journal file", db_bytes.decode("latin-1"))):
             with self.subTest(where=name):

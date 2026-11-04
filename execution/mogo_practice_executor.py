@@ -71,12 +71,17 @@ def main(argv=None):
             print("kill switch released")
             return 0
         _, journal = _journal(real)
-        if args.command == "clear-halt":
-            journal.clear_halt(args.halt, args.by, args.reason)
-        print(json.dumps({"mode": cfg.MODE, "host": cfg.PRACTICE_HOST, "killSwitch": kill.engaged(),
-                          "activeHalts": journal.active_halts(),
-                          "intents": [{k: r[k] for k in ("intent_id", "state", "reason")}
-                                      for r in journal.intents()]}, indent=1))
+        try:
+            if args.command == "clear-halt":
+                journal.clear_halt(args.halt, args.by, args.reason)
+            print(json.dumps({"mode": cfg.MODE, "host": cfg.PRACTICE_HOST, "killSwitch": kill.engaged(),
+                              "activeHalts": journal.active_halts(),
+                              "intents": [{k: r[k] for k in ("intent_id", "state", "reason")}
+                                          for r in journal.intents()],
+                              "positions": [{k: r[k] for k in ("intent_id", "trade_id", "state", "reason")}
+                                            for r in journal.positions()]}, indent=1))
+        finally:
+            journal.close()
         return 0
     except (PracticeExecutionError, OSError, ValueError) as exc:
         print("refused: %s" % exc)

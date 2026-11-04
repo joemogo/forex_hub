@@ -13,6 +13,7 @@
 # update_expected_counts.sh, so hand-edits to these comment lines are also discarded;
 # change the template, not the output.
 tests.execution.test_oanda_practice	53
+tests.execution.test_oanda_practice_m2	36
 tests.trader_intelligence.acquisition.test_acquisition	73
 tests.trader_intelligence.acquisition.test_acquisition_triage	11
 tests.trader_intelligence.acquisition.test_reconstructability	16

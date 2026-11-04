@@ -6,7 +6,9 @@ WHAT IT ENFORCES
   * every path parameter is shape-checked before it is substituted;
   * the URL is the practice base URL plus that path, and is re-parsed and
     asserted to be https on the practice host immediately before use;
-  * a write operation re-checks the kill switch at the last moment;
+  * a write that OPENS exposure re-checks the kill switch at the last moment.
+    A close reduces exposure, so it stays possible under kill: the kill switch
+    exists to stop new risk, never to trap an open position;
   * the token reaches the Authorization header and nowhere else. No error
     message carries a URL, header or body.
 
@@ -29,16 +31,20 @@ _PARAM_SHAPES = {
     "instrument": re.compile(r"^[A-Z]{3}_[A-Z]{3}$"),
     "client_id": re.compile(r"^MOGO-[0-9a-f]{16}$"),
     "transaction_id": re.compile(r"^[0-9]{1,18}$"),
+    "trade_id": re.compile(r"^[0-9]{1,18}$"),
 }
 
-#: operation -> (method, path template, is_write). Nothing outside this table can be sent.
+#: operation -> (method, path template, is_write, opens_exposure).
+#: Nothing outside this table can be sent.
 OPERATIONS = {
-    "ACCOUNT_SUMMARY": ("GET", "/v3/accounts/{account}/summary", False),
-    "PRICING": ("GET", "/v3/accounts/{account}/pricing?instruments={instrument}", False),
-    "OPEN_TRADES": ("GET", "/v3/accounts/{account}/openTrades", False),
-    "ORDER_BY_CLIENT_ID": ("GET", "/v3/accounts/{account}/orders/@{client_id}", False),
-    "TRANSACTIONS_SINCE": ("GET", "/v3/accounts/{account}/transactions/sinceid?id={transaction_id}", False),
-    "CREATE_ORDER": ("POST", "/v3/accounts/{account}/orders", True),
+    "ACCOUNT_SUMMARY": ("GET", "/v3/accounts/{account}/summary", False, False),
+    "PRICING": ("GET", "/v3/accounts/{account}/pricing?instruments={instrument}", False, False),
+    "OPEN_TRADES": ("GET", "/v3/accounts/{account}/openTrades", False, False),
+    "ORDER_BY_CLIENT_ID": ("GET", "/v3/accounts/{account}/orders/@{client_id}", False, False),
+    "TRANSACTIONS_SINCE": ("GET", "/v3/accounts/{account}/transactions/sinceid?id={transaction_id}", False, False),
+    "TRADE_DETAILS": ("GET", "/v3/accounts/{account}/trades/{trade_id}", False, False),
+    "CREATE_ORDER": ("POST", "/v3/accounts/{account}/orders", True, True),
+    "CLOSE_TRADE": ("PUT", "/v3/accounts/{account}/trades/{trade_id}/close", True, False),
 }
 
 DEFAULT_TIMEOUT_SECONDS = 10
@@ -86,7 +92,7 @@ class Transport(object):
     def url_for(self, operation, **params):
         if operation not in OPERATIONS:
             raise TransportRefused("operation %r is not allowed" % (operation,))
-        method, template, is_write = OPERATIONS[operation]
+        method, template, is_write, _opens = OPERATIONS[operation]
         if "account" in params:
             raise TransportRefused("the account is fixed by configuration")
         params = dict(params, account=self._config.account_id)
@@ -109,7 +115,7 @@ class Transport(object):
         if is_write != (body is not None):
             raise TransportRefused("%s %s a body" % (operation, "requires" if is_write else "takes no"))
         payload = json.dumps(body, sort_keys=True, separators=(",", ":")).encode("utf-8") if is_write else None
-        if is_write and self._kill is not None and self._kill.engaged():
+        if OPERATIONS[operation][3] and self._kill is not None and self._kill.engaged():
             raise NotSent("kill switch engaged at send time")
         headers = {"Authorization": "Bearer " + self._config.token.reveal(),
                    "Accept-Datetime-Format": "RFC3339"}
