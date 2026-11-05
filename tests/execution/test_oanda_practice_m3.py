@@ -363,6 +363,7 @@ class TestThePreflight(Base):
             return 401, b'{"errorMessage":"Insufficient authorization to perform request."}'
         report, opener = self.run_preflight(rejecting)
         self.assertEqual((report["stop"], report["requests"], opener.sent), ("CREDENTIALS_REJECTED", 1, 1))
+        self.assertEqual(report["stop_http_status"], 401)
         self.assertFalse(report["ok"])
 
     def test_a_summary_for_another_account_stops_after_one_request(self):
@@ -414,6 +415,15 @@ class TestTheCommand(Base):
             cfg.load_config = original
         self.assertEqual(rc, 2)
         self.assertIn("NOT_AUTHORIZED", out.getvalue())
+
+    def test_an_explicit_cafile_still_verifies_certificate_and_hostname(self):
+        bundle = ssl.get_default_verify_paths().openssl_cafile
+        for cafile in [None] + ([p for p in ("/etc/ssl/cert.pem",) if os.path.exists(p)]):
+            with self.subTest(cafile=cafile):
+                ctx = ro.verifying_context(cafile)
+                self.assertEqual(ctx.verify_mode, ssl.CERT_REQUIRED)
+                self.assertTrue(ctx.check_hostname)
+        self.assertTrue(bundle)
 
     def test_only_the_readonly_module_imports_a_network_library(self):
         import ast

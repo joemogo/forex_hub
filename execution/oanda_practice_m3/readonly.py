@@ -66,6 +66,14 @@ def parse_proxy(proxy_url):
     return parts.hostname, parts.port, auth
 
 
+def verifying_context(cafile):
+    """The default context, optionally trusting an explicit CA bundle. Never unverified."""
+    context = ssl.create_default_context(cafile=cafile) if cafile else ssl.create_default_context()
+    if context.verify_mode != ssl.CERT_REQUIRED or not context.check_hostname:
+        raise ProxyRefused("refusing an unverified TLS context")
+    return context
+
+
 class ReadOnlyHttpsOpener(object):
     """An opener for tp.Transport that can only GET the configured practice account."""
 

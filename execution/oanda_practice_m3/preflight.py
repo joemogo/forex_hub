@@ -159,6 +159,7 @@ def run(transport, account_id, instrument="EUR_USD", now=timeutil.utc_now):
         # 1. identity
         status, data = get("ACCOUNT_SUMMARY")
         if status in (401, 403):
+            report["stop_http_status"] = status     # 401: token not accepted; 403: token valid, account not its
             raise PreflightStop("CREDENTIALS_REJECTED")
         account = (data or {}).get("account") if isinstance(data, dict) else None
         if status != 200 or not isinstance(account, dict) or account.get("id") != account_id:

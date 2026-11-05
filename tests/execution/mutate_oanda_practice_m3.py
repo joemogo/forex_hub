@@ -37,7 +37,7 @@ MUTANTS = [
     ("R10 TLS verification", [(RO, "ssl_context or ssl.create_default_context()", "ssl_context or ssl._create_unverified_context()")]),
     ("R11 transport read allow-list", [(RO, 'raise ReadOnlyRefused("operation %r is not a read" % (operation,))', "pass")]),
     ("R12 transport takes only the read-only opener", [(RO, "        if not isinstance(opener, ReadOnlyHttpsOpener):\n", "        if False:\n")]),
-    ("P1 credentials-rejected stop", [(PF, '        if status in (401, 403):\n            raise PreflightStop("CREDENTIALS_REJECTED")\n', "")]),
+    ("P1 credentials-rejected stop", [(PF, '            raise PreflightStop("CREDENTIALS_REJECTED")\n', "")]),
     ("P2 configured-account stop", [(PF, ' or account.get("id") != account_id:', ":")]),
     ("P3 account masking", [(PF, '    return "%s-***-****-%s" % (groups[0], groups[3])', "    return account_id")]),
     ("P4 cap blocker", [(PF, '            if history["capped_or_paged"]:\n', "            if False:\n")]),
@@ -45,6 +45,7 @@ MUTANTS = [
     ("P6 sign model compares", [(PF, 'row["agreed" if previous + effect == stated else "disagreed"] += 1', 'row["agreed"] += 1')]),
     ("P7 redirect is a boundary stop", [(PF, '"BOUNDARY_RedirectRefused" if "RedirectRefused" in str(exc)', '"BOUNDARY_RedirectRefused" if False')]),
     ("C1 A2 required", [(CLI, '    if args.authorization != "A2":\n', "    if False:\n")]),
+    ("R13 --cafile context stays verifying", [(RO, "    context = ssl.create_default_context(cafile=cafile) if cafile else ssl.create_default_context()\n    if context.verify_mode != ssl.CERT_REQUIRED or not context.check_hostname:\n        raise ProxyRefused(\"refusing an unverified TLS context\")\n", "    context = ssl._create_unverified_context()\n")]),
 ]
 
 
