@@ -35,7 +35,7 @@ from oanda_practice.errors import NotSent, TransportRefused
 
 #: The only operations M3 can issue. All are GET in tp.OPERATIONS; that is re-checked below.
 READ_OPERATIONS = frozenset(("ACCOUNT_SUMMARY", "PRICING", "OPEN_TRADES", "ORDER_BY_CLIENT_ID",
-                             "TRANSACTIONS_SINCE", "TRADE_DETAILS"))
+                             "TRANSACTIONS_SINCE", "TRADE_DETAILS", "INSTRUMENT_DETAILS"))
 MAX_RESPONSE_BYTES = 8 * 1024 * 1024
 _LOOPBACK = ("localhost", "127.0.0.1", "::1")
 
@@ -97,6 +97,10 @@ class ReadOnlyHttpsOpener(object):
                 "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS") else "non-GET method"))
         if body is not None:
             raise ReadOnlyRefused("a read-only request carries no body")
+        return self.check_target(url, headers)
+
+    def check_target(self, url, headers):
+        """The practice host, the configured account, clean headers. Shared with the M4 A3 opener."""
         if not isinstance(url, str):
             raise ReadOnlyRefused("the request has no URL")
         parts = urlsplit(url)
@@ -113,6 +117,10 @@ class ReadOnlyHttpsOpener(object):
 
     def __call__(self, method, url, headers, body, timeout):
         parts = self.check(method, url, headers, body)
+        return self._send("GET", parts, headers, None, timeout)
+
+    def _send(self, method, parts, headers, body, timeout):
+        """Only ever called after a check; the method and body are the checked ones."""
         target = parts.path + ("?" + parts.query if parts.query else "")
         if self._proxy is None:
             conn = self._factory(cfg.PRACTICE_HOST, 443, timeout=timeout, context=self._context)
@@ -123,7 +131,7 @@ class ReadOnlyHttpsOpener(object):
                             headers={"Proxy-Authorization": auth} if auth else None)
         try:
             self.sent += 1
-            conn.request("GET", target, headers=headers)
+            conn.request(method, target, body=body, headers=headers)
             response = conn.getresponse()
             status = response.status
             if 300 <= status < 400:

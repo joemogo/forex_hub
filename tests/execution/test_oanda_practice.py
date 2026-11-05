@@ -109,6 +109,25 @@ def make_auth(**over):
     return authz.parse_authorization(json.dumps(auth_data(**over)).encode())
 
 
+_CLOSE_SEQ = [0]
+
+
+def close_auth_data(executor, auth, **over):
+    """M4: a close authorization for the position `auth` opened (a fresh id per call)."""
+    _CLOSE_SEQ[0] += 1
+    pos = executor.journal.position(auth.intent_id)
+    data = {"closeAuthorizationId": "CLOSE-20261103-%04d" % _CLOSE_SEQ[0], "mode": "BROKER_PRACTICE",
+            "accountId": ACCOUNT, "clientOrderId": auth.client_order_id,
+            "tradeId": pos["trade_id"] if pos else "1", "issuedAt": "2026-11-03T11:00:00Z",
+            "expiresAt": "2026-11-03T18:00:00Z", "issuedBy": "operator"}
+    data.update(over)
+    return data
+
+
+def make_close_auth(executor, auth, **over):
+    return authz.parse_close_authorization(json.dumps(close_auth_data(executor, auth, **over)).encode())
+
+
 class Harness(unittest.TestCase):
     """A fresh state dir, fake broker and executor per test; asserts zero network."""
 
@@ -201,10 +220,11 @@ class TestOnlyThePracticeHostIsReachable(Harness):
         params = {"PRICING": {"instrument": "EUR_USD"},
                   "ORDER_BY_CLIENT_ID": {"client_id": "MOGO-0123456789abcdef"},
                   "TRANSACTIONS_SINCE": {"transaction_id": "100"},
-                  "TRADE_DETAILS": {"trade_id": "102"}, "CLOSE_TRADE": {"trade_id": "102"}}
+                  "TRADE_DETAILS": {"trade_id": "102"}, "CLOSE_TRADE": {"trade_id": "102"},
+                  "INSTRUMENT_DETAILS": {"instrument": "EUR_USD"}}
         self.assertEqual(set(tp.OPERATIONS), {"ACCOUNT_SUMMARY", "PRICING", "OPEN_TRADES",
                                               "ORDER_BY_CLIENT_ID", "TRANSACTIONS_SINCE", "CREATE_ORDER",
-                                              "TRADE_DETAILS", "CLOSE_TRADE"})
+                                              "TRADE_DETAILS", "CLOSE_TRADE", "INSTRUMENT_DETAILS"})
         # Exactly one operation may OPEN exposure, so it is the only one the kill switch gates.
         self.assertEqual([op for op, spec in tp.OPERATIONS.items() if spec[3]], ["CREATE_ORDER"])
         for op in tp.OPERATIONS:

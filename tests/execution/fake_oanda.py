@@ -67,6 +67,14 @@ class FakeOanda(object):
         self.seen_headers = []
         self.summary_account_id = None
         self.fill_client_id_override = None
+        self.pending_order_count = 0
+        # GET instruments, in the v20 Instrument shape (documented values for EUR_USD).
+        self.instrument_specs = {"EUR_USD": {"name": "EUR_USD", "type": "CURRENCY", "displayName": "EUR/USD",
+                                             "pipLocation": -4, "displayPrecision": 5, "tradeUnitsPrecision": 0,
+                                             "minimumTradeSize": "1", "maximumTrailingStopDistance": "1.00000",
+                                             "minimumTrailingStopDistance": "0.00050",
+                                             "maximumPositionSize": "0", "maximumOrderUnits": "100000000",
+                                             "marginRate": "0.0333"}}
 
     # ---- plumbing --------------------------------------------------------------------
     def _id(self):
@@ -114,7 +122,7 @@ class FakeOanda(object):
     # ---- reads ---------------------------------------------------------------------
     def _get(self, rest, query):
         op = {"/summary": "ACCOUNT_SUMMARY", "/pricing": "PRICING", "/openTrades": "OPEN_TRADES",
-              "/transactions/sinceid": "TRANSACTIONS_SINCE"}.get(rest)
+              "/transactions/sinceid": "TRANSACTIONS_SINCE", "/instruments": "INSTRUMENT_DETAILS"}.get(rest)
         if rest.startswith("/orders/@"):
             op = "ORDER_BY_CLIENT_ID"
         elif rest.startswith("/trades/"):
@@ -126,7 +134,8 @@ class FakeOanda(object):
             return self._ok(200, {"account": {"id": self.summary_account_id or self.account_id,
                                               "currency": self.currency,
                                               "balance": money(self.balance + self.summary_balance_skew),
-                                              "lastTransactionID": last, "openTradeCount": len(self.trades)},
+                                              "lastTransactionID": last, "openTradeCount": len(self.trades),
+                                              "pendingOrderCount": self.pending_order_count},
                                   "lastTransactionID": last})
         if op == "PRICING":
             inst = query.get("instruments", [""])[0]
@@ -138,6 +147,13 @@ class FakeOanda(object):
             if p.get("time") is not None:
                 price["time"] = p["time"]
             return self._ok(200, {"prices": [price], "time": p.get("time")})
+        if op == "INSTRUMENT_DETAILS":
+            names = query.get("instruments", [""])[0].split(",")
+            # Any other well-formed pair gets EUR_USD's constraints under its own name.
+            specs = [self.instrument_specs.get(n) or dict(self.instrument_specs["EUR_USD"], name=n)
+                     for n in names if n]
+            return self._ok(200, {"instruments": specs,
+                                  "lastTransactionID": last})
         if op == "OPEN_TRADES":
             return self._ok(200, {"trades": self.trades, "lastTransactionID": last})
         if op == "ORDER_BY_CLIENT_ID":
@@ -300,3 +316,43 @@ class FakeOanda(object):
     def transfer(self, amount):
         return self._book({"id": self._id(), "type": "TRANSFER_FUNDS", "amount": money(amount)},
                           Decimal(amount))
+
+
+class FakeHttpsConnection(object):
+    """Stands in for http.client.HTTPSConnection in front of a FakeOanda: the REAL opener code
+    runs, and nothing opens a socket. `opened` counts connections per factory."""
+
+    def __init__(self, broker, host, port, timeout=None, context=None):
+        self.broker, self.host, self.port, self.context = broker, host, port, context
+        self.tunnel, self.requests, self.closed = None, [], False
+
+    def set_tunnel(self, host, port=None, headers=None):
+        self.tunnel = (host, port, headers)
+
+    def request(self, method, target, body=None, headers=None):
+        self.requests.append((method, target, body, dict(headers or {})))
+
+    def getresponse(self):
+        method, target, body, headers = self.requests[-1]
+        status, raw = self.broker(method, "https://api-fxpractice.oanda.com" + target, headers, body, 10)
+        return _FakeHttpResponse(status, raw)
+
+    def close(self):
+        self.closed = True
+
+
+class _FakeHttpResponse(object):
+    def __init__(self, status, body):
+        self.status, self._body = status, body
+
+    def read(self, n=-1):
+        return self._body if n < 0 else self._body[:n]
+
+
+def https_factory(broker, opened=None):
+    def make(host, port, timeout=None, context=None):
+        conn = FakeHttpsConnection(broker, host, port, timeout, context)
+        if opened is not None:
+            opened.append(conn)
+        return conn
+    return make

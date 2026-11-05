@@ -37,12 +37,28 @@ class Quote(object):
 
 
 class AccountSummary(object):
-    __slots__ = ("account_id", "currency", "last_transaction_id", "open_trade_count", "balance", "raw")
+    __slots__ = ("account_id", "currency", "last_transaction_id", "open_trade_count", "balance", "raw",
+                 "pending_order_count")
 
-    def __init__(self, account_id, currency, last_transaction_id, open_trade_count, raw, balance=None):
+    def __init__(self, account_id, currency, last_transaction_id, open_trade_count, raw, balance=None,
+                 pending_order_count=None):
         self.account_id, self.currency = account_id, currency
         self.last_transaction_id, self.open_trade_count = last_transaction_id, open_trade_count
         self.balance, self.raw = balance, raw
+        self.pending_order_count = pending_order_count     # None: not stated, so not proven zero
+
+
+class InstrumentSpec(object):
+    """The broker's own order constraints for one instrument (GET instruments)."""
+    __slots__ = ("instrument", "minimum_trade_size", "maximum_order_units", "trade_units_precision",
+                 "display_precision", "pip_location", "raw")
+
+    def __init__(self, instrument, minimum_trade_size, maximum_order_units, trade_units_precision,
+                 display_precision, pip_location, raw):
+        self.instrument = instrument
+        self.minimum_trade_size, self.maximum_order_units = minimum_trade_size, maximum_order_units
+        self.trade_units_precision, self.display_precision = trade_units_precision, display_precision
+        self.pip_location, self.raw = pip_location, raw
 
 
 class TradeState(object):
@@ -100,6 +116,9 @@ class BrokerAdapter(object):
     def close_trade(self, trade_id, expected_trade_units):
         raise NotImplementedError
 
+    def instrument_spec(self, instrument):
+        raise NotImplementedError
+
 
 def _decimal(value):
     if not isinstance(value, str):
@@ -129,7 +148,11 @@ def classify_fill(fill, expected_client_id, expected_units, raw):
     opened = fill.get("tradeOpened") if isinstance(fill, dict) else None
     if not isinstance(opened, dict) or not opened.get("tradeID"):
         return SubmitOutcome(UNCERTAIN, reason="FILL_WITHOUT_TRADE_OPENED", raw=raw)
-    price = _decimal(fill.get("price"))
+    # The trade's own open price is authoritative. The fill's top-level `price` is deprecated
+    # in the v20 schema; it is only a fallback, so a fill that omits it is not left UNCERTAIN.
+    price = _decimal(opened.get("price"))
+    if price is None:
+        price = _decimal(fill.get("price"))
     units = _decimal(opened.get("units"))
     if price is None or units is None:
         return SubmitOutcome(UNCERTAIN, reason="FILL_MISSING_PRICE_OR_UNITS", raw=raw)
@@ -158,8 +181,25 @@ class OandaPracticeAdapter(BrokerAdapter):
                 or not isinstance(count, int) or balance is None:
             raise BrokerReadFailed("ACCOUNT_SUMMARY is missing currency, balance, lastTransactionID "
                                    "or openTradeCount")
+        pending = account.get("pendingOrderCount")
         return AccountSummary(account.get("id"), account["currency"], last, count, response.body,
-                              balance=balance)
+                              balance=balance,
+                              pending_order_count=pending if isinstance(pending, int)
+                              and not isinstance(pending, bool) else None)
+
+    def instrument_spec(self, instrument):
+        response = _read(self._t, "INSTRUMENT_DETAILS", instrument=instrument)
+        found = response.data.get("instruments")
+        if not isinstance(found, list) or len(found) != 1 or not isinstance(found[0], dict) \
+                or found[0].get("name") != instrument:
+            raise BrokerReadFailed("INSTRUMENT_DETAILS did not return exactly the instrument asked for")
+        i = found[0]
+        ints = [i.get(k) for k in ("tradeUnitsPrecision", "displayPrecision", "pipLocation")]
+        minimum, maximum = _decimal(i.get("minimumTradeSize")), _decimal(i.get("maximumOrderUnits"))
+        if minimum is None or maximum is None or not all(isinstance(v, int) and not isinstance(v, bool)
+                                                          for v in ints):
+            raise BrokerReadFailed("INSTRUMENT_DETAILS is missing a size, precision or pip field")
+        return InstrumentSpec(instrument, minimum, maximum, ints[0], ints[1], ints[2], response.body)
 
     def quote(self, instrument):
         response = _read(self._t, "PRICING", instrument=instrument)

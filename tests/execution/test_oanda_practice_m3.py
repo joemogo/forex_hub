@@ -103,7 +103,7 @@ class FakeConnection(object):
     def set_tunnel(self, host, port=None, headers=None):
         self.tunnel = (host, port, headers)
 
-    def request(self, method, target, headers=None):
+    def request(self, method, target, body=None, headers=None):
         self.requests.append((method, target, dict(headers or {})))
 
     def getresponse(self):

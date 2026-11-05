@@ -87,7 +87,7 @@ class TestTheCompleteLifecycle(Base):
         auth = self.open_protected()
         second = make_auth(authorizationId="AUTH-20261103-0002")
         self.assertRefused("JOURNAL_HAS_OPEN_OR_UNRESOLVED_INTENT", self.ex.submit, second)
-        self.ex.close_position(auth.intent_id)
+        self.ex.close_position(auth.intent_id, m1.make_close_auth(self.ex, auth))
         self.assertRefused("JOURNAL_HAS_OPEN_OR_UNRESOLVED_INTENT", self.ex.submit, second)   # CLOSED, not reconciled
         self.ex.reconcile()
         self.assertEqual(self.pos(auth)["state"], jn.RECONCILED)
@@ -99,7 +99,7 @@ class TestTheCompleteLifecycle(Base):
         self.assertEqual(self.ex.journal.intent(auth.intent_id)["fill_units"], "-1000")
         self.assertEqual(self.pos(auth)["state"], jn.PROTECTED)
         self.fake.prices["EUR_USD"].update(bid="1.09900", ask="1.09910")
-        self.ex.close_position(auth.intent_id)
+        self.ex.close_position(auth.intent_id, m1.make_close_auth(self.ex, auth))
         self.ex.reconcile()
         p = self.pos(auth)
         self.assertEqual((p["state"], p["exit_price"], p["net_pl"]), (jn.RECONCILED, "1.09910", "0.9000"))
@@ -136,7 +136,7 @@ class TestExitsComeFromFills(Base):
         # 1 unit: realized -0.00007 is reported as -0.0001 (4 dp); that is within half a reported unit.
         auth = self.open_protected(units=1, maxLoss="1")
         self.fake.prices["EUR_USD"].update(bid="1.10003", ask="1.10013")
-        self.ex.close_position(auth.intent_id)
+        self.ex.close_position(auth.intent_id, m1.make_close_auth(self.ex, auth))
         self.ex.reconcile()
         self.assertEqual(self.pos(auth)["state"], jn.RECONCILED)                # positive control
         window = self.fake.transactions
@@ -157,7 +157,7 @@ class TestAccountingFailsClosed(Base):
     def close_and_reconcile(self, prepare):
         auth = self.open_protected()
         prepare(auth)
-        self.ex.close_position(auth.intent_id)
+        self.ex.close_position(auth.intent_id, m1.make_close_auth(self.ex, auth))
         report = self.ex.reconcile()
         return auth, report
 
@@ -194,7 +194,7 @@ class TestAccountingFailsClosed(Base):
 
     def test_a_gap_in_the_transaction_history_moves_nothing(self):
         auth = self.open_protected()
-        self.ex.close_position(auth.intent_id)
+        self.ex.close_position(auth.intent_id, m1.make_close_auth(self.ex, auth))
         fin = self.fake.daily_financing("-0.0100")
         self.fake.hide_transaction_ids = {fin["id"]}
         report = self.ex.reconcile()
@@ -220,7 +220,7 @@ class TestAccountingFailsClosed(Base):
         outcome = self.ex.adapter.submit_market_order(body, auth.client_order_id, auth.signed_units)
         self.ex._apply(auth.intent_id, outcome)
         self.ex.reconcile()
-        self.ex.close_position(auth.intent_id)
+        self.ex.close_position(auth.intent_id, m1.make_close_auth(self.ex, auth))
         self.ex.reconcile()
         self.assertTrue(any("MISSING_BALANCE_BEFORE_ENTRY" in h for h in self.halts()))
         self.assertEqual(self.pos(auth)["state"], jn.CLOSED)
@@ -335,7 +335,7 @@ class TestClosingIsWriteAheadAndNeverRetried(Base):
         auth = self.open_protected()
         seen = []
         self.fake.on_request = lambda m, path: seen.append((m, self.pos(auth)["state"])) if m == "PUT" else None
-        self.ex.close_position(auth.intent_id)
+        self.ex.close_position(auth.intent_id, m1.make_close_auth(self.ex, auth))
         self.assertEqual(seen, [("PUT", jn.CLOSING)])
 
     def test_a_close_fill_for_the_wrong_units_is_not_a_close(self):
@@ -355,7 +355,7 @@ class TestClosingIsWriteAheadAndNeverRetried(Base):
                 self.setUp()
                 auth = self.open_protected()
                 self.fake.close_behavior = behavior
-                p = self.ex.close_position(auth.intent_id)
+                p = self.ex.close_position(auth.intent_id, m1.make_close_auth(self.ex, auth))
                 self.assertEqual((p["state"], p["reason"], self.fake.close_puts), (jn.PROTECTED, reason, 1))
 
     def test_a_close_committed_then_lost_resolves_from_the_broker_without_a_second_close(self):
@@ -365,7 +365,7 @@ class TestClosingIsWriteAheadAndNeverRetried(Base):
                 self.setUp()
                 auth = self.open_protected()
                 self.fake.close_behavior = behavior
-                self.assertEqual(self.ex.close_position(auth.intent_id)["state"], jn.CLOSE_UNCERTAIN)
+                self.assertEqual(self.ex.close_position(auth.intent_id, m1.make_close_auth(self.ex, auth))["state"], jn.CLOSE_UNCERTAIN)
                 self.ex.close()
                 self.ex = self.new_executor()                                  # and a restart
                 self.ex.reconcile()
@@ -375,7 +375,7 @@ class TestClosingIsWriteAheadAndNeverRetried(Base):
     def test_a_close_that_never_reached_the_broker_re_verifies_protection(self):
         auth = self.open_protected()
         self.fake.close_behavior = "timeout_before_commit"
-        self.assertEqual(self.ex.close_position(auth.intent_id)["state"], jn.CLOSE_UNCERTAIN)
+        self.assertEqual(self.ex.close_position(auth.intent_id, m1.make_close_auth(self.ex, auth))["state"], jn.CLOSE_UNCERTAIN)
         self.ex.reconcile()
         p = self.pos(auth)
         self.assertEqual((p["state"], self.fake.close_puts), (jn.PROTECTED, 1))
@@ -385,7 +385,7 @@ class TestClosingIsWriteAheadAndNeverRetried(Base):
     def test_a_partial_close_is_not_a_close(self):
         auth = self.open_protected()
         self.fake.close_behavior = "partial"
-        p = self.ex.close_position(auth.intent_id)
+        p = self.ex.close_position(auth.intent_id, m1.make_close_auth(self.ex, auth))
         self.assertEqual((p["state"], p["reason"]), (jn.CLOSE_UNCERTAIN, "PARTIAL_CLOSE"))
         self.ex.reconcile()
         # The trade is still open, yet a fill reduced it: neither "closed" nor "not executed".
@@ -395,7 +395,8 @@ class TestClosingIsWriteAheadAndNeverRetried(Base):
 
     def test_a_crash_between_the_close_record_and_the_send_never_sends(self):
         auth = self.open_protected()
-        self.ex.journal.transition_position(auth.intent_id, jn.CLOSING, reason="CLOSE_REQUESTED")  # then crash
+        self.ex.journal.transition_position(auth.intent_id, jn.CLOSING, reason="CLOSE_REQUESTED",
+                                            consume_close=m1.make_close_auth(self.ex, auth))  # then crash
         self.ex.close()
         self.ex = self.new_executor()
         self.ex.reconcile()
@@ -405,13 +406,13 @@ class TestClosingIsWriteAheadAndNeverRetried(Base):
         auth = self.open_protected()
         self.ex.kill.engage("flatten")
         self.assertRefused("KILL_SWITCH_ENGAGED", self.ex.submit, make_auth(authorizationId="AUTH-20261103-0008"))
-        self.assertEqual(self.ex.close_position(auth.intent_id)["state"], jn.CLOSED)
+        self.assertEqual(self.ex.close_position(auth.intent_id, m1.make_close_auth(self.ex, auth))["state"], jn.CLOSED)
 
     def test_only_an_open_position_can_be_closed(self):
         auth = self.open_protected()
-        self.ex.close_position(auth.intent_id)
+        self.ex.close_position(auth.intent_id, m1.make_close_auth(self.ex, auth))
         with self.assertRaises(OrderRefused) as ctx:
-            self.ex.close_position(auth.intent_id)
+            self.ex.close_position(auth.intent_id, m1.make_close_auth(self.ex, auth))
         self.assertEqual(ctx.exception.codes, ["POSITION_NOT_OPEN"])
         self.assertEqual(self.fake.close_puts, 1)
 
@@ -420,7 +421,7 @@ class TestClosingIsWriteAheadAndNeverRetried(Base):
 class TestReconcileIsIdempotentAndRestartSafe(Base):
     def test_a_second_reconcile_changes_nothing(self):
         auth = self.open_protected()
-        self.ex.close_position(auth.intent_id)
+        self.ex.close_position(auth.intent_id, m1.make_close_auth(self.ex, auth))
         self.ex.reconcile()
         db = self.ex.journal._db
         snapshot = lambda: [db.execute("SELECT COUNT(*) FROM %s" % t).fetchone()[0]
@@ -458,7 +459,7 @@ class TestReconcileIsIdempotentAndRestartSafe(Base):
 
     def test_position_history_is_append_only_and_transitions_are_validated(self):
         auth = self.open_protected()
-        self.ex.close_position(auth.intent_id)
+        self.ex.close_position(auth.intent_id, m1.make_close_auth(self.ex, auth))
         self.ex.reconcile()
         db = self.ex.journal._db
         for sql in ("DELETE FROM positions", "DELETE FROM broker_transactions",

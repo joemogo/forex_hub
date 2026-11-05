@@ -36,6 +36,10 @@ AUTHORIZATION = {
     "instrument": "EUR_USD", "direction": "BUY", "units": 1000, "stopLossPrice": "1.09800",
     "maxSlippage": "0.00010", "maxSpread": "0.00020", "maxLoss": "5", "maxQuoteAgeSeconds": 10,
     "issuedAt": "2026-11-03T11:00:00Z", "expiresAt": "2026-11-03T18:00:00Z", "issuedBy": "demo"}
+#: M4: the close is its own operator act. clientOrderId and tradeId are filled from the position.
+CLOSE_AUTHORIZATION = {
+    "closeAuthorizationId": "CLOSE-DEMO-20261103-0001", "mode": "BROKER_PRACTICE", "accountId": ACCOUNT,
+    "issuedAt": "2026-11-03T11:00:00Z", "expiresAt": "2026-11-03T18:00:00Z", "issuedBy": "demo"}
 
 
 def run(state_dir, commission="0.0500", financing="-0.0100", daily="-0.0200"):
@@ -62,7 +66,10 @@ def run(state_dir, commission="0.0500", financing="-0.0100", daily="-0.0200"):
              reconcile=report["resolved"])
         fake.daily_financing(daily)                                  # held overnight
         fake.prices["EUR_USD"].update(bid="1.10250", ask="1.10260")  # the market moves
-        pos = executor.close_position(auth.intent_id)
+        close_auth = authz.parse_close_authorization(json.dumps(dict(
+            CLOSE_AUTHORIZATION, clientOrderId=auth.client_order_id,
+            tradeId=executor.journal.position(auth.intent_id)["trade_id"])).encode())
+        pos = executor.close_position(auth.intent_id, close_auth)
         step("5 close fill", position=pos["state"], exitPrice=pos["exit_price"],
              closeReason=pos["close_reason"], closePuts=fake.close_puts)
         report = executor.reconcile()

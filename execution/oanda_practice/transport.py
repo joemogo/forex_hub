@@ -43,6 +43,7 @@ OPERATIONS = {
     "ORDER_BY_CLIENT_ID": ("GET", "/v3/accounts/{account}/orders/@{client_id}", False, False),
     "TRANSACTIONS_SINCE": ("GET", "/v3/accounts/{account}/transactions/sinceid?id={transaction_id}", False, False),
     "TRADE_DETAILS": ("GET", "/v3/accounts/{account}/trades/{trade_id}", False, False),
+    "INSTRUMENT_DETAILS": ("GET", "/v3/accounts/{account}/instruments?instruments={instrument}", False, False),
     "CREATE_ORDER": ("POST", "/v3/accounts/{account}/orders", True, True),
     "CLOSE_TRADE": ("PUT", "/v3/accounts/{account}/trades/{trade_id}/close", True, False),
 }

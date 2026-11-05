@@ -123,11 +123,14 @@ CREATE TABLE IF NOT EXISTS positions (
 );
 CREATE TABLE IF NOT EXISTS broker_transactions (
   id INTEGER PRIMARY KEY, type TEXT, raw_sha256 TEXT NOT NULL, first_seen_at TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS close_authorizations (
+  close_authorization_id TEXT PRIMARY KEY, intent_id TEXT NOT NULL, trade_id TEXT NOT NULL,
+  authorization_sha256 TEXT NOT NULL, at TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS halts (
   seq INTEGER PRIMARY KEY AUTOINCREMENT, kind TEXT NOT NULL, halt_seq INTEGER,
   reason TEXT NOT NULL, by TEXT, at TEXT NOT NULL);
 """
-_APPEND_ONLY = ("events", "raw", "refusals", "halts", "broker_transactions")
+_APPEND_ONLY = ("events", "raw", "refusals", "halts", "broker_transactions", "close_authorizations")
 
 
 class JournalRefused(Exception):
@@ -333,7 +336,15 @@ class Journal(object):
             raise
         return self.position(intent_id)
 
-    def transition_position(self, intent_id, to_state, reason=None, raw=None, **fields):
+    def close_authorization_used(self, close_authorization_id):
+        return self._db.execute("SELECT 1 FROM close_authorizations WHERE close_authorization_id=?",
+                                (close_authorization_id,)).fetchone() is not None
+
+    def transition_position(self, intent_id, to_state, reason=None, raw=None, consume_close=None, **fields):
+        """Validated move. `consume_close` (M4) records a close authorization as used IN THE SAME
+        transaction as the move to CLOSING, so a close is never recorded without consuming it."""
+        if (consume_close is not None) != (to_state == CLOSING):
+            raise ValueError("a move to CLOSING, and only that move, consumes a close authorization")
         if set(fields) - _POSITION_FIELDS:
             raise ValueError("unknown position fields %s" % sorted(set(fields) - _POSITION_FIELDS))
         now = self._now()
@@ -351,6 +362,14 @@ class Journal(object):
             self._db.execute("UPDATE positions SET %s WHERE intent_id=?" % ", ".join(sets), args + [intent_id])
             self._db.execute("INSERT INTO events (intent_id, from_state, to_state, reason, raw_sha256, at)"
                              " VALUES (?, ?, ?, ?, ?, ?)", (intent_id, row["state"], to_state, reason, digest, now))
+            if consume_close is not None:
+                try:
+                    self._db.execute("INSERT INTO close_authorizations (close_authorization_id, intent_id,"
+                                     " trade_id, authorization_sha256, at) VALUES (?, ?, ?, ?, ?)",
+                                     (consume_close.close_authorization_id, intent_id, row["trade_id"],
+                                      consume_close.raw_sha256, now))
+                except sqlite3.IntegrityError:
+                    raise JournalRefused(["CLOSE_AUTHORIZATION_ALREADY_USED"])
             self._db.execute("COMMIT")
         except BaseException:
             self._db.execute("ROLLBACK")

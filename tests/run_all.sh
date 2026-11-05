@@ -201,6 +201,12 @@ if ! python3 tests/execution/mutate_oanda_practice_m3.py; then
   OVERALL_EXIT=1
 fi
 
+# M4 A3 write path and first-trade guards: the grants, the broker constraints, the $5 cap and the
+# separate close authorization, each deleted, must turn the execution suites red.
+if ! python3 tests/execution/mutate_oanda_practice_m4.py; then
+  OVERALL_EXIT=1
+fi
+
 if ! node tests/mutate_v166_tod_session.js; then
   OVERALL_EXIT=1
 fi

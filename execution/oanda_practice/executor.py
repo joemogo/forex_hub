@@ -5,8 +5,10 @@ THE ORDER OF OPERATIONS IS THE SAFETY ARGUMENT
   1. kill switch           -> refuse (nothing read, nothing sent)
   2. authorization         -> account, validity window, not already used
   3. halts / open intents  -> refuse until reconcile or the operator clears them
-  4. broker reads          -> account, quote, open trades; a failed read refuses
-  5. risk                  -> every check, every code reported
+  4. broker reads          -> account, quote, open trades, instrument constraints;
+                              a failed read refuses
+  5. risk                  -> every check, every code reported (M4 adds pending orders
+                              and the broker's size, precision and stop-distance limits)
   6. build the request     -> deterministic client id; mandatory stop; FOK; bound
   7. dry run stops here    -> returns the request; writes nothing
   8. reserve (journal)     -> SUBMITTING committed to disk BEFORE sending
@@ -24,7 +26,9 @@ exactly the authorised price, and the transaction stream holds the
 STOP_LOSS_ORDER that created it. Only then is the position PROTECTED. A missing
 or different stop is a halt. close_position() is write-ahead, like the entry:
 CLOSING is committed before the request, and an unknown outcome is
-CLOSE_UNCERTAIN, never retried. Once the broker shows the trade CLOSED,
+CLOSE_UNCERTAIN, never retried. M4: a close needs its own operator
+authorization naming this exact trade (client order id AND broker trade id),
+consumed in the same journal transaction that records CLOSING. Once the broker shows the trade CLOSED,
 accounting.reconcile_trade() must agree on every figure before the position
 becomes RECONCILED and the exposure is released. A closed trade whose
 accounting disagrees halts and keeps blocking. Exit price and P&L come only
@@ -124,12 +128,14 @@ class Executor(object):
             account = self.adapter.account_summary()
             quote = self.adapter.quote(auth.instrument)
             broker_trades = self.adapter.open_trades()
+            spec = self.adapter.instrument_spec(auth.instrument)
         except BrokerReadFailed:
             self._refuse(auth_id, ["BROKER_READ_FAILED"])
         if account.account_id not in (None, self.config.account_id):
             self._refuse(auth_id, ["BROKER_RETURNED_ANOTHER_ACCOUNT"])
 
         codes = risk.assess(auth, quote, account, broker_trades, self.journal.has_open_exposure(), now)
+        codes += risk.assess_constraints(auth, quote, account, spec)
         if codes:
             self._refuse(auth_id, codes)
         bound = risk.price_bound(auth, quote)
@@ -140,6 +146,12 @@ class Executor(object):
         if dry_run:
             return {"dryRun": True, "clientOrderId": auth.client_order_id, "request": body,
                     "worstCaseLoss": str(risk.worst_case_loss(auth, quote)),
+                    "quote": {"bid": str(quote.bid), "ask": str(quote.ask), "time": quote.time.isoformat(),
+                              "tradeable": quote.tradeable},
+                    "brokerConstraints": {"minimumTradeSize": str(spec.minimum_trade_size),
+                                          "maximumOrderUnits": str(spec.maximum_order_units),
+                                          "displayPrecision": spec.display_precision,
+                                          "pipLocation": spec.pip_location},
                     "lastTransactionIdBefore": account.last_transaction_id, "journalWrites": 0}
 
         try:
@@ -290,20 +302,35 @@ class Executor(object):
             balance_after=f["balance_after"])
         report["resolved"].append(dict(entry, state=jn.RECONCILED, netPl=str(f["net_pl"])))
 
-    def close_position(self, intent_id):
-        """Close one open position, write-ahead. Allowed under the kill switch: it reduces risk."""
+    def close_position(self, intent_id, close_auth):
+        """Close one open position, write-ahead, under its own close authorization.
+
+        Allowed under the kill switch and under a halt: closing reduces risk, and an
+        UNPROTECTED_POSITION halt is exactly when a close is needed.
+        """
         pos = self.journal.position(intent_id)
         if pos is None or pos["state"] not in jn.POSITION_OPEN_STATES:
             raise OrderRefused(["POSITION_NOT_OPEN"])
+        intent = self.journal.intent(intent_id)
+        try:
+            authz.check_close_current(close_auth, self.config, self._clock(), pos, intent["client_order_id"])
+        except AuthorizationRefused as exc:
+            raise OrderRefused(["CLOSE_AUTHORIZATION_REFUSED:" + str(exc)])
+        if self.journal.close_authorization_used(close_auth.close_authorization_id):
+            raise OrderRefused(["CLOSE_AUTHORIZATION_ALREADY_USED"])
         try:
             summary = self.adapter.account_summary()
         except BrokerReadFailed:
             raise OrderRefused(["BROKER_READ_FAILED"])
         prior = pos["state"]
         request = json.dumps({"units": "ALL"}, sort_keys=True, separators=(",", ":")).encode("utf-8")
-        self.journal.transition_position(intent_id, jn.CLOSING, reason="CLOSE_REQUESTED", raw=request,
-                                         last_transaction_id_before_close=summary.last_transaction_id,
-                                         close_request_sha256=self.journal.store_raw(request))
+        try:
+            self.journal.transition_position(intent_id, jn.CLOSING, reason="CLOSE_REQUESTED", raw=request,
+                                             consume_close=close_auth,
+                                             last_transaction_id_before_close=summary.last_transaction_id,
+                                             close_request_sha256=self.journal.store_raw(request))
+        except jn.JournalRefused as exc:
+            raise OrderRefused(exc.codes)
         try:
             outcome = self.adapter.close_trade(pos["trade_id"], pos["signed_units"])
         except NotSent as exc:
