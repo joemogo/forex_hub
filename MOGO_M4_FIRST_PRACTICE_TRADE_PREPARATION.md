@@ -41,7 +41,8 @@ It extends the M1/M2 engine and the M3 transport. There is no parallel engine.
 | Commit | Content |
 |---|---|
 | `8a8454788`, `17e7dff7c` | M3: the read-only boundary and its report (before M4) |
-| M4 commit | everything in §2, the tests, the gates and this report (see `git log`) |
+| `b50c0d564` | everything in §2, the tests, the gates and this report |
+| next commit | records the hash above in this report |
 
 ## 4. Safeguards, exactly
 
