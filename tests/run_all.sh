@@ -195,6 +195,12 @@ if ! python3 tests/execution/mutate_oanda_practice.py; then
   OVERALL_EXIT=1
 fi
 
+# M3 read-only boundary: every guard in execution/oanda_practice_m3/ (GET only, practice host,
+# configured account, no redirect, loopback-only proxy), deleted, must turn the M3 suite red.
+if ! python3 tests/execution/mutate_oanda_practice_m3.py; then
+  OVERALL_EXIT=1
+fi
+
 if ! node tests/mutate_v166_tod_session.js; then
   OVERALL_EXIT=1
 fi

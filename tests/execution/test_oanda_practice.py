@@ -160,9 +160,14 @@ class TestTheNetworkGuard(Harness):
 
     def test_no_package_module_imports_a_network_or_process_library(self):
         banned = {"socket", "ssl", "http", "urllib.request", "requests", "asyncio", "subprocess", "ftplib"}
+        # M3 (operator authorization A2): exactly ONE file may import exactly http.client and
+        # ssl -- the read-only GET opener. Every other file, and every other library, stays banned.
+        exempt = {os.path.join("execution", "oanda_practice_m3", "readonly.py"): {"http.client", "ssl"}}
+        used = {}
         files = [os.path.join(dp, f) for dp, _, fs in os.walk(EXEC_DIR) for f in fs if f.endswith(".py")]
         self.assertGreater(len(files), 5)
         for path in files:
+            rel = os.path.relpath(path, REPO_ROOT)
             tree = ast.parse(read_text(path))
             for node in ast.walk(tree):
                 names = []
@@ -171,8 +176,12 @@ class TestTheNetworkGuard(Harness):
                 elif isinstance(node, ast.ImportFrom) and node.module:
                     names = [node.module] + [node.module + "." + a.name for a in node.names]
                 for name in names:
-                    with self.subTest(file=os.path.relpath(path, REPO_ROOT), name=name):
+                    if name in exempt.get(rel, ()):
+                        used.setdefault(rel, set()).add(name)
+                        continue
+                    with self.subTest(file=rel, name=name):
                         self.assertFalse(name in banned or name.split(".")[0] in banned - {"urllib"})
+        self.assertEqual(used, exempt, "the M3 exemption no longer matches what the opener imports")
 
     def test_the_default_opener_sends_nothing_and_a_submit_refuses(self):
         executor = self.new_executor(opener=tp.NetworkDisabledOpener())
