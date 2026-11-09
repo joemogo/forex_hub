@@ -19,6 +19,21 @@ An autonomous scientific trading laboratory running three concurrent missions:
 **LIVE-money trading is prohibited.** Quiet markets are a valid result; never manufacture trades
 or loosen a rule to create activity.
 
+**Broker practice is a separate mode, and every contact with a broker is gated.**
+`execution/oanda_practice/` is a broker-PRACTICE executor. It can address only the OANDA
+practice host, a constant in that package, and it has no live host and no environment selector.
+Building and testing it offline against the in-process fake broker is routine work. Each of the
+following needs its own explicit operator authorisation, and approving one never implies the next:
+
+- configuring its credentials;
+- giving it a network opener;
+- sending any request, read-only included (A2);
+- placing or closing a practice order (A3).
+
+That gate is `MOGO Broker-Practice Execution` in `scripts/auto_mode/mogo_rules.json`. It never
+weakens the live-money prohibition. Its records stay out of the research corpus, where
+`executionKind` remains SIMULATED or UNKNOWN.
+
 ## Where the governance gates actually live
 
 The hard boundaries are **enforced**, not documented: `scripts/auto_mode/mogo_rules.json`
