@@ -15,7 +15,7 @@
 tests.execution.test_oanda_practice	53
 tests.execution.test_oanda_practice_m2	37
 tests.execution.test_oanda_practice_m3	30
-tests.execution.test_oanda_practice_m4	32
+tests.execution.test_oanda_practice_m4	50
 tests.trader_intelligence.acquisition.test_acquisition	73
 tests.trader_intelligence.acquisition.test_acquisition_triage	11
 tests.trader_intelligence.acquisition.test_reconstructability	16

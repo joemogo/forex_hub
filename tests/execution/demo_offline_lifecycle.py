@@ -34,7 +34,7 @@ NOW = datetime.datetime(2026, 11, 3, 12, 0, 1, tzinfo=datetime.timezone.utc)
 AUTHORIZATION = {
     "authorizationId": "AUTH-DEMO-20261103-0001", "mode": "BROKER_PRACTICE", "accountId": ACCOUNT,
     "instrument": "EUR_USD", "direction": "BUY", "units": 1000, "stopLossPrice": "1.09800",
-    "maxSlippage": "0.00010", "maxSpread": "0.00020", "maxLoss": "5", "maxQuoteAgeSeconds": 10,
+    "maxEntryPrice": "1.10030", "maxSlippage": "0.00010", "maxSpread": "0.00020", "maxLoss": "5", "maxQuoteAgeSeconds": 10,
     "issuedAt": "2026-11-03T11:00:00Z", "expiresAt": "2026-11-03T18:00:00Z", "issuedBy": "demo"}
 #: M4: the close is its own operator act. clientOrderId and tradeId are filled from the position.
 CLOSE_AUTHORIZATION = {

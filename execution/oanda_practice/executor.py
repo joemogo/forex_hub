@@ -145,6 +145,7 @@ class Executor(object):
 
         if dry_run:
             return {"dryRun": True, "clientOrderId": auth.client_order_id, "request": body,
+                    "approvedEntryLimit": {authz.ENTRY_LIMIT_FIELD[auth.direction]: str(auth.entry_price_limit)},
                     "worstCaseLoss": str(risk.worst_case_loss(auth, quote)),
                     "quote": {"bid": str(quote.bid), "ask": str(quote.ask), "time": quote.time.isoformat(),
                               "tradeable": quote.tradeable},
@@ -248,11 +249,16 @@ class Executor(object):
         rewritten = self.journal.ingest_transactions(window.transactions)
         if rewritten:
             return self._halt(report, "TRANSACTION_REWRITTEN %s" % ",".join(rewritten))
-        if trade is None:
-            return self._halt(report, "TRADE_MISSING_AT_BROKER %s" % pos["trade_id"])
         txns = window.transactions
+        # The practice API answers 404 NO_SUCH_TRADE for a CLOSED trade, so a missing trade is not
+        # by itself an anomaly -- nor is it proof of closure. With no close fill for this trade in
+        # the broker's own history it halts as before; with one, it goes through the same close
+        # evidence and three-way accounting gates below as a trade the broker reports CLOSED.
+        if trade is None and not any(closing_entry(t, pos["trade_id"])[0]
+                                     for t in txns if t.get("type") == "ORDER_FILL"):
+            return self._halt(report, "TRADE_MISSING_AT_BROKER %s" % pos["trade_id"])
         state = pos["state"]
-        if trade.state == "OPEN":
+        if trade is not None and trade.state == "OPEN":
             if state in (jn.CLOSING, jn.CLOSE_UNCERTAIN):
                 if any(closing_entry(t, pos["trade_id"])[0] for t in txns if t.get("type") == "ORDER_FILL"):
                     return self._halt(report, "TRADE_OPEN_BUT_CLOSE_FILL_PRESENT %s" % pos["trade_id"])
@@ -269,7 +275,7 @@ class Executor(object):
                                                  raw=trade.raw, stop_order_id=stop_id)
             report["resolved"].append(dict(entry, state=jn.PROTECTED))
             return
-        if trade.state != "CLOSED":
+        if trade is not None and trade.state != "CLOSED":
             report["unresolved"].append(dict(entry, reason="TRADE_STATE_%s" % trade.state))
             return
         closes = [t for t in txns if t.get("type") == "ORDER_FILL" and closing_entry(t, pos["trade_id"])[0]]
@@ -282,7 +288,7 @@ class Executor(object):
             return self._halt(report, "CLOSE_EVIDENCE_INVALID %s %s" % (pos["trade_id"], outcome.reason))
         if state != jn.CLOSED:
             pos = self.journal.transition_position(
-                pos["intent_id"], jn.CLOSED, reason="BROKER_CLOSE_FILL", raw=trade.raw,
+                pos["intent_id"], jn.CLOSED, reason="BROKER_CLOSE_FILL", raw=trade.raw if trade else None,
                 exit_price=outcome.fill_price, close_fill_id=closes[0].get("id"), close_reason=outcome.reason)
         before = intent.get("account_balance_before")
         result = accounting.reconcile_trade(pos["trade_id"], pos["signed_units"],

@@ -33,12 +33,13 @@ from oanda_practice import accounting             # noqa: E402
 from oanda_practice import adapter as ad          # noqa: E402
 from oanda_practice import authorization as authz  # noqa: E402
 from oanda_practice import config as cfg          # noqa: E402
+from oanda_practice import executor as ex         # noqa: E402
 from oanda_practice import journal as jn          # noqa: E402
 from oanda_practice import risk                   # noqa: E402
 from oanda_practice import transport as tp        # noqa: E402
 from oanda_practice.errors import AuthorizationRefused, NotSent, SendUncertain  # noqa: E402
 from oanda_practice.kill import KillSwitch        # noqa: E402
-from oanda_practice_m3.readonly import ReadOnlyHttpsOpener  # noqa: E402
+from oanda_practice_m3.readonly import READ_OPERATIONS, ReadOnlyHttpsOpener  # noqa: E402
 from oanda_practice_m4 import a3                  # noqa: E402
 from fake_oanda import FakeOanda, https_factory   # noqa: E402
 
@@ -243,6 +244,27 @@ class TestTheGrantAdmitsExactlyOneAuthorizedWrite(Base):
                 "not JSON": ("POST", BASE + "orders", b"{not json")}.items():
             with self.subTest(case=name):
                 self.assert_refused(self.entry_opener(), method, url, body)
+
+    def test_a_bound_beyond_the_limit_is_refused_and_one_at_it_reaches_the_socket(self):
+        opener = self.entry_opener()
+        self.assert_refused(opener, "POST", BASE + "orders", self.body(priceBound="1.10031"))
+        self.assertEqual(opener.writes, 0)
+        before = len(m1.NET_ATTEMPTS)
+        with self.assertRaises(OSError):
+            self.entry_opener()("POST", BASE + "orders", {"Content-Type": "application/json"},
+                                self.body(priceBound="1.10030"), 1)
+        self.assertTrue(m1.NET_ATTEMPTS[before:], "positive control: the bound at the limit is sent")
+        del m1.NET_ATTEMPTS[before:]
+
+    def test_a_sell_bound_below_its_limit_is_refused(self):
+        auth = authz.parse_authorization(json.dumps(sell_data()).encode())
+        opener = a3.A3WriteOpener(ACCOUNT, a3.EntryGrant(auth, demo.config(), NOW))
+        body = json.loads(self.body(units="-1", priceBound="1.09979",
+                                    stopLossOnFill={"price": "1.10200", "timeInForce": "GTC"}))
+        for key in ("clientExtensions", "tradeClientExtensions"):
+            body["order"][key]["id"] = auth.client_order_id
+        self.assert_refused(opener, "POST", BASE + "orders", json.dumps(body).encode())
+        self.assertEqual(opener.writes, 0)
 
     def test_a_spent_grant_refuses_a_second_write(self):
         opener = a3.A3WriteOpener(ACCOUNT, a3.EntryGrant(order_auth(), demo.config(), NOW),
@@ -545,6 +567,227 @@ class TestDocumentedV20Shapes(unittest.TestCase):
         self.assertTrue(result.ok, result.codes)
         self.assertEqual((result.figures["realized_pl"], result.figures["net_pl"]),
                          (Decimal("0.0024"), Decimal("0.0024")))
+
+
+# ---- repair A: the practice API answers 404 for a CLOSED trade ------------------------------
+with open(os.path.join(HERE, "fixtures", "oanda_practice_observed_first_trade_20261109.json"),
+          encoding="utf-8") as _h:
+    OBSERVED = json.load(_h)
+
+
+class TestAClosedTrade404ReconcilesOnlyFromCloseEvidence(Base):
+    """Through the CLI against the fake, which now answers 404 for a closed trade as OANDA did."""
+
+    def test_POSITIVE_the_fake_models_the_observed_404_and_the_close_reconciles(self):
+        self.assertEqual(self.submit()[0], 0)
+        pos = self.position()
+        code, out = self.close(self.close_file(pos))
+        status, body = self.broker("GET", BASE + "trades/%s" % pos["trade_id"], {}, None, 1)
+        self.assertEqual((status, json.loads(body)["errorCode"]), (404, "NO_SUCH_TRADE"))
+        self.assertEqual((code, out["position"]["state"], out["position"]["activeHalts"]), (0, jn.RECONCILED, []))
+        # fill-based: entry 1.10010 (ask), exit 1.10000 (bid), 1 unit: -0.0001
+        self.assertEqual((out["position"]["entry_price"], out["position"]["exit_price"],
+                          out["position"]["net_pl"]), ("1.10010", "1.10000", "-0.0001"))
+
+    def test_a_404_with_no_close_fill_still_halts_as_missing(self):
+        self.assertEqual(self.submit()[0], 0)
+        self.broker.trades.clear()                     # gone, and the history shows no close
+        code, out = self.cmd("reconcile")
+        self.assertEqual(code, 3)
+        self.assertEqual(out["halted"], ["TRADE_MISSING_AT_BROKER %s" % self.position()["trade_id"]])
+        self.assertEqual(self.position()["state"], jn.PROTECTED)
+
+    def test_a_stop_that_fired_then_404_reconciles_from_the_stop_fill(self):
+        self.assertEqual(self.submit()[0], 0)
+        pos = self.position()
+        self.broker.trigger_stop(pos["trade_id"])
+        code, out = self.cmd("reconcile")
+        self.assertEqual((code, self.position()["state"]), (0, jn.RECONCILED))
+
+
+class TestTheObservedFirstTradeReplay(unittest.TestCase):
+    """The REAL 2026-11-09 broker evidence, replayed into a journal in the state the live one was
+    left in (CLOSED after a CLOSE_FILLED close). Reads only: the canned adapter has no write."""
+
+    def setUp(self):
+        self.net_before = len(m1.NET_ATTEMPTS)
+        self.work = tempfile.mkdtemp(prefix="mogo_m4_obs_")
+        self.asked = []
+
+    def tearDown(self):
+        shutil.rmtree(self.work, ignore_errors=True)
+        self.assertEqual(m1.NET_ATTEMPTS[self.net_before:], [], "a test attempted network access")
+
+    def seed(self, state):
+        journal = jn.Journal(os.path.join(state, "journal.sqlite3"))
+        try:
+            auth = order_auth(authorizationId=OBSERVED["authorization_id"], stopLossPrice="1.11757",
+                              maxEntryPrice="1.12036", maxSpread="0.00030")
+            self.assertEqual(auth.client_order_id, OBSERVED["client_id"])
+            journal.reserve(auth, 1, Decimal("1.12036"), OBSERVED["last_transaction_id_before"], b"{}", [],
+                            balance_before=Decimal(OBSERVED["balance_before"]))
+            journal.transition(auth.intent_id, jn.FILLED, broker_order_id="4", broker_trade_id="5",
+                               fill_price=Decimal("1.12032"), fill_units=Decimal("1"))
+            journal.open_position(auth.intent_id, "5", "EUR_USD", 1, "1.11757")   # as the executor passes it
+            journal.transition_position(auth.intent_id, jn.PROTECTED, reason="STOP_VERIFIED", stop_order_id="6")
+            close = authz.parse_close_authorization(json.dumps(dict(
+                demo.CLOSE_AUTHORIZATION, clientOrderId=OBSERVED["client_id"], tradeId="5")).encode())
+            journal.transition_position(auth.intent_id, jn.CLOSING, reason="CLOSE_REQUESTED", consume_close=close,
+                                        last_transaction_id_before_close="6")
+            journal.transition_position(auth.intent_id, jn.CLOSED, reason="CLOSE_FILLED",
+                                        exit_price=Decimal("1.11911"), close_reason="MARKET_ORDER_TRADE_CLOSE")
+            return auth.intent_id
+        finally:
+            journal.close()
+
+    def reconcile(self, window=None, summary=None):
+        state = os.path.join(self.work, "state-%d" % len(os.listdir(self.work)))
+        os.makedirs(state)
+        intent_id = self.seed(state)
+        window = window or OBSERVED["transactions_since_3"]
+        summary = dict(OBSERVED["summary_after_close"], **(summary or {}))
+        summary["lastTransactionID"] = window["lastTransactionID"]
+        canned = _Canned({"ACCOUNT_SUMMARY": (200, {"account": summary, "lastTransactionID": window["lastTransactionID"]}),
+                          "TRADE_DETAILS": (404, OBSERVED["closed_trade_details_404"]),
+                          "TRANSACTIONS_SINCE": (200, window), "OPEN_TRADES": (200, {"trades": []})})
+        canned_request = canned.request
+
+        def recording(operation, body=None, **params):
+            self.asked.append(operation)
+            return canned_request(operation, body, **params)
+        canned.request = recording
+        executor = ex.Executor(demo.config(), ad.OandaPracticeAdapter(canned), state, clock=lambda: NOW)
+        try:
+            report = executor.reconcile()
+            return report, executor.journal.position(intent_id), [h["reason"] for h in executor.journal.active_halts()]
+        finally:
+            executor.close()
+
+    def window_with(self, edit):
+        window = json.loads(json.dumps(OBSERVED["transactions_since_3"]))
+        edit(window["transactions"])
+        return window
+
+    @staticmethod
+    def close_fill(txns):
+        return next(t for t in txns if t["id"] == "8")
+
+    def test_POSITIVE_the_real_evidence_reaches_RECONCILED_on_broker_figures(self):
+        report, pos, halts = self.reconcile()
+        self.assertEqual((pos["state"], halts, report["halted"]), (jn.RECONCILED, [], []))
+        self.assertEqual({k: pos[k] for k in ("entry_fill_id", "entry_price", "close_fill_id", "exit_price",
+                                              "realized_pl", "financing", "commission", "net_pl", "balance_after")},
+                         {"entry_fill_id": "5", "entry_price": "1.12032", "close_fill_id": "8",
+                          "exit_price": "1.11911", "realized_pl": "-0.0012", "financing": "0",
+                          "commission": "0", "net_pl": "-0.0012", "balance_after": "99999.9988"})
+        self.assertTrue(self.asked and set(self.asked) <= READ_OPERATIONS, self.asked)
+
+    def assert_halted_unbooked(self, prefix, **kw):
+        report, pos, halts = self.reconcile(**kw)
+        self.assertTrue(any(h.startswith(prefix) for h in halts), halts)
+        self.assertNotEqual(pos["state"], jn.RECONCILED)
+        self.assertEqual((pos["net_pl"], pos["balance_after"], pos["realized_pl"]), (None, None, None))
+
+    def test_a_404_whose_close_fill_names_another_trade_halts_as_missing(self):
+        def other(txns):
+            self.close_fill(txns)["tradesClosed"][0]["tradeID"] = "99"
+        self.assert_halted_unbooked("TRADE_MISSING_AT_BROKER 5", window=self.window_with(other))
+
+    def test_a_404_with_only_a_partial_close_halts(self):
+        def partial(txns):
+            fill = self.close_fill(txns)
+            fill["tradeReduced"] = fill.pop("tradesClosed")[0]
+        self.assert_halted_unbooked("CLOSE_EVIDENCE_INVALID 5", window=self.window_with(partial))
+
+    def test_a_404_whose_close_quantity_disagrees_halts(self):
+        def units(txns):
+            self.close_fill(txns)["tradesClosed"][0]["units"] = "-2"
+        self.assert_halted_unbooked("CLOSE_EVIDENCE_INVALID 5", window=self.window_with(units))
+
+    def test_a_404_with_two_close_fills_halts_and_books_nothing(self):
+        window = self.window_with(lambda txns: txns.append(dict(self.close_fill(txns), id="10")))
+        window["lastTransactionID"] = "10"
+        self.assert_halted_unbooked("MULTIPLE_CLOSE_FILLS 5", window=window)
+
+    def test_a_404_whose_balance_disagrees_with_the_fills_halts(self):
+        self.assert_halted_unbooked("ACCOUNTING_MISMATCH 5", summary={"balance": "99999.9900"})
+
+
+# ---- repair B: the operator's absolute entry limit -----------------------------------------
+def entry_data(**over):
+    data = dict(demo.ORDER_AUTHORIZATION, **over)
+    return {k: v for k, v in data.items() if v is not None}
+
+
+def sell_data(**over):
+    return entry_data(**dict({"direction": "SELL", "stopLossPrice": "1.10200", "maxEntryPrice": None,
+                              "minEntryPrice": "1.09980"}, **over))
+
+
+class TestTheApprovedEntryLimitIsEnforced(Base):
+    def parse(self, data):
+        return authz.parse_authorization(json.dumps(data).encode())
+
+    def test_a_legacy_or_misnamed_authorization_is_refused(self):
+        refused = {"legacy BUY without a limit": entry_data(maxEntryPrice=None),
+                   "legacy SELL without a limit": sell_data(minEntryPrice=None),
+                   "BUY carrying minEntryPrice": entry_data(maxEntryPrice=None, minEntryPrice="1.10030"),
+                   "SELL carrying maxEntryPrice": sell_data(minEntryPrice=None, maxEntryPrice="1.09980"),
+                   "both limits": entry_data(minEntryPrice="1.09980"),
+                   "not a decimal": entry_data(maxEntryPrice="market"),
+                   "a number, not a string": entry_data(maxEntryPrice=1.1003),
+                   "zero": entry_data(maxEntryPrice="0"),
+                   "BUY limit at the stop": entry_data(maxEntryPrice="1.09800"),
+                   "BUY limit below the stop": entry_data(maxEntryPrice="1.09700"),
+                   "SELL limit at the stop": sell_data(minEntryPrice="1.10200"),
+                   "SELL limit above the stop": sell_data(minEntryPrice="1.10300")}
+        for name, data in refused.items():
+            with self.subTest(case=name):
+                with self.assertRaises(AuthorizationRefused):
+                    self.parse(data)
+        self.assertEqual(self.parse(entry_data()).entry_price_limit, Decimal("1.10030"))
+        self.assertEqual(self.parse(sell_data()).entry_price_limit, Decimal("1.09980"))
+
+    def test_the_first_trades_file_shape_is_refused_by_the_cli_and_nothing_is_sent(self):
+        legacy = self.order_file(**{"maxEntryPrice": None})
+        with open(legacy) as h:
+            data = {k: v for k, v in json.load(h).items() if v is not None}
+        demo.write_json(legacy, data)
+        with self.assertRaises(AuthorizationRefused):
+            self.submit(legacy)
+        self.assertEqual((self.broker.posts, self.writes()), (0, []))
+
+    def assert_refused(self, order, code_wanted="PRICE_BOUND_BEYOND_APPROVED_ENTRY_LIMIT"):
+        with self.assertRaises(Exception) as caught:
+            self.submit(order)
+        self.assertIn(code_wanted, str(caught.exception))
+        self.assertEqual((self.broker.posts, self.writes()), (0, []))
+
+    def test_the_first_trade_replayed_under_its_approved_limit_is_refused_before_any_write(self):
+        # 13:56Z on 2026-11-09: ask 1.12026 + 1 pip slippage = 1.12036, above the approved 1.11980.
+        self.broker.prices["EUR_USD"].update(bid="1.12010", ask="1.12026")
+        self.assert_refused(self.order_file(stopLossPrice="1.11757", maxEntryPrice="1.11980", maxSpread="0.00030"))
+
+    def test_a_buy_whose_bound_would_pass_the_limit_is_refused_and_one_at_it_fills(self):
+        self.broker.prices["EUR_USD"].update(bid="1.10011", ask="1.10021")     # bound 1.10031 > 1.10030
+        self.assert_refused(self.order_file())
+        self.broker = FakeOanda(ACCOUNT)
+        self.broker.prices["EUR_USD"].update(bid="1.10010", ask="1.10020")     # bound 1.10030 == limit
+        code, out = self.submit(self.order_file(authorizationId="AUTH-M4-LIMIT-0002"))
+        self.assertEqual((code, out["submit"]["state"]), (0, jn.FILLED))
+        self.assertEqual(self.broker.posts, 1)
+
+    def test_a_sell_whose_bound_would_pass_the_limit_is_refused(self):
+        self.broker.prices["EUR_USD"].update(bid="1.09989", ask="1.09999")     # bound 1.09979 < 1.09980
+        order = demo.write_json(os.path.join(self.work, "sell.json"), sell_data())
+        self.assert_refused(order)
+
+    def test_the_limit_must_fit_the_broker_price_precision(self):
+        self.assert_refused(self.order_file(maxEntryPrice="1.100301"), "ENTRY_LIMIT_PRECISION_EXCEEDED")
+
+    def test_the_dry_run_shows_the_approved_limit(self):
+        code, out = self.cmd("dry-run", "--order-authorization", self.order_file())
+        self.assertEqual((code, out["approvedEntryLimit"]), (0, {"maxEntryPrice": "1.10030"}))
 
 
 if __name__ == "__main__":

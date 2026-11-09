@@ -2,6 +2,9 @@
 
 Nothing is submitted without one. It names the account, the instrument, the
 direction, the exact units, the protective stop and the limits, and it expires.
+It also states the approved entry price limit (maxEntryPrice for a BUY,
+minEntryPrice for a SELL) as an absolute price: the order's priceBound may never
+pass it, and nothing widens or reprices it. A file without one is refused.
 Its authorizationId is consumed by the journal at the moment an order is
 recorded as SUBMITTING, so the same file can never place a second order --
 not after a crash, not after a refusal-then-retry, not ever.
@@ -31,6 +34,8 @@ _INSTRUMENT_RE = re.compile(r"^[A-Z]{3}_[A-Z]{3}$")
 _FIELDS = ("authorizationId", "mode", "accountId", "instrument", "direction", "units",
            "stopLossPrice", "maxSlippage", "maxSpread", "maxLoss", "maxQuoteAgeSeconds",
            "issuedAt", "expiresAt", "issuedBy")
+#: The approved absolute entry limit: one field, named by the direction it binds.
+ENTRY_LIMIT_FIELD = {"BUY": "maxEntryPrice", "SELL": "minEntryPrice"}
 
 
 def _dec(data, key):
@@ -57,6 +62,7 @@ class Authorization(object):
         self.units = data["units"]
         self.stop_loss_price = _dec(data, "stopLossPrice")
         self.max_slippage = _dec(data, "maxSlippage")
+        self.entry_price_limit = _dec(data, ENTRY_LIMIT_FIELD[data["direction"]])
         self.max_spread = _dec(data, "maxSpread")
         self.max_loss = _dec(data, "maxLoss")
         self.max_quote_age_seconds = data["maxQuoteAgeSeconds"]
@@ -84,8 +90,11 @@ def parse_authorization(raw_bytes):
         raise AuthorizationRefused("authorization is not JSON")
     if not isinstance(data, dict):
         raise AuthorizationRefused("authorization must be an object")
-    unknown = sorted(set(data) - set(_FIELDS))
-    missing = sorted(set(_FIELDS) - set(data))
+    if data.get("direction") not in ENTRY_LIMIT_FIELD:
+        raise AuthorizationRefused("direction must be BUY or SELL")
+    fields = _FIELDS + (ENTRY_LIMIT_FIELD[data["direction"]],)
+    unknown = sorted(set(data) - set(fields))
+    missing = sorted(set(fields) - set(data))
     if unknown or missing:
         raise AuthorizationRefused("authorization fields: missing %s, unknown %s" % (missing, unknown))
     if data["mode"] != cfg.MODE:
@@ -94,8 +103,6 @@ def parse_authorization(raw_bytes):
         raise AuthorizationRefused("authorizationId has the wrong shape")
     if not isinstance(data["instrument"], str) or not _INSTRUMENT_RE.match(data["instrument"]):
         raise AuthorizationRefused("instrument has the wrong shape")
-    if data["direction"] not in ("BUY", "SELL"):
-        raise AuthorizationRefused("direction must be BUY or SELL")
     units = data["units"]
     if not isinstance(units, int) or isinstance(units, bool) or not 1 <= units <= HARD_MAX_UNITS:
         raise AuthorizationRefused("units must be an integer in [1, %d]" % HARD_MAX_UNITS)
@@ -109,6 +116,10 @@ def parse_authorization(raw_bytes):
         raise AuthorizationRefused("issuedAt/expiresAt must be RFC3339 UTC")
     if auth.expires_at <= auth.issued_at or auth.expires_at - auth.issued_at > HARD_MAX_LIFETIME:
         raise AuthorizationRefused("authorization lifetime must be positive and at most 24h")
+    if auth.direction == "BUY" and not auth.entry_price_limit > auth.stop_loss_price:
+        raise AuthorizationRefused("maxEntryPrice must be above the stop")
+    if auth.direction == "SELL" and not auth.entry_price_limit < auth.stop_loss_price:
+        raise AuthorizationRefused("minEntryPrice must be below the stop")
     if auth.max_loss > HARD_MAX_LOSS:
         raise AuthorizationRefused("maxLoss exceeds the hard ceiling %s" % HARD_MAX_LOSS)
     return auth

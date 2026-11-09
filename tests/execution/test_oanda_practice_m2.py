@@ -322,6 +322,7 @@ class TestProtectionIsVerifiedAtTheBroker(Base):
 
     def test_a_closed_trade_without_close_evidence_halts(self):
         auth = self.open_protected()
+        self.fake.closed_trade_404 = False      # the documented shape: a closed trade stays readable
         trade = self.fake.trades.pop()
         trade["state"] = "CLOSED"
         self.fake.closed_trades.append(trade)

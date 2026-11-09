@@ -101,8 +101,14 @@ def auth_data(**over):
             "maxSlippage": "0.00010", "maxSpread": "0.00020", "maxLoss": "5",
             "maxQuoteAgeSeconds": 10, "issuedAt": "2026-11-03T11:00:00Z",
             "expiresAt": "2026-11-03T18:00:00Z", "issuedBy": "operator"}
+    # The approved absolute entry limit (M4 repair), named by direction: 2 pips beyond the fake's
+    # ask for a BUY (ask 1.10010, bound 1.10020) and below its bid for a SELL (bid 1.10000).
+    if over.get("direction") == "SELL":
+        data["minEntryPrice"] = "1.09980"
+    else:
+        data["maxEntryPrice"] = "1.10030"
     data.update(over)
-    return data
+    return {k: v for k, v in data.items() if v is not None}
 
 
 def make_auth(**over):

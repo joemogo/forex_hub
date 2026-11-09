@@ -24,6 +24,13 @@ def price_bound(auth, quote):
     return quote.bid - auth.max_slippage
 
 
+def within_entry_limit(auth, price):
+    """The operator's absolute entry limit: a BUY never above maxEntryPrice, a SELL never below minEntryPrice."""
+    if auth.direction == "BUY":
+        return price <= auth.entry_price_limit
+    return price >= auth.entry_price_limit
+
+
 def worst_case_loss(auth, quote):
     return abs(price_bound(auth, quote) - auth.stop_loss_price) * auth.units
 
@@ -52,6 +59,8 @@ def assess(auth, quote, account, broker_open_trades, journal_open_exposure, now)
         codes.append("STOP_ON_WRONG_SIDE")
     if not bound > 0:
         codes.append("PRICE_BOUND_INVALID")
+    if not within_entry_limit(auth, bound):
+        codes.append("PRICE_BOUND_BEYOND_APPROVED_ENTRY_LIMIT")
     if worst_case_loss(auth, quote) > auth.max_loss:
         codes.append("LOSS_AT_STOP_EXCEEDS_MAX_LOSS")
     if account.open_trade_count != 0 or broker_open_trades:
@@ -89,6 +98,8 @@ def assess_constraints(auth, quote, account, spec):
         codes.append("STOP_PRICE_PRECISION_EXCEEDED")
     if _decimals(price_bound(auth, quote)) > spec.display_precision:
         codes.append("PRICE_BOUND_PRECISION_EXCEEDED")
+    if _decimals(auth.entry_price_limit) > spec.display_precision:
+        codes.append("ENTRY_LIMIT_PRECISION_EXCEEDED")
     trigger = quote.bid if auth.direction == "BUY" else quote.ask
     distance = abs(trigger - auth.stop_loss_price)
     pip = Decimal(1).scaleb(spec.pip_location)

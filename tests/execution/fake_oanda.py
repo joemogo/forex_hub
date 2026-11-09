@@ -18,6 +18,9 @@ Position side (M2):
                      timeout_before_commit | http500_after_commit
     stop_behavior    attach | missing | wrong_price
     close_commission, close_financing   Decimal amounts booked on the close fill
+    closed_trade_404 (M4 repair; default True) GET trades/<id> answers 404 NO_SUCH_TRADE for a
+                     CLOSED trade, as the real practice API did for the first live trade
+                     (2026-11-09); False keeps a closed trade readable with state CLOSED
     balance_report_skew   added to the NEXT reported accountBalance (a lying broker)
     summary_balance_skew  added to the summary balance
     hide_transaction_ids  ids omitted from TRANSACTIONS_SINCE (a gap)
@@ -50,6 +53,7 @@ class FakeOanda(object):
         self.close_commission = Decimal("0")
         self.close_financing = Decimal("0")
         self.balance_report_skew = Decimal("0")
+        self.closed_trade_404 = True
         self.summary_balance_skew = Decimal("0")
         self.hide_transaction_ids = set()
         self.fail_reads = set()
@@ -164,7 +168,7 @@ class FakeOanda(object):
             return self._ok(200, {"order": order, "lastTransactionID": last})
         if op == "TRADE_DETAILS":
             trade = self._trade(rest[len("/trades/"):])
-            if trade is None:
+            if trade is None or (self.closed_trade_404 and trade.get("state") == "CLOSED"):
                 return self._ok(404, {"errorMessage": "The Trade specified does not exist",
                                       "errorCode": "NO_SUCH_TRADE"})
             return self._ok(200, {"trade": trade, "lastTransactionID": last})

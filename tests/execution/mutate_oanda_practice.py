@@ -134,7 +134,7 @@ MUTANTS = [
     ("X2 stop must be PENDING", [(E, "        if not stop or stop.get(\"state\") != \"PENDING\" or stop.get(\"price\") != want \\", "        if not stop or stop.get(\"price\") != want \\")]),
     ("X3 stop corroborated by its transaction", [(E, "        return stop.get(\"id\") if len(created) == 1 else None", "        return stop.get(\"id\")")]),
     ("X4 units unchanged", [(E, "            if trade.current_units != Decimal(pos[\"signed_units\"]):", "            if False:")]),
-    ("X5 trade missing at broker", [(E, "        if trade is None:\n            return self._halt", "        if False:\n            return self._halt")]),
+    ("X5 trade missing at broker", [(E, '        if trade is None and not any(closing_entry(t, pos["trade_id"])[0]\n', '        if False and not any(closing_entry(t, pos["trade_id"])[0]\n')]),
     ("X6 closed needs close evidence", [(E, "        if not closes:\n", "        if False:\n")]),
     ("X7 accounting gates RECONCILED", [(E, "        if not result.ok:\n", "        if False:\n")]),
     ("X8 close is write-ahead", [(E, "            self.journal.transition_position(intent_id, jn.CLOSING, reason=\"CLOSE_REQUESTED\", raw=request,", "            (lambda *a, **k: None)(intent_id, jn.CLOSING, reason=\"CLOSE_REQUESTED\", raw=request,")]),

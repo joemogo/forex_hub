@@ -6,7 +6,8 @@ only write the opener will send:
   EntryGrant  (A3)    exactly one POST /v3/accounts/<account>/orders whose body is
                       the market order for THAT authorization: its client order id,
                       instrument, signed units and stop price; FOK; OPEN_ONLY; a
-                      priceBound; a stopLossOnFill; and no other field.
+                      priceBound no worse than the approved entry limit; a
+                      stopLossOnFill; and no other field.
   CloseGrant          exactly one PUT /v3/accounts/<account>/trades/<trade>/close
                       for THAT trade, with the body {"units": "ALL"}.
 
@@ -72,8 +73,11 @@ class EntryGrant(object):
         if (order.get("clientExtensions") or {}).get("id") != a.client_order_id \
                 or (order.get("tradeClientExtensions") or {}).get("id") != a.client_order_id:
             raise A3Refused("the entry order does not carry the authorized client order id")
-        if _positive_decimal(order.get("priceBound")) is None:
+        bound = _positive_decimal(order.get("priceBound"))
+        if bound is None:
             raise A3Refused("the entry order has no price bound")
+        if not (bound <= a.entry_price_limit if a.direction == "BUY" else bound >= a.entry_price_limit):
+            raise A3Refused("the entry order's price bound is beyond the approved entry limit")
 
 
 class CloseGrant(object):

@@ -6,6 +6,8 @@ Same discipline as the M1/M2 and M3 gates: each mutant replaces exact snippets (
 must occur exactly once), clears __pycache__, runs the M1, M2, M3 and M4 suites,
 requires a non-zero exit, restores in a finally block, and the run ends by checking
 every mutated file's bytes against the hashes taken before the first mutant.
+RA*/RB* (2026-11-09) cover the two repairs from the first live practice trade: closed-trade
+404 reconciliation, and the operator's absolute entry-price limit.
 DEFENCE-IN-DEPTH pairs (the CLI's CloseGrant and the executor both check a close
 authorization's account and validity window) are mutated together.
 
@@ -75,6 +77,25 @@ MUTANTS = [
     ("C1 submit needs A3", [(CLI, '    if args.command == "submit" and args.authorization != "A3":\n', "    if False:\n")]),
     ("C2 submit verifies protection at once", [(CLI, '                result["reconcile"] = executor.reconcile()\n', "                pass\n")]),
     ("C3 an unprotected position needs the operator", [(CLI, '            return (3 if _attention(result["position"], (jn.PROTECTED,)) else 0), result\n', "            return 0, result\n")]),
+    # repair A (2026-11-09): a closed trade answers 404; closure only on the broker's own close fill
+    ("RA1 a 404 without a close fill halts as missing", [(EXE, '        if trade is None and not any(closing_entry(t, pos["trade_id"])[0]\n', '        if False and not any(closing_entry(t, pos["trade_id"])[0]\n')]),
+    ("RA2 the 404 close fill names this trade", [(EXE, 'not any(closing_entry(t, pos["trade_id"])[0]\n                                     for t in txns', 'not any(t.get("type") == "ORDER_FILL"\n                                     for t in txns')]),
+    ("RA3 exactly one close fill", [(EXE, "        if len(closes) != 1:\n", "        if len(closes) < 1:\n")]),
+    ("RA4 the close fill is a full close", [(EXE, '        if outcome.kind != "CLOSED":\n            return self._halt(report, "CLOSE_EVIDENCE_INVALID', '        if False:\n            return self._halt(report, "CLOSE_EVIDENCE_INVALID')]),
+    ("RA5 fills, stream and balance must agree", [(EXE, "        if not result.ok:\n", "        if False:\n")]),
+    # repair B (2026-11-09): the operator's absolute entry limit
+    ("RB1 a legacy file gains no permission", [(AUTH, '    fields = _FIELDS + (ENTRY_LIMIT_FIELD[data["direction"]],)\n', '    fields = _FIELDS + tuple(f for f in ENTRY_LIMIT_FIELD.values() if f in data)\n'),
+                                               (AUTH, '        self.entry_price_limit = _dec(data, ENTRY_LIMIT_FIELD[data["direction"]])\n', '        self.entry_price_limit = _dec(data, ENTRY_LIMIT_FIELD[data["direction"]]) if ENTRY_LIMIT_FIELD[data["direction"]] in data else (Decimal("1E9") if data["direction"] == "BUY" else Decimal("1E-9"))\n')]),
+    ("RB2 the limit is the one named by the direction", [(AUTH, '    fields = _FIELDS + (ENTRY_LIMIT_FIELD[data["direction"]],)\n', '    fields = _FIELDS + tuple(f for f in ENTRY_LIMIT_FIELD.values() if f in data)\n')]),
+    ("RB3 a BUY limit sits above its stop", [(AUTH, '    if auth.direction == "BUY" and not auth.entry_price_limit > auth.stop_loss_price:\n', "    if False:\n")]),
+    ("RB4 a SELL limit sits below its stop", [(AUTH, '    if auth.direction == "SELL" and not auth.entry_price_limit < auth.stop_loss_price:\n', "    if False:\n")]),
+    ("RB5 the limit is a strict decimal string", [(AUTH, '        self.entry_price_limit = _dec(data, ENTRY_LIMIT_FIELD[data["direction"]])\n', '        self.entry_price_limit = Decimal(str(data[ENTRY_LIMIT_FIELD[data["direction"]]]))\n')]),
+    ("RB6 pre-socket: the bound within the limit", [(RISK, "    if not within_entry_limit(auth, bound):\n", "    if False:\n")]),
+    ("RB7 pre-socket: BUY comparison", [(RISK, "        return price <= auth.entry_price_limit\n", "        return True\n")]),
+    ("RB8 pre-socket: SELL comparison", [(RISK, "    return price >= auth.entry_price_limit\n", "    return True\n")]),
+    ("RB9 the limit fits the broker precision", [(RISK, "    if _decimals(auth.entry_price_limit) > spec.display_precision:\n", "    if False:\n")]),
+    ("RB10 EntryGrant: the outgoing bound within the limit", [(A3, '        if not (bound <= a.entry_price_limit if a.direction == "BUY" else bound >= a.entry_price_limit):\n', "        if False:\n")]),
+    ("RB11 EntryGrant: SELL comparison", [(A3, "else bound >= a.entry_price_limit)", "else True)")]),
 ]
 
 
