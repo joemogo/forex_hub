@@ -1,0 +1,216 @@
+{
+ "_source": "Observed on the OANDA practice API for MOGO's first live practice trade, 2026-11-09 (entry 13:56:25Z, close 14:36:06Z), read with A2 GET requests at 14:37:47Z. Sanitized: accountID, userID, requestID and batchID removed; order-book depth (bids/asks) removed. Values otherwise verbatim. Do not edit: this is evidence, not a fixture to tune.",
+ "authorization_id": "AUTH-20261109-0002",
+ "balance_before": "100000.0000",
+ "client_id": "MOGO-4b39b8a8f23d2c35",
+ "closed_trade_details_404": {
+  "errorCode": "NO_SUCH_TRADE",
+  "errorMessage": "The trade ID specified does not exist",
+  "lastTransactionID": "9"
+ },
+ "last_transaction_id_before": "3",
+ "summary_after_close": {
+  "NAV": "99999.9988",
+  "balance": "99999.9988",
+  "commission": "0.0000",
+  "currency": "USD",
+  "financing": "0.0000",
+  "lastTransactionID": "9",
+  "openPositionCount": 0,
+  "openTradeCount": 0,
+  "pendingOrderCount": 0,
+  "pl": "-0.0012",
+  "unrealizedPL": "0.0000"
+ },
+ "transactions_since_3": {
+  "lastTransactionID": "9",
+  "transactions": [
+   {
+    "clientExtensions": {
+     "comment": "AUTH-20261109-0002",
+     "id": "MOGO-4b39b8a8f23d2c35",
+     "tag": "MOGO_BROKER_PRACTICE"
+    },
+    "id": "4",
+    "instrument": "EUR_USD",
+    "positionFill": "OPEN_ONLY",
+    "priceBound": "1.12036",
+    "reason": "CLIENT_ORDER",
+    "stopLossOnFill": {
+     "price": "1.11757",
+     "timeInForce": "GTC",
+     "triggerMode": "TOP_OF_BOOK"
+    },
+    "time": "2026-11-09T13:56:25.954148863Z",
+    "timeInForce": "FOK",
+    "tradeClientExtensions": {
+     "id": "MOGO-4b39b8a8f23d2c35",
+     "tag": "MOGO_BROKER_PRACTICE"
+    },
+    "type": "MARKET_ORDER",
+    "units": "1"
+   },
+   {
+    "accountBalance": "100000.0000",
+    "baseFinancing": "0",
+    "baseFinancingHomeConversionCost": "0.0000000",
+    "clientOrderID": "MOGO-4b39b8a8f23d2c35",
+    "commission": "0.0000",
+    "financing": "0.0000",
+    "fullPrice": {
+     "closeoutAsk": "1.12042",
+     "closeoutBid": "1.12006",
+     "time": "2026-11-09T13:56:25.840816691Z"
+    },
+    "fullVWAP": "1.12032",
+    "gainQuoteHomeConversionFactor": "1",
+    "guaranteedExecutionFee": "0.0000",
+    "guaranteedExecutionFeeHomeConversionCost": "0",
+    "halfSpreadCost": "0.0001",
+    "homeConversionCost": "0.0000000",
+    "homeConversionFactors": {
+     "gainBaseHome": {
+      "factor": "1.1090376"
+     },
+     "gainQuoteHome": {
+      "factor": "1"
+     },
+     "lossBaseHome": {
+      "factor": "1.1314424"
+     },
+     "lossQuoteHome": {
+      "factor": "1"
+     }
+    },
+    "id": "5",
+    "instrument": "EUR_USD",
+    "lossQuoteHomeConversionFactor": "1",
+    "orderID": "4",
+    "pl": "0.0000",
+    "plHomeConversionCost": "0",
+    "price": "1.12032",
+    "quoteGuaranteedExecutionFee": "0",
+    "quotePL": "0",
+    "reason": "MARKET_ORDER",
+    "requestedUnits": "1",
+    "time": "2026-11-09T13:56:25.954148863Z",
+    "tradeOpened": {
+     "clientExtensions": {
+      "id": "MOGO-4b39b8a8f23d2c35",
+      "tag": "MOGO_BROKER_PRACTICE"
+     },
+     "guaranteedExecutionFee": "0.0000",
+     "guaranteedExecutionFeeHomeConversionCost": "0",
+     "halfSpreadCost": "0.0001",
+     "initialMarginRequired": "0.0224",
+     "price": "1.12032",
+     "quoteGuaranteedExecutionFee": "0",
+     "tradeID": "5",
+     "units": "1"
+    },
+    "type": "ORDER_FILL",
+    "units": "1"
+   },
+   {
+    "clientTradeID": "MOGO-4b39b8a8f23d2c35",
+    "id": "6",
+    "price": "1.11757",
+    "reason": "ON_FILL",
+    "time": "2026-11-09T13:56:25.954148863Z",
+    "timeInForce": "GTC",
+    "tradeID": "5",
+    "triggerCondition": "DEFAULT",
+    "triggerMode": "TOP_OF_BOOK",
+    "type": "STOP_LOSS_ORDER"
+   },
+   {
+    "id": "7",
+    "instrument": "EUR_USD",
+    "positionFill": "REDUCE_ONLY",
+    "reason": "TRADE_CLOSE",
+    "time": "2026-11-09T14:36:06.024054227Z",
+    "timeInForce": "FOK",
+    "tradeClose": {
+     "clientTradeID": "MOGO-4b39b8a8f23d2c35",
+     "tradeID": "5",
+     "units": "ALL"
+    },
+    "type": "MARKET_ORDER",
+    "units": "-1"
+   },
+   {
+    "accountBalance": "99999.9988",
+    "baseFinancing": "0.00000000000000",
+    "baseFinancingHomeConversionCost": "0.00000000000000",
+    "commission": "0.0000",
+    "financing": "0.0000",
+    "fullPrice": {
+     "closeoutAsk": "1.11937",
+     "closeoutBid": "1.11902",
+     "time": "2026-11-09T14:36:05.270220040Z"
+    },
+    "fullVWAP": "1.11911",
+    "gainQuoteHomeConversionFactor": "1",
+    "guaranteedExecutionFee": "0.0000",
+    "guaranteedExecutionFeeHomeConversionCost": "0",
+    "halfSpreadCost": "0.0001",
+    "homeConversionCost": "0.00000000000000",
+    "homeConversionFactors": {
+     "gainBaseHome": {
+      "factor": "1.1079981"
+     },
+     "gainQuoteHome": {
+      "factor": "1"
+     },
+     "lossBaseHome": {
+      "factor": "1.1303819"
+     },
+     "lossQuoteHome": {
+      "factor": "1"
+     }
+    },
+    "id": "8",
+    "instrument": "EUR_USD",
+    "lossQuoteHomeConversionFactor": "1",
+    "orderID": "7",
+    "pl": "-0.0012",
+    "plHomeConversionCost": "0.00000",
+    "price": "1.11911",
+    "quoteGuaranteedExecutionFee": "0",
+    "quotePL": "-0.00121",
+    "reason": "MARKET_ORDER_TRADE_CLOSE",
+    "requestedUnits": "-1",
+    "time": "2026-11-09T14:36:06.024054227Z",
+    "tradesClosed": [
+     {
+      "baseFinancing": "0.00000000000000",
+      "baseFinancingHomeConversionCost": "0.00000000000000",
+      "clientTradeID": "MOGO-4b39b8a8f23d2c35",
+      "financing": "0.0000",
+      "guaranteedExecutionFee": "0.0000",
+      "guaranteedExecutionFeeHomeConversionCost": "0",
+      "halfSpreadCost": "0.0001",
+      "homeConversionCost": "0.00000000000000",
+      "plHomeConversionCost": "0.00000",
+      "price": "1.11911",
+      "quoteGuaranteedExecutionFee": "0",
+      "realizedPL": "-0.0012",
+      "tradeID": "5",
+      "units": "-1"
+     }
+    ],
+    "type": "ORDER_FILL",
+    "units": "-1"
+   },
+   {
+    "closedTradeID": "5",
+    "id": "9",
+    "orderID": "6",
+    "reason": "LINKED_TRADE_CLOSED",
+    "time": "2026-11-09T14:36:06.024054227Z",
+    "tradeCloseTransactionID": "8",
+    "type": "ORDER_CANCEL"
+   }
+  ]
+ }
+}

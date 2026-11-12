@@ -47,6 +47,14 @@ class TestTheCountGate(unittest.TestCase):
                            "module discovery found almost nothing, so every "
                            "assertion here would pass vacuously")
         self.assertIn("tests.trader_intelligence.evidence.test_evidence", found)
+        self.assertIn("tests.execution.test_oanda_practice", found)
+
+    def test_the_runner_and_the_count_gate_enumerate_the_same_roots(self):
+        with open(os.path.join(REPO_ROOT, "tests", "run_all.sh"), encoding="utf-8") as handle:
+            runner = handle.read()
+        find_line = next(l for l in runner.splitlines() if l.startswith('PY_MODULES="$(find '))
+        roots = [w[len("tests/"):] for w in find_line.split() if w.startswith("tests/")]
+        self.assertEqual(sorted(roots), sorted(cpt.SUITE_ROOTS))
 
     def test_a_suite_that_SHRINKS_fails(self):
         rows = self.actual()

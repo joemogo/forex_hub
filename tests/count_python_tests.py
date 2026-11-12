@@ -31,16 +31,20 @@ import unittest
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO_ROOT = os.path.dirname(HERE)
 EXPECTED = os.path.join(HERE, "expected_python_test_counts.tsv")
+#: The Python lane's suite roots. Must match the find roots in tests/run_all.sh.
+#: execution/ holds the broker-practice executor (BROKER_PRACTICE mode), kept apart
+#: from the research suites in trader_intelligence/.
+SUITE_ROOTS = ("trader_intelligence", "execution")
 
 
 def modules():
     found = []
-    for dirpath, _dirnames, filenames in os.walk(
-            os.path.join(HERE, "trader_intelligence")):
-        for name in filenames:
-            if name.startswith("test_") and name.endswith(".py"):
-                rel = os.path.relpath(os.path.join(dirpath, name), REPO_ROOT)
-                found.append(rel[:-3].replace(os.sep, "."))
+    for root in SUITE_ROOTS:
+        for dirpath, _dirnames, filenames in os.walk(os.path.join(HERE, root)):
+            for name in filenames:
+                if name.startswith("test_") and name.endswith(".py"):
+                    rel = os.path.relpath(os.path.join(dirpath, name), REPO_ROOT)
+                    found.append(rel[:-3].replace(os.sep, "."))
     return sorted(found)
 
 
